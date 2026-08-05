@@ -1,4 +1,4 @@
-import { Facebook, Instagram, MessageCircle } from "lucide-react";
+import { FaFacebook, FaInstagram, FaWhatsapp } from "react-icons/fa";
 
 export default function Footer() {
   return (
@@ -39,10 +39,10 @@ export default function Footer() {
         <div>
           <h4 className="font-bold mb-4">Síguenos</h4>
 
-          <div className="flex gap-4">
-            <Facebook />
-            <Instagram />
-            <MessageCircle />
+          <div className="flex gap-5 text-2xl">
+            <FaFacebook className="cursor-pointer hover:text-blue-500 transition" />
+            <FaInstagram className="cursor-pointer hover:text-pink-500 transition" />
+            <FaWhatsapp className="cursor-pointer hover:text-green-500 transition" />
           </div>
         </div>
 
