@@ -1,69 +1,116 @@
-import Image from "next/image";
-
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <main className="min-h-screen bg-gray-100">
+      {/* Navbar */}
+      <header className="bg-slate-900 text-white shadow">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <h1 className="text-2xl font-bold text-cyan-400">
+            Mundo Web
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+
+          <nav className="hidden gap-8 md:flex">
+            <a href="#" className="hover:text-cyan-400">Inicio</a>
+            <a href="#" className="hover:text-cyan-400">Productos</a>
+            <a href="#" className="hover:text-cyan-400">Categorías</a>
+            <a href="#" className="hover:text-cyan-400">Ofertas</a>
+            <a href="#" className="hover:text-cyan-400">Contacto</a>
+          </nav>
+
+          <button className="rounded-lg bg-cyan-500 px-4 py-2 font-semibold hover:bg-cyan-600">
+            Iniciar sesión
+          </button>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </header>
+
+      {/* Hero */}
+      <section className="bg-gradient-to-r from-slate-900 to-blue-700 py-24 text-center text-white">
+        <h2 className="mb-4 text-5xl font-bold">
+          La tecnología que impulsa tu mundo
+        </h2>
+
+        <p className="mx-auto mb-8 max-w-2xl text-lg text-gray-200">
+          Encuentra computadoras, laptops, monitores, accesorios,
+          componentes y mucho más al mejor precio.
+        </p>
+
+        <button className="rounded-xl bg-cyan-400 px-8 py-4 text-lg font-bold text-black hover:bg-cyan-300">
+          Comprar ahora
+        </button>
+      </section>
+
+      {/* Categorías */}
+      <section className="mx-auto max-w-7xl px-6 py-16">
+        <h3 className="mb-10 text-center text-3xl font-bold">
+          Categorías
+        </h3>
+
+        <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+          {[
+            "Computadoras",
+            "Laptops",
+            "Monitores",
+            "Gaming",
+            "Accesorios",
+            "Redes",
+            "Componentes",
+            "Almacenamiento",
+          ].map((item) => (
+            <div
+              key={item}
+              className="rounded-xl bg-white p-8 text-center shadow transition hover:-translate-y-1 hover:shadow-lg"
+            >
+              <h4 className="font-semibold">{item}</h4>
+            </div>
+          ))}
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* Productos */}
+      <section className="bg-white py-16">
+        <div className="mx-auto max-w-7xl px-6">
+          <h3 className="mb-10 text-center text-3xl font-bold">
+            Productos destacados
+          </h3>
+
+          <div className="grid gap-8 md:grid-cols-4">
+            {[1, 2, 3, 4].map((item) => (
+              <div
+                key={item}
+                className="rounded-xl border bg-gray-50 p-5 shadow-sm"
+              >
+                <div className="mb-4 flex h-40 items-center justify-center rounded-lg bg-gray-200">
+                  Imagen
+                </div>
+
+                <h4 className="font-bold">Producto {item}</h4>
+
+                <p className="mt-2 text-cyan-600 text-xl font-bold">
+                  $199
+                </p>
+
+                <button className="mt-5 w-full rounded-lg bg-slate-900 py-3 text-white hover:bg-cyan-600">
+                  Agregar al carrito
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-slate-900 py-10 text-center text-white">
+        <h3 className="text-2xl font-bold text-cyan-400">
+          Mundo Web
+        </h3>
+
+        <p className="mt-3 text-gray-300">
+          Todo en tecnología, en un solo lugar.
+        </p>
+
+        <p className="mt-6 text-sm text-gray-500">
+          © 2026 Mundo Web. Todos los derechos reservados.
+        </p>
+      </footer>
+    </main>
   );
 }
