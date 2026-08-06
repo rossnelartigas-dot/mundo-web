@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getProducts } from "@/services/productService";
 
 export default async function ProductsPage() {
@@ -16,12 +17,12 @@ export default async function ProductsPage() {
 
         </h1>
 
-        <button className="bg-cyan-500 hover:bg-cyan-600 text-white px-5 py-3 rounded-lg">
-
-          Nuevo Producto
-
-        </button>
-
+        <Link
+  href="/admin/products/new"
+  className="bg-cyan-500 hover:bg-cyan-600 text-white px-5 py-3 rounded-lg"
+>
+  Nuevo Producto
+</Link>
       </div>
 
       <div className="bg-white rounded-xl shadow overflow-hidden">
