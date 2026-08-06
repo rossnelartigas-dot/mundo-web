@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -10,51 +11,67 @@ import {
 } from "@/lib/validators/product";
 
 import { createProduct } from "@/services/productService";
+import { uploadProductImage } from "@/services/storageService";
+
+import ImageUploader from "./ImageUploader";
 
 
 export default function ProductForm() {
 
   const router = useRouter();
 
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
+  const [loading, setLoading] = useState(false);
+
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors }
+    setValue,
+    formState:{errors}
 
   } = useForm<ProductFormData>({
-    resolver: zodResolver(ProductSchema) as any,
 
-    defaultValues: {
+    resolver:zodResolver(ProductSchema),
 
-      name: "",
-      description: "",
-      brand: "",
-      category: "",
-      price: 0,
-      stock: 0,
-      featured: false,
-      active: true,
-      image: ""
-
+    defaultValues:{
+      featured:false,
+      active:true,
+      image:""
     }
 
   });
 
 
 
-  async function onSubmit(data: ProductFormData) {
+  async function onSubmit(data:ProductFormData){
 
-    try {
+    try{
+
+      setLoading(true);
+
+
+      let imageUrl = data.image || "";
+
+
+      if(imageFile){
+
+        imageUrl = await uploadProductImage(imageFile);
+
+      }
+
+
 
       await createProduct({
 
         ...data,
 
-        image: data.image || ""
+        image:imageUrl
 
       });
+
 
 
       alert("Producto creado correctamente");
@@ -62,21 +79,27 @@ export default function ProductForm() {
 
       reset();
 
+      setImageFile(null);
+
 
       router.push("/admin/products");
 
+      router.refresh();
 
-    } catch (error) {
 
+    }catch(error){
 
       console.error(
         "Error creando producto:",
         error
       );
 
+      alert("Error creando producto");
 
-      alert("Error guardando producto");
 
+    }finally{
+
+      setLoading(false);
 
     }
 
@@ -94,26 +117,19 @@ export default function ProductForm() {
 
       <div>
 
-        <label className="block font-medium mb-2">
-          Nombre del producto
+        <label className="block mb-2 font-medium">
+          Nombre
         </label>
 
 
         <input
-
           {...register("name")}
-
-          className="border rounded-lg w-full p-3"
-
-          placeholder="Ejemplo: Laptop Lenovo"
-
+          className="border rounded-lg p-3 w-full"
         />
 
-
-        <p className="text-red-500 text-sm">
+        <p className="text-red-500">
           {errors.name?.message}
         </p>
-
 
       </div>
 
@@ -121,7 +137,7 @@ export default function ProductForm() {
 
       <div>
 
-        <label className="block font-medium mb-2">
+        <label className="block mb-2 font-medium">
           Descripción
         </label>
 
@@ -130,18 +146,39 @@ export default function ProductForm() {
 
           {...register("description")}
 
-          className="border rounded-lg w-full p-3"
+          className="border rounded-lg p-3 w-full"
 
           rows={4}
 
-          placeholder="Descripción del producto"
+        />
+
+      </div>
+
+
+
+
+      <div className="grid grid-cols-2 gap-5">
+
+        <input
+
+          {...register("brand")}
+
+          placeholder="Marca"
+
+          className="border rounded-lg p-3"
 
         />
 
 
-        <p className="text-red-500 text-sm">
-          {errors.description?.message}
-        </p>
+        <input
+
+          {...register("category")}
+
+          placeholder="Categoría"
+
+          className="border rounded-lg p-3"
+
+        />
 
 
       </div>
@@ -152,117 +189,60 @@ export default function ProductForm() {
       <div className="grid grid-cols-2 gap-5">
 
 
-        <div>
+        <input
 
-          <label className="block mb-2">
-            Marca
-          </label>
+          type="number"
 
+          {...register("price")}
 
-          <input
+          placeholder="Precio"
 
-            {...register("brand")}
+          className="border rounded-lg p-3"
 
-            className="border rounded-lg w-full p-3"
-
-            placeholder="Ejemplo: Lenovo"
-
-          />
+        />
 
 
-        </div>
+        <input
 
+          type="number"
 
+          {...register("stock")}
 
+          placeholder="Stock"
 
-        <div>
+          className="border rounded-lg p-3"
 
-          <label className="block mb-2">
-            Categoría
-          </label>
-
-
-          <input
-
-            {...register("category")}
-
-            className="border rounded-lg w-full p-3"
-
-            placeholder="Ejemplo: Laptops"
-
-          />
-
-
-        </div>
+        />
 
 
       </div>
-
-
-
-
-
-      <div className="grid grid-cols-2 gap-5">
-
-
-        <div>
-
-          <label className="block mb-2">
-            Precio
-          </label>
-
-
-          <input
-
-            type="number"
-
-            {...register("price")}
-
-            className="border rounded-lg w-full p-3"
-
-            placeholder="599"
-
-          />
-
-
-        </div>
-
-
-
-
-        <div>
-
-          <label className="block mb-2">
-            Stock
-          </label>
-
-
-          <input
-
-            type="number"
-
-            {...register("stock")}
-
-            className="border rounded-lg w-full p-3"
-
-            placeholder="10"
-
-          />
-
-
-        </div>
-
-
-      </div>
-
 
 
 
 
       <div>
 
-        <label className="block mb-2">
-          Imagen URL
+        <ImageUploader
+
+          onImageChange={(file)=>{
+
+            setImageFile(file);
+
+          }}
+
+        />
+
+      </div>
+
+
+
+
+      <div>
+
+        <label className="block mb-2 font-medium">
+
+          O usar URL de imagen
+
         </label>
 
 
@@ -270,73 +250,72 @@ export default function ProductForm() {
 
           {...register("image")}
 
-          className="border rounded-lg w-full p-3"
+          placeholder="https://imagen.com/producto.jpg"
 
-          placeholder="https://imagen.com/foto.jpg"
+          className="border rounded-lg p-3 w-full"
 
         />
 
-
       </div>
 
 
 
 
+      <div className="flex gap-3 items-center">
 
-      <div className="flex gap-6">
+        <input
 
+          type="checkbox"
 
-        <label className="flex items-center gap-2">
+          {...register("featured")}
 
-          <input
+        />
 
-            type="checkbox"
-
-            {...register("featured")}
-
-          />
-
+        <span>
           Producto destacado
-
-        </label>
-
-
-
-
-
-        <label className="flex items-center gap-2">
-
-          <input
-
-            type="checkbox"
-
-            {...register("active")}
-
-          />
-
-          Producto activo
-
-        </label>
+        </span>
 
 
       </div>
 
+
+
+
+      <div className="flex gap-3 items-center">
+
+        <input
+
+          type="checkbox"
+
+          {...register("active")}
+
+        />
+
+        <span>
+          Producto activo
+        </span>
+
+
+      </div>
 
 
 
 
       <button
 
-        type="submit"
+        disabled={loading}
 
-        className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg"
+        className="bg-cyan-600 text-white px-6 py-3 rounded-lg"
 
       >
 
-        Guardar Producto
+        {loading
+          ? "Guardando..."
+          : "Guardar Producto"
+        }
+
 
       </button>
-
 
 
     </form>
