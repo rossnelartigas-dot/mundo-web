@@ -3,10 +3,12 @@ import Link from "next/link";
 import { getProducts } from "@/services/productService";
 
 import {
-  ShoppingCart,
   Heart,
   Star
 } from "lucide-react";
+
+import AddToCartButton from "./AddToCartButton";
+
 
 
 export default async function FeaturedProducts() {
@@ -15,9 +17,14 @@ export default async function FeaturedProducts() {
   const products = await getProducts();
 
 
+
   const featuredProducts = products.filter(
+
     (product) => product.featured
+
   );
+
+
 
 
 
@@ -38,13 +45,14 @@ Productos Destacados
 
 
 
+
 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+
 
 
 {
 
 featuredProducts.map((product)=>(
-
 
 
 <div
@@ -54,6 +62,7 @@ key={product.id}
 className="bg-white rounded-2xl shadow hover:shadow-xl transition overflow-hidden"
 
 >
+
 
 
 
@@ -69,6 +78,7 @@ href={`/productos/${product.slug}`}
 
 product.image ? (
 
+
 <img
 
 src={product.image}
@@ -83,7 +93,7 @@ className="h-56 w-full object-cover"
 ):(
 
 
-<div className="h-56 w-full bg-gray-200 flex items-center justify-center">
+<div className="h-56 w-full bg-slate-200 flex items-center justify-center">
 
 Sin imagen
 
@@ -104,13 +114,16 @@ Sin imagen
 
 
 
+
+
 <div className="p-5">
 
 
 
 
 
-<div className="flex justify-between">
+
+<div className="flex justify-between items-center">
 
 
 <div className="flex">
@@ -144,11 +157,19 @@ className="fill-yellow-400 text-yellow-400"
 
 
 
-<Heart size={20}/>
+<Heart
+
+size={20}
+
+className="cursor-pointer"
+
+/>
 
 
 
 </div>
+
+
 
 
 
@@ -177,6 +198,7 @@ href={`/productos/${product.slug}`}
 
 
 
+
 <p className="text-slate-500 text-sm mt-2">
 
 {product.brand}
@@ -194,7 +216,7 @@ href={`/productos/${product.slug}`}
 product.discount > 0 && (
 
 
-<p className="text-sm text-gray-400 line-through mt-2">
+<p className="text-gray-400 line-through mt-3">
 
 ${product.price}
 
@@ -204,6 +226,7 @@ ${product.price}
 )
 
 }
+
 
 
 
@@ -221,9 +244,13 @@ product.discount > 0
 
 ?
 
+(
+
 product.price -
 
 (product.price * product.discount / 100)
+
+)
 
 :
 
@@ -241,20 +268,13 @@ product.price
 
 
 
-<button
 
-className="w-full mt-5 bg-cyan-500 hover:bg-cyan-600 text-white py-3 rounded-xl flex justify-center items-center gap-2"
+<AddToCartButton
 
->
+product={product}
 
+/>
 
-<ShoppingCart size={20}/>
-
-
-Agregar al carrito
-
-
-</button>
 
 
 
@@ -262,6 +282,7 @@ Agregar al carrito
 
 
 </div>
+
 
 
 
@@ -281,9 +302,12 @@ Agregar al carrito
 
 
 
+
+
 </section>
 
 
   );
+
 
 }
