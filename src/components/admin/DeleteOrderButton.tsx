@@ -14,26 +14,45 @@ export default function DeleteOrderButton({
 
   async function handleDelete() {
     const confirmDelete = confirm(
-      "¿Eliminar este pedido?"
+      "¿Estás seguro de que quieres eliminar este pedido?"
     );
 
-    if (!confirmDelete) return;
+    if (!confirmDelete) {
+      return;
+    }
 
     try {
       await deleteOrder(id);
 
+      alert(
+        "Pedido eliminado correctamente"
+      );
+
+      router.push(
+        "/admin/orders"
+      );
+
       router.refresh();
-    } catch {
-      alert("No se pudo eliminar.");
+
+    } catch (error) {
+      console.error(
+        "Error eliminando pedido:",
+        error
+      );
+
+      alert(
+        "No se pudo eliminar el pedido"
+      );
     }
   }
 
   return (
     <button
+      type="button"
       onClick={handleDelete}
       className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
     >
-      Eliminar
+      Eliminar pedido
     </button>
   );
 }

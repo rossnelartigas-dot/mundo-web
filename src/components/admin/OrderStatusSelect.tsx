@@ -16,6 +16,7 @@ export default function OrderStatusSelect({
   const router = useRouter();
 
   const [value, setValue] = useState(status);
+  const [loading, setLoading] = useState(false);
 
   async function handleChange(
     e: React.ChangeEvent<HTMLSelectElement>
@@ -23,12 +24,25 @@ export default function OrderStatusSelect({
     const newStatus = e.target.value;
 
     setValue(newStatus);
+    setLoading(true);
 
     try {
       await updateOrderStatus(id, newStatus);
+
       router.refresh();
-    } catch {
-      alert("Error actualizando estado");
+    } catch (error) {
+      console.error(
+        "Error actualizando estado:",
+        error
+      );
+
+      setValue(status);
+
+      alert(
+        "Error actualizando estado"
+      );
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -36,7 +50,8 @@ export default function OrderStatusSelect({
     <select
       value={value}
       onChange={handleChange}
-      className="border rounded-lg px-3 py-2"
+      disabled={loading}
+      className="border rounded-lg px-3 py-2 bg-white"
     >
       <option value="pending">
         Pendiente
