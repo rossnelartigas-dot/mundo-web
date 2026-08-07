@@ -298,7 +298,7 @@ Peso:
 
 <Link
 
-href="https://wa.me/"
+href="https://wa.me/+584264433849"
 
 className="bg-green-600 text-white px-6 py-3 rounded-lg inline-block"
 
