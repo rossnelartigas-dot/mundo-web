@@ -10,50 +10,134 @@ import {
   ProductFormData,
 } from "@/lib/validators/product";
 
-import { createProduct } from "@/services/productService";
+import {
+  createProduct,
+  updateProduct,
+} from "@/services/productService";
+
 import { uploadProductImage } from "@/services/storageService";
+
+import { Product } from "@/types/product";
 
 import ImageUploader from "./ImageUploader";
 
 
-export default function ProductForm() {
+interface Props {
+  product?: Product;
+}
+
+
+export default function ProductForm({ product }: Props) {
+
 
   const router = useRouter();
+
 
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const [loading, setLoading] = useState(false);
 
 
+
   const {
     register,
     handleSubmit,
-    reset,
+    watch,
     setValue,
-    formState:{errors}
+    formState:{
+      errors
+    }
 
   } = useForm<ProductFormData>({
 
-    resolver:zodResolver(ProductSchema),
+    resolver: zodResolver(ProductSchema),
 
-    defaultValues:{
-      featured:false,
-      active:true,
-      image:""
+    defaultValues: {
+
+      name: product?.name || "",
+
+      description: product?.description || "",
+
+      price: product?.price || 0,
+
+      category: product?.category || "",
+
+      brand: product?.brand || "",
+
+      image: product?.image || "",
+
+      stock: product?.stock || 0,
+
+      slug: product?.slug || "",
+
+      sku: product?.sku || "",
+
+      featured: product?.featured || false,
+
+      active: product?.active ?? true,
+
+      discount: product?.discount || 0,
+
+      weight: product?.weight || 0,
+
     }
 
   });
 
 
 
+  const name = watch("name");
+
+
+
+  function generateSlug(value:string){
+
+    return value
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g,"")
+      .replace(/\s+/g,"-");
+
+  }
+
+
+
+  function handleNameChange(
+    e:React.ChangeEvent<HTMLInputElement>
+  ){
+
+    setValue(
+      "name",
+      e.target.value
+    );
+
+
+    if(!product){
+
+      setValue(
+        "slug",
+        generateSlug(e.target.value)
+      );
+
+    }
+
+  }
+
+
+
+
   async function onSubmit(data:ProductFormData){
 
-    try{
+
+    try {
+
 
       setLoading(true);
 
 
+
       let imageUrl = data.image || "";
+
 
 
       if(imageFile){
@@ -64,72 +148,133 @@ export default function ProductForm() {
 
 
 
-      await createProduct({
+
+      const productData = {
 
         ...data,
 
         image:imageUrl
 
-      });
+      };
 
 
 
-      alert("Producto creado correctamente");
+
+      if(product){
 
 
-      reset();
+        await updateProduct(
 
-      setImageFile(null);
+          product.id,
+
+          productData
+
+        );
 
 
-      router.push("/admin/products");
+        alert(
+          "Producto actualizado"
+        );
+
+
+      }else{
+
+
+        await createProduct(
+
+          productData
+
+        );
+
+
+        alert(
+          "Producto creado"
+        );
+
+
+      }
+
+
+
+
+      router.push(
+        "/admin/products"
+      );
+
 
       router.refresh();
 
 
-    }catch(error){
 
-      console.error(
-        "Error creando producto:",
-        error
+    } catch(error){
+
+
+      console.error(error);
+
+
+      alert(
+        "Error guardando producto"
       );
 
-      alert("Error creando producto");
 
+    } finally {
 
-    }finally{
 
       setLoading(false);
 
+
     }
 
+
   }
+
 
 
 
   return (
 
     <form
-      onSubmit={handleSubmit(onSubmit)}
+
+      onSubmit={
+        handleSubmit(onSubmit)
+      }
+
       className="space-y-6"
+
     >
 
 
       <div>
 
-        <label className="block mb-2 font-medium">
+        <label>
           Nombre
         </label>
 
 
         <input
-          {...register("name")}
-          className="border rounded-lg p-3 w-full"
+
+          defaultValue={product?.name}
+
+          onChange={handleNameChange}
+
+          className="border p-3 w-full rounded"
+
         />
+
+
+        <input
+
+          type="hidden"
+
+          {...register("name")}
+
+        />
+
 
         <p className="text-red-500">
           {errors.name?.message}
         </p>
+
 
       </div>
 
@@ -137,7 +282,7 @@ export default function ProductForm() {
 
       <div>
 
-        <label className="block mb-2 font-medium">
+        <label>
           Descripción
         </label>
 
@@ -146,9 +291,7 @@ export default function ProductForm() {
 
           {...register("description")}
 
-          className="border rounded-lg p-3 w-full"
-
-          rows={4}
+          className="border p-3 w-full rounded"
 
         />
 
@@ -157,7 +300,8 @@ export default function ProductForm() {
 
 
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-2 gap-4">
+
 
         <input
 
@@ -165,9 +309,10 @@ export default function ProductForm() {
 
           placeholder="Marca"
 
-          className="border rounded-lg p-3"
+          className="border p-3 rounded"
 
         />
+
 
 
         <input
@@ -176,7 +321,7 @@ export default function ProductForm() {
 
           placeholder="Categoría"
 
-          className="border rounded-lg p-3"
+          className="border p-3 rounded"
 
         />
 
@@ -186,7 +331,7 @@ export default function ProductForm() {
 
 
 
-      <div className="grid grid-cols-2 gap-5">
+      <div className="grid grid-cols-2 gap-4">
 
 
         <input
@@ -197,9 +342,10 @@ export default function ProductForm() {
 
           placeholder="Precio"
 
-          className="border rounded-lg p-3"
+          className="border p-3 rounded"
 
         />
+
 
 
         <input
@@ -210,7 +356,7 @@ export default function ProductForm() {
 
           placeholder="Stock"
 
-          className="border rounded-lg p-3"
+          className="border p-3 rounded"
 
         />
 
@@ -220,48 +366,100 @@ export default function ProductForm() {
 
 
 
-      <div>
-
-        <ImageUploader
-
-          onImageChange={(file)=>{
-
-            setImageFile(file);
-
-          }}
-
-        />
-
-      </div>
-
-
-
-
-      <div>
-
-        <label className="block mb-2 font-medium">
-
-          O usar URL de imagen
-
-        </label>
+      <div className="grid grid-cols-2 gap-4">
 
 
         <input
 
-          {...register("image")}
+          {...register("sku")}
 
-          placeholder="https://imagen.com/producto.jpg"
+          placeholder="SKU"
 
-          className="border rounded-lg p-3 w-full"
+          className="border p-3 rounded"
 
         />
+
+
+
+        <input
+
+          {...register("slug")}
+
+          placeholder="Slug"
+
+          className="border p-3 rounded"
+
+        />
+
 
       </div>
 
 
 
 
-      <div className="flex gap-3 items-center">
+      <div className="grid grid-cols-2 gap-4">
+
+
+        <input
+
+          type="number"
+
+          {...register("discount")}
+
+          placeholder="Descuento %"
+
+          className="border p-3 rounded"
+
+        />
+
+
+
+        <input
+
+          type="number"
+
+          {...register("weight")}
+
+          placeholder="Peso Kg"
+
+          className="border p-3 rounded"
+
+        />
+
+
+      </div>
+
+
+
+
+      <ImageUploader
+
+        imageUrl={product?.image}
+
+        onImageChange={
+          setImageFile
+        }
+
+      />
+
+
+
+
+      <input
+
+        {...register("image")}
+
+        placeholder="URL de imagen"
+
+        className="border p-3 w-full rounded"
+
+      />
+
+
+
+
+
+      <label className="flex gap-2">
 
         <input
 
@@ -271,17 +469,14 @@ export default function ProductForm() {
 
         />
 
-        <span>
-          Producto destacado
-        </span>
+        Producto destacado
 
-
-      </div>
+      </label>
 
 
 
 
-      <div className="flex gap-3 items-center">
+      <label className="flex gap-2">
 
         <input
 
@@ -291,31 +486,57 @@ export default function ProductForm() {
 
         />
 
-        <span>
-          Producto activo
-        </span>
+        Producto activo
+
+      </label>
+
+
+
+
+
+      <div className="flex gap-4">
+
+
+        <button
+
+          disabled={loading}
+
+          className="bg-cyan-600 text-white px-6 py-3 rounded"
+
+        >
+
+          {loading
+            ? "Guardando..."
+            : product
+              ? "Guardar cambios"
+              : "Crear producto"
+          }
+
+
+        </button>
+
+
+
+
+        <button
+
+          type="button"
+
+          onClick={() =>
+            router.push("/admin/products")
+          }
+
+          className="bg-gray-400 text-white px-6 py-3 rounded"
+
+        >
+
+          Cancelar
+
+        </button>
 
 
       </div>
 
-
-
-
-      <button
-
-        disabled={loading}
-
-        className="bg-cyan-600 text-white px-6 py-3 rounded-lg"
-
-      >
-
-        {loading
-          ? "Guardando..."
-          : "Guardar Producto"
-        }
-
-
-      </button>
 
 
     </form>

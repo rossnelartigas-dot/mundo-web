@@ -16,10 +16,18 @@ export interface Product {
 
   stock: number;
 
-  featured?: boolean;
-
-  active?: boolean;
-
   created_at: string;
+
+  slug: string;
+
+  sku: string;
+
+  featured: boolean;
+
+  active: boolean;
+
+  discount: number;
+
+  weight: number;
 
 }
