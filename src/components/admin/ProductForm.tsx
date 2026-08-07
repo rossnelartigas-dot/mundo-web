@@ -140,11 +140,17 @@ export default function ProductForm({ product }: Props) {
 
 
 
-      if(imageFile){
+      if (imageFile) {
 
-        imageUrl = await uploadProductImage(imageFile);
+    if (product?.image) {
 
-      }
+      await deleteProductImage(product.image);
+
+    }
+
+    imageUrl = await uploadProductImage(imageFile);
+
+    }
 
 
 
