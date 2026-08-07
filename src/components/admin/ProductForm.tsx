@@ -44,13 +44,10 @@ export default function ProductForm({
 
 
 
-
-
   const {
     register,
     handleSubmit,
     setValue,
-    watch,
     formState:{
       errors
     }
@@ -59,10 +56,8 @@ export default function ProductForm({
 
     resolver: zodResolver(ProductSchema),
 
-    mode: "onChange",
 
-
-    defaultValues:{
+    defaultValues: {
 
 
       name: product?.name || "",
@@ -92,7 +87,7 @@ export default function ProductForm({
       sku: product?.sku || "",
 
 
-      featured: product?.featured || false,
+      featured: product?.featured ?? false,
 
 
       active: product?.active ?? true,
@@ -107,6 +102,7 @@ export default function ProductForm({
     }
 
   });
+
 
 
 
@@ -127,6 +123,7 @@ export default function ProductForm({
 
 
   }
+
 
 
 
@@ -171,6 +168,7 @@ export default function ProductForm({
 
 
 
+
   async function onSubmit(
     data:ProductFormData
   ){
@@ -203,6 +201,7 @@ export default function ProductForm({
 
 
 
+
       const productData = {
 
 
@@ -218,8 +217,8 @@ export default function ProductForm({
 
 
 
-      if(product){
 
+      if(product){
 
 
         await updateProduct(
@@ -229,7 +228,6 @@ export default function ProductForm({
           productData
 
         );
-
 
 
         alert(
@@ -249,7 +247,6 @@ export default function ProductForm({
         );
 
 
-
         alert(
           "Producto creado correctamente"
         );
@@ -261,13 +258,13 @@ export default function ProductForm({
 
 
 
+
       router.push(
         "/admin/products"
       );
 
 
       router.refresh();
-
 
 
 
@@ -304,8 +301,7 @@ export default function ProductForm({
 
 
 
-return (
-
+  return (
 
 <form
 
@@ -322,7 +318,6 @@ className="space-y-6"
 
 <div>
 
-
 <label className="block mb-2 font-medium">
 
 Nombre
@@ -330,19 +325,13 @@ Nombre
 </label>
 
 
-
 <input
-
 
 {...register("name")}
 
-
 onChange={handleNameChange}
 
-
 className="border p-3 w-full rounded-lg"
-
-
 
 />
 
@@ -354,8 +343,8 @@ className="border p-3 w-full rounded-lg"
 </p>
 
 
-
 </div>
+
 
 
 
@@ -364,7 +353,6 @@ className="border p-3 w-full rounded-lg"
 
 <div>
 
-
 <label className="block mb-2 font-medium">
 
 Descripción
@@ -372,22 +360,15 @@ Descripción
 </label>
 
 
-
 <textarea
-
 
 {...register("description")}
 
-
 rows={4}
-
 
 className="border p-3 w-full rounded-lg"
 
-
-
 />
-
 
 
 </div>
@@ -402,41 +383,27 @@ className="border p-3 w-full rounded-lg"
 <div className="grid grid-cols-2 gap-4">
 
 
-
 <input
-
 
 {...register("brand")}
 
-
 placeholder="Marca"
 
-
 className="border p-3 rounded-lg"
-
-
 
 />
 
 
 
-
-
 <input
-
 
 {...register("category")}
 
-
 placeholder="Categoría"
-
 
 className="border p-3 rounded-lg"
 
-
-
 />
-
 
 
 </div>
@@ -452,47 +419,35 @@ className="border p-3 rounded-lg"
 <div className="grid grid-cols-2 gap-4">
 
 
-
 <input
-
 
 type="number"
 
-
-{...register("price")}
-
+{...register("price",{
+  valueAsNumber:true
+})}
 
 placeholder="Precio"
 
-
 className="border p-3 rounded-lg"
-
-
 
 />
 
 
 
-
-
 <input
-
 
 type="number"
 
-
-{...register("stock")}
-
+{...register("stock",{
+  valueAsNumber:true
+})}
 
 placeholder="Stock"
 
-
 className="border p-3 rounded-lg"
 
-
-
 />
-
 
 
 </div>
@@ -504,45 +459,30 @@ className="border p-3 rounded-lg"
 
 
 
-
 <div className="grid grid-cols-2 gap-4">
 
 
-
 <input
-
 
 {...register("sku")}
 
-
 placeholder="SKU"
-
 
 className="border p-3 rounded-lg"
 
-
-
 />
-
-
 
 
 
 <input
 
-
 {...register("slug")}
-
 
 placeholder="Slug"
 
-
 className="border p-3 rounded-lg"
 
-
-
 />
-
 
 
 </div>
@@ -554,51 +494,38 @@ className="border p-3 rounded-lg"
 
 
 
-
 <div className="grid grid-cols-2 gap-4">
 
 
-
 <input
-
 
 type="number"
 
-
-{...register("discount")}
-
+{...register("discount",{
+  valueAsNumber:true
+})}
 
 placeholder="Descuento %"
 
-
 className="border p-3 rounded-lg"
 
-
-
 />
-
-
 
 
 
 <input
 
-
 type="number"
 
-
-{...register("weight")}
-
+{...register("weight",{
+  valueAsNumber:true
+})}
 
 placeholder="Peso Kg"
 
-
 className="border p-3 rounded-lg"
 
-
-
 />
-
 
 
 </div>
@@ -613,22 +540,12 @@ className="border p-3 rounded-lg"
 
 <ImageUploader
 
-
 imageUrl={product?.image}
 
-
-onImageChange={
-
-(file)=>{
-
-setImageFile(file);
-
-}
-
-}
-
+onImageChange={setImageFile}
 
 />
+
 
 
 
@@ -646,19 +563,13 @@ URL de imagen
 </label>
 
 
-
 <input
-
 
 {...register("image")}
 
-
 placeholder="https://imagen.com/producto.jpg"
 
-
 className="border p-3 w-full rounded-lg"
-
-
 
 />
 
@@ -677,12 +588,9 @@ className="border p-3 w-full rounded-lg"
 
 <input
 
-
 type="checkbox"
 
-
 {...register("featured")}
-
 
 />
 
@@ -699,18 +607,14 @@ Producto destacado
 
 
 
-
 <label className="flex gap-2 items-center">
 
 
 <input
 
-
 type="checkbox"
 
-
 {...register("active")}
-
 
 />
 
@@ -727,22 +631,14 @@ Producto activo
 
 
 
-
 <div className="flex gap-4">
-
-
-
 
 
 <button
 
-
 disabled={loading}
 
-
 className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg"
-
-
 
 >
 
@@ -777,19 +673,15 @@ product
 
 
 
-
 <button
-
 
 type="button"
 
-
-onClick={()=>router.push("/admin/products")}
-
+onClick={() =>
+router.push("/admin/products")
+}
 
 className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg"
-
-
 
 >
 
@@ -811,8 +703,6 @@ Cancelar
 
 </form>
 
-
-);
-
+  );
 
 }
