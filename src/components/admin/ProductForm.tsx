@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
+
 import {
   ProductSchema,
   ProductFormData,
@@ -14,7 +15,9 @@ import {
   updateProduct,
 } from "@/services/productService";
 
-import { uploadProductImage } from "@/services/storageService";
+import {
+  uploadProductImage,
+} from "@/services/storageService";
 
 import { Product } from "@/types/product";
 
@@ -26,7 +29,9 @@ interface Props {
 }
 
 
-export default function ProductForm({ product }: Props) {
+export default function ProductForm({
+  product
+}: Props) {
 
 
   const router = useRouter();
@@ -34,15 +39,18 @@ export default function ProductForm({ product }: Props) {
 
   const [imageFile, setImageFile] = useState<File | null>(null);
 
+
   const [loading, setLoading] = useState(false);
+
+
 
 
 
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
+    watch,
     formState:{
       errors
     }
@@ -51,33 +59,50 @@ export default function ProductForm({ product }: Props) {
 
     resolver: zodResolver(ProductSchema),
 
-    defaultValues: {
+    mode: "onChange",
+
+
+    defaultValues:{
+
 
       name: product?.name || "",
 
+
       description: product?.description || "",
+
 
       price: product?.price || 0,
 
+
       category: product?.category || "",
+
 
       brand: product?.brand || "",
 
+
       image: product?.image || "",
+
 
       stock: product?.stock || 0,
 
+
       slug: product?.slug || "",
+
 
       sku: product?.sku || "",
 
+
       featured: product?.featured || false,
+
 
       active: product?.active ?? true,
 
+
       discount: product?.discount || 0,
 
+
       weight: product?.weight || 0,
+
 
     }
 
@@ -85,50 +110,73 @@ export default function ProductForm({ product }: Props) {
 
 
 
-  const name = watch("name");
-
 
 
   function generateSlug(value:string){
 
+
     return value
+
       .toLowerCase()
+
       .trim()
+
       .replace(/[^\w\s-]/g,"")
+
       .replace(/\s+/g,"-");
+
 
   }
 
 
 
+
+
+
   function handleNameChange(
+
     e:React.ChangeEvent<HTMLInputElement>
+
   ){
+
+
+    const value = e.target.value;
+
 
     setValue(
       "name",
-      e.target.value
+      value
     );
 
 
     if(!product){
 
+
       setValue(
+
         "slug",
-        generateSlug(e.target.value)
+
+        generateSlug(value)
+
       );
 
+
     }
+
 
   }
 
 
 
 
-  async function onSubmit(data:ProductFormData){
 
 
-    try {
+  async function onSubmit(
+    data:ProductFormData
+  ){
+
+
+    try{
 
 
       setLoading(true);
@@ -139,33 +187,39 @@ export default function ProductForm({ product }: Props) {
 
 
 
-      if (imageFile) {
+      if(imageFile){
 
-    if (product?.image) {
 
-      await deleteProductImage(product.image);
+        imageUrl = await uploadProductImage(
 
-    }
+          imageFile
 
-    imageUrl = await uploadProductImage(imageFile);
+        );
 
-    }
+
+      }
+
 
 
 
 
       const productData = {
 
+
         ...data,
 
+
         image:imageUrl
+
 
       };
 
 
 
 
+
       if(product){
+
 
 
         await updateProduct(
@@ -177,12 +231,15 @@ export default function ProductForm({ product }: Props) {
         );
 
 
+
         alert(
-          "Producto actualizado"
+          "Producto actualizado correctamente"
         );
 
 
+
       }else{
+
 
 
         await createProduct(
@@ -192,12 +249,14 @@ export default function ProductForm({ product }: Props) {
         );
 
 
+
         alert(
-          "Producto creado"
+          "Producto creado correctamente"
         );
 
 
       }
+
 
 
 
@@ -211,10 +270,15 @@ export default function ProductForm({ product }: Props) {
 
 
 
-    } catch(error){
 
 
-      console.error(error);
+    }catch(error){
+
+
+      console.error(
+        "Error guardando producto:",
+        error
+      );
 
 
       alert(
@@ -222,7 +286,8 @@ export default function ProductForm({ product }: Props) {
       );
 
 
-    } finally {
+
+    }finally{
 
 
       setLoading(false);
@@ -236,304 +301,518 @@ export default function ProductForm({ product }: Props) {
 
 
 
-  return (
 
-    <form
 
-      onSubmit={
-        handleSubmit(onSubmit)
-      }
 
-      className="space-y-6"
+return (
 
-    >
 
+<form
 
-      <div>
+onSubmit={
+  handleSubmit(onSubmit)
+}
 
-        <label>
-          Nombre
-        </label>
+className="space-y-6"
 
+>
 
-        <input
 
-          defaultValue={product?.name}
 
-          onChange={handleNameChange}
 
-          className="border p-3 w-full rounded"
+<div>
 
-        />
 
+<label className="block mb-2 font-medium">
 
-        <input
+Nombre
 
-          type="hidden"
+</label>
 
-          {...register("name")}
 
-        />
 
+<input
 
-        <p className="text-red-500">
-          {errors.name?.message}
-        </p>
 
+{...register("name")}
 
-      </div>
 
+onChange={handleNameChange}
 
 
-      <div>
+className="border p-3 w-full rounded-lg"
 
-        <label>
-          Descripción
-        </label>
 
 
-        <textarea
+/>
 
-          {...register("description")}
 
-          className="border p-3 w-full rounded"
+<p className="text-red-500">
 
-        />
+{errors.name?.message}
 
-      </div>
+</p>
 
 
 
+</div>
 
-      <div className="grid grid-cols-2 gap-4">
 
 
-        <input
 
-          {...register("brand")}
 
-          placeholder="Marca"
 
-          className="border p-3 rounded"
+<div>
 
-        />
 
+<label className="block mb-2 font-medium">
 
+Descripción
 
-        <input
+</label>
 
-          {...register("category")}
 
-          placeholder="Categoría"
 
-          className="border p-3 rounded"
+<textarea
 
-        />
 
+{...register("description")}
 
-      </div>
 
+rows={4}
 
 
+className="border p-3 w-full rounded-lg"
 
-      <div className="grid grid-cols-2 gap-4">
 
 
-        <input
+/>
 
-          type="number"
 
-          {...register("price")}
 
-          placeholder="Precio"
+</div>
 
-          className="border p-3 rounded"
 
-        />
 
 
 
-        <input
 
-          type="number"
 
-          {...register("stock")}
 
-          placeholder="Stock"
+<div className="grid grid-cols-2 gap-4">
 
-          className="border p-3 rounded"
 
-        />
 
+<input
 
-      </div>
 
+{...register("brand")}
 
 
+placeholder="Marca"
 
-      <div className="grid grid-cols-2 gap-4">
 
+className="border p-3 rounded-lg"
 
-        <input
 
-          {...register("sku")}
 
-          placeholder="SKU"
+/>
 
-          className="border p-3 rounded"
 
-        />
 
 
-      </div>
 
+<input
 
 
+{...register("category")}
 
-      <div className="grid grid-cols-2 gap-4">
 
+placeholder="Categoría"
 
-        <input
 
-          type="number"
+className="border p-3 rounded-lg"
 
-          {...register("discount")}
 
-          placeholder="Descuento %"
 
-          className="border p-3 rounded"
+/>
 
-        />
 
 
+</div>
 
-        <input
 
-          type="number"
 
-          {...register("weight")}
 
-          placeholder="Peso Kg"
 
-          className="border p-3 rounded"
 
-        />
 
 
-      </div>
 
+<div className="grid grid-cols-2 gap-4">
 
 
 
-      <ImageUploader
+<input
 
-        imageUrl={product?.image}
 
-        onImageChange={
-          setImageFile
-        }
+type="number"
 
-      />
 
+{...register("price")}
 
 
+placeholder="Precio"
 
-      <input
 
-        {...register("image")}
+className="border p-3 rounded-lg"
 
-        placeholder="URL de imagen"
 
-        className="border p-3 w-full rounded"
 
-      />
+/>
 
 
 
 
 
-      <label className="flex gap-2">
+<input
 
-        <input
 
-          type="checkbox"
+type="number"
 
-          {...register("featured")}
 
-        />
+{...register("stock")}
 
-        Producto destacado
 
-      </label>
+placeholder="Stock"
 
 
+className="border p-3 rounded-lg"
 
 
-      <label className="flex gap-2">
 
-        <input
+/>
 
-          type="checkbox"
 
-          {...register("active")}
 
-        />
+</div>
 
-        Producto activo
 
-      </label>
 
 
 
 
 
-      <div className="flex gap-4">
 
 
-        <button
+<div className="grid grid-cols-2 gap-4">
 
-          disabled={loading}
 
-          className="bg-cyan-600 text-white px-6 py-3 rounded"
 
-        >
+<input
 
-          {loading
-            ? "Guardando..."
-            : product
-              ? "Guardar cambios"
-              : "Crear producto"
-          }
 
+{...register("sku")}
 
-        </button>
 
+placeholder="SKU"
 
 
+className="border p-3 rounded-lg"
 
-        <button
 
-          type="button"
 
-          onClick={() =>
-            router.push("/admin/products")
-          }
+/>
 
-          className="bg-gray-400 text-white px-6 py-3 rounded"
 
-        >
 
-          Cancelar
 
-        </button>
 
+<input
 
-      </div>
 
+{...register("slug")}
 
 
-    </form>
+placeholder="Slug"
 
-  );
+
+className="border p-3 rounded-lg"
+
+
+
+/>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<div className="grid grid-cols-2 gap-4">
+
+
+
+<input
+
+
+type="number"
+
+
+{...register("discount")}
+
+
+placeholder="Descuento %"
+
+
+className="border p-3 rounded-lg"
+
+
+
+/>
+
+
+
+
+
+<input
+
+
+type="number"
+
+
+{...register("weight")}
+
+
+placeholder="Peso Kg"
+
+
+className="border p-3 rounded-lg"
+
+
+
+/>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<ImageUploader
+
+
+imageUrl={product?.image}
+
+
+onImageChange={
+
+(file)=>{
+
+setImageFile(file);
+
+}
+
+}
+
+
+/>
+
+
+
+
+
+
+
+<div>
+
+
+<label className="block mb-2 font-medium">
+
+URL de imagen
+
+</label>
+
+
+
+<input
+
+
+{...register("image")}
+
+
+placeholder="https://imagen.com/producto.jpg"
+
+
+className="border p-3 w-full rounded-lg"
+
+
+
+/>
+
+
+</div>
+
+
+
+
+
+
+
+
+<label className="flex gap-2 items-center">
+
+
+<input
+
+
+type="checkbox"
+
+
+{...register("featured")}
+
+
+/>
+
+
+Producto destacado
+
+
+</label>
+
+
+
+
+
+
+
+
+
+<label className="flex gap-2 items-center">
+
+
+<input
+
+
+type="checkbox"
+
+
+{...register("active")}
+
+
+/>
+
+
+Producto activo
+
+
+</label>
+
+
+
+
+
+
+
+
+
+<div className="flex gap-4">
+
+
+
+
+
+<button
+
+
+disabled={loading}
+
+
+className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg"
+
+
+
+>
+
+
+{
+
+loading
+
+?
+
+"Guardando..."
+
+:
+
+product
+
+?
+
+"Guardar cambios"
+
+:
+
+"Crear producto"
+
+}
+
+
+</button>
+
+
+
+
+
+
+
+<button
+
+
+type="button"
+
+
+onClick={()=>router.push("/admin/products")}
+
+
+className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg"
+
+
+
+>
+
+
+Cancelar
+
+
+</button>
+
+
+
+
+
+</div>
+
+
+
+
+
+</form>
+
+
+);
+
 
 }
