@@ -106,3 +106,33 @@ export async function deleteProduct(
 
 
 }
+export async function getProductBySlug(
+  slug: string
+): Promise<Product | null> {
+
+
+  const { data, error } = await supabase
+
+    .from("products")
+
+    .select("*")
+
+    .eq("slug", slug)
+
+    .single();
+
+
+
+  if (error) {
+
+    console.error(error);
+
+    return null;
+
+  }
+
+
+
+  return data as Product;
+
+}
