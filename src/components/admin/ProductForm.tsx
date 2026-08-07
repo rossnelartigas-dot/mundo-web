@@ -380,18 +380,6 @@ export default function ProductForm({ product }: Props) {
         />
 
 
-
-        <input
-
-          {...register("slug")}
-
-          placeholder="Slug"
-
-          className="border p-3 rounded"
-
-        />
-
-
       </div>
 
 
