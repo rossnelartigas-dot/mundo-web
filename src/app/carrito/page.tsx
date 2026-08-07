@@ -1,7 +1,6 @@
 "use client";
 
 
-import Image from "next/image";
 
 import Link from "next/link";
 
@@ -310,18 +309,17 @@ ${total}
 
 
 
+<Link
 
-<button
+href="/checkout"
 
-className="mt-5 bg-cyan-600 text-white px-8 py-3 rounded-lg"
+className="inline-block mt-5 bg-cyan-600 text-white px-8 py-3 rounded-lg"
 
 >
 
-
 Continuar compra
 
-
-</button>
+</Link>
 
 
 
