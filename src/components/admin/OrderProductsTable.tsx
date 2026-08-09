@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 interface ProductItem {
   id: number;
   name: string;
@@ -57,13 +59,12 @@ export default function OrderProductsTable({
 
               <td className="p-4">
 
-                <img
-                  src={
-                    product.image ||
-                    "/no-image.png"
-                  }
+                <Image
+                  src={product.image || '/no-image.png'}
                   alt={product.name}
-                  className="w-20 h-20 rounded-lg object-cover border"
+                  width={48}
+                  height={48}
+                  className="object-cover"
                 />
 
               </td>

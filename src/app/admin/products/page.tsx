@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from 'next/image';
 
 import { getProducts } from "@/services/productService";
 
@@ -151,13 +152,17 @@ export default async function ProductsPage() {
 
                   {product.image ? (
 
-                    <img
+                    <Image
 
                       src={product.image}
 
                       alt={product.name}
 
-                      className="w-16 h-16 object-cover rounded-lg border"
+                      width={64}
+
+                      height={64}
+
+                      className="object-cover rounded-lg border"
 
                     />
 

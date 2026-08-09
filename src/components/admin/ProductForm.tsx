@@ -44,15 +44,7 @@ export default function ProductForm({
 
 
 
-  const {
-    register,
-    handleSubmit,
-    setValue: _setValue,
-    formState:{
-      errors
-    }
-
-  } = useForm<ProductFormData>({
+  const { register, handleSubmit } = useForm<ProductFormData>({
 
     resolver: zodResolver(ProductSchema),
 
@@ -291,6 +283,19 @@ export default function ProductForm({
 
 
   }
+
+
+
+
+
+
+
+  const handleFileChange = (e: unknown) => {
+    const ev = e as React.ChangeEvent<HTMLInputElement>;
+    const files = ev?.target?.files;
+    if (!files || files.length === 0) return;
+    setImageFile(files[0]);
+  };
 
 
 
@@ -539,7 +544,7 @@ className="border p-3 rounded-lg"
 
 imageUrl={product?.image}
 
-onImageChange={setImageFile}
+onImageChange={handleFileChange}
 
 />
 
@@ -683,7 +688,7 @@ className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg"
 >
 
 
-Cancelar
+ Cancelar
 
 
 </button>

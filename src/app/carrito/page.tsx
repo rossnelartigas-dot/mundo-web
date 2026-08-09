@@ -1,14 +1,9 @@
 "use client";
 
-
-
 import Link from "next/link";
+import Image from 'next/image';
 
 import { useCart } from "@/context/CartContext";
-
-
-
-
 
 export default function CartPage(){
 
@@ -18,10 +13,6 @@ const {
 cart,
 
 removeFromCart,
-
-increaseQuantity,
-
-decreaseQuantity,
 
 total
 
@@ -111,167 +102,11 @@ Carrito de compras
 
 {
 
-cart.map((product)=>(
-
-
-
-<div
-
-key={product.id}
-
-className="bg-white shadow rounded-xl p-5 flex gap-5 items-center"
-
->
-
-
-
-
-
-
-{
-
-product.image && (
-
-
-<img
-
-src={product.image}
-
-alt={product.name}
-
-className="w-28 h-28 object-cover rounded-lg"
-
-/>
-
-
-)
-
-
-}
-
-
-
-
-
-
-
-
-<div className="flex-1">
-
-
-<h2 className="font-bold text-xl">
-
-{product.name}
-
-</h2>
-
-
-
-<p className="text-gray-500">
-
-{product.brand}
-
-</p>
-
-
-
-
-
-<p className="text-cyan-600 font-bold text-lg">
-
-${product.price}
-
-</p>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<div className="flex items-center gap-3">
-
-
-
-<button
-
-onClick={()=>decreaseQuantity(product.id)}
-
-className="bg-gray-200 px-3 py-1 rounded"
-
->
-
--
-
-</button>
-
-
-
-
-
-<span className="font-bold">
-
-{product.quantity}
-
-</span>
-
-
-
-
-
-<button
-
-onClick={()=>increaseQuantity(product.id)}
-
-className="bg-gray-200 px-3 py-1 rounded"
-
->
-
-+
-
-</button>
-
-
-
-
-</div>
-
-
-
-
-
-
-
-<button
-
-onClick={()=>removeFromCart(product.id)}
-
-className="bg-red-500 text-white px-4 py-2 rounded-lg"
-
->
-
-
-Eliminar
-
-
-</button>
-
-
-
-
-
-
-
-</div>
-
-
-
+cart.items.map((it) => (
+  <div key={it.id} className="flex items-center">
+    <Image src={it.product.image} alt={it.product.name} width={80} height={80} className="object-cover" />
+    <div className="ml-4">{it.product.name}</div>
+  </div>
 ))
 
 
