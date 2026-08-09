@@ -44,7 +44,12 @@ export default function ProductForm({
 
 
 
-  const { register, setValue: _setValue, handleSubmit, formState: { errors } } = useForm<ProductFormData>({
+  const {
+    register,
+    setValue: _setValue,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ProductFormData>({
     resolver: zodResolver(ProductSchema) as Resolver<ProductFormData, unknown>,
     defaultValues: {
       name: product?.name || "",
@@ -74,7 +79,6 @@ export default function ProductForm({
 
   function handleNameChange(e: React.ChangeEvent<HTMLInputElement>): void {
     const value = e.target.value;
-    _setValue("name", value);
     if (!product) {
       _setValue("slug", generateSlug(value));
     }
@@ -108,10 +112,8 @@ export default function ProductForm({
     }
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    setImageFile(files[0]);
+  const handleFileChange = (file: File | null) => {
+    setImageFile(file);
   };
 
   return (

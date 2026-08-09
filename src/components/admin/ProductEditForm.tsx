@@ -106,10 +106,8 @@ export default function ProductEditForm({
       }
     };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    setImageFile(files[0]);
+  const handleFileChange = (file: File | null) => {
+    setImageFile(file);
   };
 
   return (
