@@ -108,9 +108,8 @@ export default function ProductForm({
     }
   }
 
-  const handleFileChange = (e: unknown) => {
-    const ev = e as React.ChangeEvent<HTMLInputElement>;
-    const files = ev?.target?.files;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
     if (!files || files.length === 0) return;
     setImageFile(files[0]);
   };

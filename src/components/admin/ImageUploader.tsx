@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from 'next/image';
+import Image from "next/image";
 
 interface Props {
 
@@ -153,59 +153,19 @@ export default function ImageUploader({
 
 
       {preview && (
-
-
-        <div className="space-y-3">
-
-
-          <p className="font-medium">
-
-            Vista previa
-
-          </p>
-
-
-
-
-          <Image
-            src={preview}
-            alt="Vista previa"
-            width={400}
-            height={300}
-            style={{ objectFit: 'contain' }}
-          />
-
-
-
-
-
-          <button
-
-
-            type="button"
-
-
-            onClick={removeImage}
-
-
-            className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
-
-
-          >
-
-
-            Eliminar imagen
-
-
-          </button>
-
-
-
+        <div className="preview">
+          <Image src={preview} alt="preview" width={400} height={300} style={{ objectFit: "contain" }} />
         </div>
-
-
       )}
 
+
+      <button
+        type="button"
+        onClick={removeImage}
+        className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg"
+      >
+        Eliminar imagen
+      </button>
 
     </div>
 

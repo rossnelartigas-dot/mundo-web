@@ -1,12 +1,9 @@
 import Link from "next/link";
-import Image from 'next/image';
+import Image from "next/image";
 
 import { getProducts } from "@/services/productService";
 
-import {
-  Heart,
-  Star
-} from "lucide-react";
+import { Heart, Star } from "lucide-react";
 
 import AddToCartButton from "./AddToCartButton";
 
@@ -20,15 +17,12 @@ export default async function FeaturedProducts() {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
         {featuredProducts.map((product) => (
-          <div
-            key={product.id}
-            className="bg-white rounded-2xl shadow hover:shadow-xl transition overflow-hidden"
-          >
+          <div key={product.id} className="bg-white rounded-2xl shadow hover:shadow-xl transition overflow-hidden">
             <Link href={`/productos/${product.slug}`}>
               {product.image ? (
                 <Image
                   src={product.image}
-                  alt={product.name ?? 'product'}
+                  alt={product.name ?? "product"}
                   width={400}
                   height={300}
                   priority={false}
@@ -41,7 +35,7 @@ export default async function FeaturedProducts() {
             <div className="p-5">
               <div className="flex justify-between items-center">
                 <div className="flex">
-                  {[1,2,3,4,5].map((star) => (
+                  {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                       key={star}
                       size={18}

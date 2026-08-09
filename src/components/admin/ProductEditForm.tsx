@@ -44,10 +44,7 @@ export default function ProductEditForm({
   const [loading, setLoading] =
     useState(false);
 
-  const {
-    register,
-    handleSubmit,
-  } = useForm<ProductEditFormData>({
+  const { register, handleSubmit } = useForm<ProductEditFormData>({
     defaultValues: {
       name: product.name,
       description: product.description,
@@ -109,9 +106,8 @@ export default function ProductEditForm({
       }
     };
 
-  const handleFileChange = (e: unknown) => {
-    const ev = e as React.ChangeEvent<HTMLInputElement>;
-    const files = ev?.target?.files;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
     if (!files || files.length === 0) return;
     setImageFile(files[0]);
   };
