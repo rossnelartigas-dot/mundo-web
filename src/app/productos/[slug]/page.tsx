@@ -42,8 +42,8 @@ export default async function ProductPage({
 
         <div>
           <Image
-            src={product.image}
-            alt={product.name}
+            src={product.image ?? '/placeholder.png'}
+            alt={product.name ?? 'product'}
             width={800}
             height={480}
             className="object-contain w-full"

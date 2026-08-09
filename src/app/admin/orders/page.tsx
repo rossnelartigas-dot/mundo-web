@@ -123,3 +123,5 @@ export default async function OrdersPage() {
     </div>
   );
 }
+
+export {};

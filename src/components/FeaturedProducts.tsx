@@ -25,13 +25,17 @@ export default async function FeaturedProducts() {
             className="bg-white rounded-2xl shadow hover:shadow-xl transition overflow-hidden"
           >
             <Link href={`/productos/${product.slug}`}>
-              <Image
-                src={product.image}
-                alt={product.name ?? 'product'}
-                width={400}
-                height={300}
-                priority={false}
-              />
+              {product.image ? (
+                <Image
+                  src={product.image}
+                  alt={product.name ?? 'product'}
+                  width={400}
+                  height={300}
+                  priority={false}
+                />
+              ) : (
+                <div className="w-full h-48 bg-gray-100" />
+              )}
             </Link>
 
             <div className="p-5">
