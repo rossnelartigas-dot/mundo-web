@@ -3,8 +3,17 @@ import Link from "next/link";
 import { getOrders } from "@/services/orderService";
 import OrderStatusSelect from "@/components/admin/OrderStatusSelect";
 
+export const dynamic = "force-dynamic";
+
 export default async function OrdersPage() {
-  const orders = await getOrders();
+  let orders = [];
+
+  try {
+    orders = await getOrders();
+  } catch (error) {
+    console.error("Error loading orders:", error);
+    orders = [];
+  }
 
   return (
     <div className="p-8">
@@ -123,5 +132,3 @@ export default async function OrdersPage() {
     </div>
   );
 }
-
-export {};
