@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, SubmitHandler } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
 import { Product } from "@/types/product";
@@ -16,25 +17,42 @@ interface Props {
 }
 
 
-export default function ProductEditForm({product}: Props){
+interface ProductEditFormData {
+  name: string;
+  description: string;
+  brand: string;
+  category: string;
+  price: number;
+  stock: number;
+  image?: string;
+  featured: boolean;
+  active: boolean;
+}
+
+
+export default function ProductEditForm({
+  product,
+}: Props) {
+
 
   const router = useRouter();
 
 
-  const [imageFile,setImageFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] =
+    useState<File | null>(null);
 
-  const [loading,setLoading] = useState(false);
+
+  const [loading, setLoading] =
+    useState(false);
 
 
 
   const {
     register,
     handleSubmit,
-    setValue
+  } = useForm<ProductEditFormData>({
 
-  } = useForm({
-
-    defaultValues:{
+    defaultValues: {
 
       name: product.name,
 
@@ -52,342 +70,380 @@ export default function ProductEditForm({product}: Props){
 
       featured: product.featured || false,
 
-      active: product.active ?? true
+      active: product.active ?? true,
 
-    }
+    },
 
   });
 
 
 
-  async function onSubmit(data:any){
+  const onSubmit: SubmitHandler<ProductEditFormData> =
+    async (data) => {
 
 
-    try{
+      try {
 
 
-      setLoading(true);
-
-
-
-      let imageUrl = data.image || "";
+        setLoading(true);
 
 
 
-      if(imageFile){
-
-        imageUrl = await uploadProductImage(imageFile);
-
-      }
+        let imageUrl =
+          data.image || "";
 
 
 
-      await updateProduct(
+        if (imageFile) {
 
-        product.id,
-
-        {
-
-          ...data,
-
-          image:imageUrl
+          imageUrl =
+            await uploadProductImage(
+              imageFile
+            );
 
         }
 
-      );
 
 
+        await updateProduct(
 
-      alert("Producto actualizado correctamente");
+          product.id,
 
+          {
 
+            ...data,
 
-      router.push("/admin/products");
+            image: imageUrl,
 
-      router.refresh();
+          }
 
+        );
 
 
-    }catch(error){
 
+        alert(
+          "Producto actualizado correctamente"
+        );
 
-      console.error(
-        "Error actualizando producto:",
-        error
-      );
 
 
-      alert("Error actualizando producto");
+        router.push(
+          "/admin/products"
+        );
 
 
-    }finally{
+        router.refresh();
 
 
-      setLoading(false);
 
+      } catch (error) {
 
-    }
 
+        console.error(
+          "Error actualizando producto:",
+          error
+        );
 
-  }
 
+        alert(
+          "Error actualizando producto"
+        );
 
 
 
+      } finally {
 
-return (
 
-<form
+        setLoading(false);
 
-onSubmit={handleSubmit(onSubmit)}
+      }
 
-className="space-y-6"
+    };
 
->
 
 
+  return (
 
-<div>
+    <form
 
-<label className="block mb-2 font-medium">
+      onSubmit={
+        handleSubmit(onSubmit)
+      }
 
-Nombre
+      className="space-y-6"
 
-</label>
+    >
 
 
-<input
+      <div>
 
-{...register("name")}
 
-className="border rounded-lg p-3 w-full"
+        <label className="block mb-2 font-medium">
 
-/>
+          Nombre
 
-</div>
+        </label>
 
 
 
+        <input
 
+          {...register("name")}
 
-<div>
+          className="border rounded-lg p-3 w-full"
 
-<label className="block mb-2 font-medium">
+        />
 
-Descripción
 
-</label>
+      </div>
 
 
-<textarea
 
-{...register("description")}
 
-rows={4}
+      <div>
 
-className="border rounded-lg p-3 w-full"
 
-/>
+        <label className="block mb-2 font-medium">
 
+          Descripción
 
-</div>
+        </label>
 
 
 
+        <textarea
 
+          {...register("description")}
 
-<div className="grid grid-cols-2 gap-5">
+          rows={4}
 
+          className="border rounded-lg p-3 w-full"
 
-<input
+        />
 
-{...register("brand")}
 
-placeholder="Marca"
+      </div>
 
-className="border rounded-lg p-3"
 
-/>
 
 
+      <div className="grid grid-cols-2 gap-5">
 
-<input
 
-{...register("category")}
+        <input
 
-placeholder="Categoría"
+          {...register("brand")}
 
-className="border rounded-lg p-3"
+          placeholder="Marca"
 
-/>
+          className="border rounded-lg p-3"
 
+        />
 
-</div>
 
 
+        <input
 
+          {...register("category")}
 
+          placeholder="Categoría"
 
-<div className="grid grid-cols-2 gap-5">
+          className="border rounded-lg p-3"
 
+        />
 
-<input
 
-type="number"
+      </div>
 
-{...register("price")}
 
-placeholder="Precio"
 
-className="border rounded-lg p-3"
 
-/>
+      <div className="grid grid-cols-2 gap-5">
 
 
+        <input
 
-<input
+          type="number"
 
-type="number"
+          {...register("price", {
+            valueAsNumber: true,
+          })}
 
-{...register("stock")}
+          placeholder="Precio"
 
-placeholder="Stock"
+          className="border rounded-lg p-3"
 
-className="border rounded-lg p-3"
+        />
 
-/>
 
 
-</div>
+        <input
 
+          type="number"
 
+          {...register("stock", {
+            valueAsNumber: true,
+          })}
 
+          placeholder="Stock"
 
+          className="border rounded-lg p-3"
 
-<div>
+        />
 
-<ImageUploader
 
-imageUrl={product.image}
+      </div>
 
-onImageChange={(file)=>{
 
-setImageFile(file);
 
-}}
 
-/>
+      <div>
 
 
-</div>
+        <ImageUploader
 
+          imageUrl={product.image}
 
+          onImageChange={(file) => {
 
+            setImageFile(file);
 
+          }}
 
-<div>
+        />
 
 
-<label className="block mb-2 font-medium">
+      </div>
 
-URL de imagen
 
-</label>
 
 
-<input
+      <div>
 
-{...register("image")}
 
-className="border rounded-lg p-3 w-full"
+        <label className="block mb-2 font-medium">
 
-placeholder="https://..."
+          URL de imagen
 
-/>
+        </label>
 
 
-</div>
 
+        <input
 
+          {...register("image")}
 
+          className="border rounded-lg p-3 w-full"
 
+          placeholder="https://..."
 
-<div className="flex items-center gap-3">
+        />
 
 
-<input
+      </div>
 
-type="checkbox"
 
-{...register("featured")}
 
-/>
 
+      <div className="flex items-center gap-3">
 
-<label>
 
-Producto destacado
+        <input
 
-</label>
+          type="checkbox"
 
+          {...register("featured")}
 
-</div>
+        />
 
 
+        <label>
 
+          Producto destacado
 
+        </label>
 
-<div className="flex items-center gap-3">
 
+      </div>
 
-<input
 
-type="checkbox"
 
-{...register("active")}
 
-/>
+      <div className="flex items-center gap-3">
 
 
-<label>
+        <input
 
-Producto activo
+          type="checkbox"
 
-</label>
+          {...register("active")}
 
+        />
 
-</div>
 
+        <label>
 
+          Producto activo
 
+        </label>
 
 
-<button
+      </div>
 
-disabled={loading}
 
-className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
 
->
 
+      <div className="flex gap-4">
 
-{
-loading
-?
-"Guardando..."
-:
-"Guardar cambios"
-}
 
+        <button
 
-</button>
+          type="submit"
 
+          disabled={loading}
 
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
 
-</form>
+        >
 
+          {
 
-);
+            loading
 
+              ? "Guardando..."
+
+              : "Guardar cambios"
+
+          }
+
+        </button>
+
+
+
+        <button
+
+          type="button"
+
+          onClick={() =>
+            router.push(
+              "/admin/products"
+            )
+          }
+
+          className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg"
+
+        >
+
+          Cancelar
+
+        </button>
+
+
+      </div>
+
+
+    </form>
+
+  );
 
 }
