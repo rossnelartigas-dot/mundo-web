@@ -47,7 +47,7 @@ export default function ProductForm({
   const {
     register,
     handleSubmit,
-    setValue,
+    setValue: _setValue,
     formState:{
       errors
     }
@@ -140,7 +140,7 @@ export default function ProductForm({
     const value = e.target.value;
 
 
-    setValue(
+    _setValue(
       "name",
       value
     );
@@ -149,12 +149,9 @@ export default function ProductForm({
     if(!product){
 
 
-      setValue(
-
+      _setValue(
         "slug",
-
         generateSlug(value)
-
       );
 
 

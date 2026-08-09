@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
+import Image from 'next/image';
 
 interface Props {
 
@@ -167,18 +167,12 @@ export default function ImageUploader({
 
 
 
-          <img
-
-
+          <Image
             src={preview}
-
-
             alt="Vista previa"
-
-
-            className="w-48 h-48 object-cover rounded-lg border"
-
-
+            width={400}
+            height={300}
+            style={{ objectFit: 'contain' }}
           />
 
 

@@ -1,12 +1,17 @@
-
 "use client";
 
 import { useState } from "react";
-import { useForm, SubmitHandler } from "react-hook-form";
+import {
+  useForm,
+  SubmitHandler,
+} from "react-hook-form";
+
 import { useRouter } from "next/navigation";
 
 import { Product } from "@/types/product";
+
 import { updateProduct } from "@/services/productService";
+
 import { uploadProductImage } from "@/services/storageService";
 
 import ImageUploader from "./ImageUploader";
@@ -18,15 +23,25 @@ interface Props {
 
 
 interface ProductEditFormData {
+
   name: string;
+
   description: string;
+
   brand: string;
+
   category: string;
+
   price: number;
+
   stock: number;
+
   image?: string;
+
   featured: boolean;
+
   active: boolean;
+
 }
 
 
@@ -49,14 +64,17 @@ export default function ProductEditForm({
 
   const {
     register,
+    setValue: _setValue,
     handleSubmit,
+    control,
   } = useForm<ProductEditFormData>({
 
     defaultValues: {
 
       name: product.name,
 
-      description: product.description,
+      description:
+        product.description,
 
       brand: product.brand,
 
@@ -66,11 +84,14 @@ export default function ProductEditForm({
 
       stock: product.stock,
 
-      image: product.image || "",
+      image:
+        product.image || "",
 
-      featured: product.featured || false,
+      featured:
+        product.featured || false,
 
-      active: product.active ?? true,
+      active:
+        product.active ?? true,
 
     },
 
@@ -88,10 +109,8 @@ export default function ProductEditForm({
         setLoading(true);
 
 
-
         let imageUrl =
           data.image || "";
-
 
 
         if (imageFile) {
@@ -102,7 +121,6 @@ export default function ProductEditForm({
             );
 
         }
-
 
 
         await updateProduct(
@@ -120,11 +138,9 @@ export default function ProductEditForm({
         );
 
 
-
         alert(
           "Producto actualizado correctamente"
         );
-
 
 
         router.push(
@@ -133,7 +149,6 @@ export default function ProductEditForm({
 
 
         router.refresh();
-
 
 
       } catch (error) {
@@ -150,7 +165,6 @@ export default function ProductEditForm({
         );
 
 
-
       } finally {
 
 
@@ -161,6 +175,13 @@ export default function ProductEditForm({
     };
 
 
+
+  const handleFileChange = (e: unknown) => {
+    const ev = e as React.ChangeEvent<HTMLInputElement>;
+    const files = ev?.target?.files;
+    if (!files || files.length === 0) return;
+    setImageFile(files[0]);
+  };
 
   return (
 
@@ -177,13 +198,11 @@ export default function ProductEditForm({
 
       <div>
 
-
         <label className="block mb-2 font-medium">
 
           Nombre
 
         </label>
-
 
 
         <input
@@ -194,7 +213,6 @@ export default function ProductEditForm({
 
         />
 
-
       </div>
 
 
@@ -202,13 +220,11 @@ export default function ProductEditForm({
 
       <div>
 
-
         <label className="block mb-2 font-medium">
 
           Descripción
 
         </label>
-
 
 
         <textarea
@@ -221,14 +237,12 @@ export default function ProductEditForm({
 
         />
 
-
       </div>
 
 
 
 
       <div className="grid grid-cols-2 gap-5">
-
 
         <input
 
@@ -241,7 +255,6 @@ export default function ProductEditForm({
         />
 
 
-
         <input
 
           {...register("category")}
@@ -252,14 +265,12 @@ export default function ProductEditForm({
 
         />
 
-
       </div>
 
 
 
 
       <div className="grid grid-cols-2 gap-5">
-
 
         <input
 
@@ -276,7 +287,6 @@ export default function ProductEditForm({
         />
 
 
-
         <input
 
           type="number"
@@ -291,27 +301,20 @@ export default function ProductEditForm({
 
         />
 
-
       </div>
 
 
 
 
       <div>
-
 
         <ImageUploader
 
           imageUrl={product.image}
 
-          onImageChange={(file) => {
-
-            setImageFile(file);
-
-          }}
+          onImageChange={handleFileChange}
 
         />
-
 
       </div>
 
@@ -319,14 +322,12 @@ export default function ProductEditForm({
 
 
       <div>
-
 
         <label className="block mb-2 font-medium">
 
           URL de imagen
 
         </label>
-
 
 
         <input
@@ -339,14 +340,12 @@ export default function ProductEditForm({
 
         />
 
-
       </div>
 
 
 
 
       <div className="flex items-center gap-3">
-
 
         <input
 
@@ -363,14 +362,12 @@ export default function ProductEditForm({
 
         </label>
 
-
       </div>
 
 
 
 
       <div className="flex items-center gap-3">
-
 
         <input
 
@@ -387,14 +384,12 @@ export default function ProductEditForm({
 
         </label>
 
-
       </div>
 
 
 
 
       <div className="flex gap-4">
-
 
         <button
 
@@ -406,18 +401,11 @@ export default function ProductEditForm({
 
         >
 
-          {
-
-            loading
-
-              ? "Guardando..."
-
-              : "Guardar cambios"
-
-          }
+          {loading
+            ? "Guardando..."
+            : "Guardar cambios"}
 
         </button>
-
 
 
         <button
@@ -437,7 +425,6 @@ export default function ProductEditForm({
           Cancelar
 
         </button>
-
 
       </div>
 
