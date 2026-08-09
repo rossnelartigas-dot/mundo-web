@@ -66,7 +66,6 @@ export default function ProductEditForm({
     register,
     setValue: _setValue,
     handleSubmit,
-    control,
   } = useForm<ProductEditFormData>({
 
     defaultValues: {
@@ -315,6 +314,7 @@ export default function ProductEditForm({
           onImageChange={handleFileChange}
 
         />
+
 
       </div>
 
