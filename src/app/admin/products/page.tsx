@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from 'next/image';
 
+import { Product } from "@/types/product";
 import { getProducts } from "@/services/productService";
 
 import DeleteButton from "@/components/admin/DeleteButton";
@@ -12,7 +13,7 @@ export const dynamic = "force-dynamic";
 export default async function ProductsPage() {
 
 
-  let products = [];
+  let products: Product[] = [];
 
   try {
     products = await getProducts();
