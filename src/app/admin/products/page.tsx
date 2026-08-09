@@ -7,11 +7,19 @@ import DeleteButton from "@/components/admin/DeleteButton";
 
 
 
+export const dynamic = "force-dynamic";
+
 export default async function ProductsPage() {
 
 
-  const products = await getProducts();
+  let products = [];
 
+  try {
+    products = await getProducts();
+  } catch (error) {
+    console.error("Error loading products:", error);
+    products = [];
+  }
 
 
   return (
