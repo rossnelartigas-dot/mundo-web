@@ -69,28 +69,22 @@ export default async function OrdersPage() {
           <tbody>
 
             {orders.map((order) => (
-
               <tr
                 key={order.id}
                 className="border-b hover:bg-slate-50"
               >
-
                 <td className="p-4 font-bold">
                   #{order.id}
                 </td>
-
                 <td className="p-4">
                   {order.customer_name}
                 </td>
-
                 <td className="text-center">
                   {order.customer_phone}
                 </td>
-
                 <td className="text-center font-semibold">
                   ${Number(order.total).toFixed(2)}
                 </td>
-
                 <td className="text-center">
 
                   <OrderStatusSelect
@@ -99,7 +93,6 @@ export default async function OrdersPage() {
                   />
 
                 </td>
-
                 <td className="text-center">
 
                   {new Date(
@@ -107,7 +100,6 @@ export default async function OrdersPage() {
                   ).toLocaleDateString()}
 
                 </td>
-
                 <td className="text-center">
 
                   <Link
@@ -118,9 +110,7 @@ export default async function OrdersPage() {
                   </Link>
 
                 </td>
-
               </tr>
-
             ))}
 
           </tbody>
