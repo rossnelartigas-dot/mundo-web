@@ -1,43 +1,49 @@
 import DashboardCard from "@/components/admin/DashboardCard";
+import { getOrders } from "@/services/orderService";
 
-export default function Dashboard(){
+export const dynamic = "force-dynamic";
 
-return(
+export default async function Dashboard() {
+  let orders = [];
 
-<div>
+  try {
+    orders = await getOrders();
+  } catch (error) {
+    console.error("Error loading dashboard orders:", error);
+    orders = [];
+  }
 
-<h1 className="text-3xl font-bold mb-8">
+  const totalOrders = orders.length;
+  const paidOrders = orders.filter(
+    (order: any) => order.status === "paid"
+  );
+  const totalPaidSales = paidOrders.reduce(
+    (sum: number, order: any) => sum + Number(order.total ?? 0),
+    0
+  );
+  const uniqueCustomers = new Set(
+    orders.map(
+      (order: any) =>
+        order.customer_email || `${order.customer_name}-${order.customer_phone}`
+    )
+  ).size;
 
-Dashboard
+  return (
+    <div>
+      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
 
-</h1>
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <DashboardCard title="Productos" value={0} />
 
-<div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <DashboardCard title="Pedidos" value={totalOrders} />
 
-<DashboardCard
-title="Productos"
-value={0}
-/>
+        <DashboardCard title="Clientes" value={uniqueCustomers} />
 
-<DashboardCard
-title="Pedidos"
-value={0}
-/>
-
-<DashboardCard
-title="Clientes"
-value={0}
-/>
-
-<DashboardCard
-title="Ventas"
-value="$0"
-/>
-
-</div>
-
-</div>
-
-)
-
+        <DashboardCard
+          title="Ventas"
+          value={`$${totalPaidSales.toFixed(2)}`}
+        />
+      </div>
+    </div>
+  );
 }
