@@ -2,11 +2,11 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
-  useCallback,
 } from "react";
 
 export interface StoreSettings {
@@ -55,12 +55,9 @@ interface StoreSettingsContextType {
 const StoreSettingsContext = createContext<StoreSettingsContextType | undefined>(undefined);
 
 export function StoreSettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettingsState] = useState<StoreSettings>(defaultSettings);
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  useEffect(() => {
+  const [settings, setSettingsState] = useState<StoreSettings>(() => {
     if (typeof window === "undefined") {
-      return;
+      return defaultSettings;
     }
 
     try {
@@ -68,14 +65,14 @@ export function StoreSettingsProvider({ children }: { children: React.ReactNode 
 
       if (saved) {
         const parsed = JSON.parse(saved) as Partial<StoreSettings>;
-        setSettingsState({ ...defaultSettings, ...parsed });
+        return { ...defaultSettings, ...parsed };
       }
     } catch (error) {
       console.error("Error cargando configuración:", error);
-    } finally {
-      setIsHydrated(true);
     }
-  }, []);
+
+    return defaultSettings;
+  });
 
   const persistSettings = useCallback((value: StoreSettings) => {
     if (typeof window === "undefined") {
@@ -92,12 +89,12 @@ export function StoreSettingsProvider({ children }: { children: React.ReactNode 
   }, []);
 
   useEffect(() => {
-    if (!isHydrated || typeof window === "undefined") {
+    if (typeof window === "undefined") {
       return;
     }
 
     persistSettings(settings);
-  }, [settings, isHydrated, persistSettings]);
+  }, [persistSettings, settings]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -131,17 +128,17 @@ export function StoreSettingsProvider({ children }: { children: React.ReactNode 
     };
   }, []);
 
-  const updateSettings = (value: Partial<StoreSettings>) => {
+  const updateSettings = useCallback((value: Partial<StoreSettings>) => {
     setSettingsState((current) => ({ ...current, ...value }));
-  };
+  }, []);
 
-  const saveSettings = () => {
+  const saveSettings = useCallback(() => {
     persistSettings(settings);
-  };
+  }, [persistSettings, settings]);
 
   const contextValue = useMemo(
     () => ({ settings, updateSettings, setSettings: setSettingsState, saveSettings }),
-    [settings, persistSettings]
+    [saveSettings, settings, updateSettings]
   );
 
   return (

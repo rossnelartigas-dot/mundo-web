@@ -4,9 +4,23 @@ import { getProducts } from "@/services/productService";
 
 export const dynamic = "force-dynamic";
 
+interface OrderRecord {
+  id?: string | number;
+  status?: string;
+  total?: number | string;
+  customer_email?: string;
+  customer_name?: string;
+  customer_phone?: string;
+  created_at?: string;
+}
+
+interface ProductRecord {
+  id?: string | number;
+}
+
 export default async function Dashboard() {
-  let orders = [];
-  let products = [];
+  let orders: OrderRecord[] = [];
+  let products: ProductRecord[] = [];
 
   try {
     orders = await getOrders();
@@ -24,23 +38,17 @@ export default async function Dashboard() {
 
   const totalOrders = orders.length;
   const totalProducts = products.length;
-  const paidOrders = orders.filter(
-    (order: any) => order.status === "paid"
-  );
+  const paidOrders = orders.filter((order) => order.status === "paid");
   const totalPaidSales = paidOrders.reduce(
-    (sum: number, order: any) => sum + Number(order.total ?? 0),
+    (sum: number, order) => sum + Number(order.total ?? 0),
     0
   );
   const uniqueCustomers = new Set(
     orders.map(
-      (order: any) =>
-        order.customer_email || `${order.customer_name}-${order.customer_phone}`
+      (order) => order.customer_email || `${order.customer_name}-${order.customer_phone}`
     )
   ).size;
-  const averageSale =
-    paidOrders.length > 0
-      ? totalPaidSales / paidOrders.length
-      : 0;
+  const averageSale = paidOrders.length > 0 ? totalPaidSales / paidOrders.length : 0;
 
   return (
     <div>
@@ -53,44 +61,28 @@ export default async function Dashboard() {
 
         <DashboardCard title="Clientes" value={uniqueCustomers} />
 
-        <DashboardCard
-          title="Ventas"
-          value={`$${totalPaidSales.toFixed(2)}`}
-        />
+        <DashboardCard title="Ventas" value={`$${totalPaidSales.toFixed(2)}`} />
       </div>
 
       <section className="mt-10">
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold">
-              Resumen de ventas pagadas
-            </h2>
+            <h2 className="text-2xl font-semibold">Resumen de ventas pagadas</h2>
             <p className="text-slate-500 mt-2">
-              Totales y últimos pedidos que ya están en estatus "Pagado".
+              Totales y últimos pedidos que ya están en estado “Pagado”.
             </p>
           </div>
         </div>
 
         <div className="grid md:grid-cols-3 gap-6 mt-6">
-          <DashboardCard
-            title="Pedidos pagados"
-            value={paidOrders.length}
-          />
-          <DashboardCard
-            title="Total pagado"
-            value={`$${totalPaidSales.toFixed(2)}`}
-          />
-          <DashboardCard
-            title="Ticket promedio"
-            value={`$${averageSale.toFixed(2)}`}
-          />
+          <DashboardCard title="Pedidos pagados" value={paidOrders.length} />
+          <DashboardCard title="Total pagado" value={`$${totalPaidSales.toFixed(2)}`} />
+          <DashboardCard title="Ticket promedio" value={`$${averageSale.toFixed(2)}`} />
         </div>
 
         <div className="overflow-hidden rounded-xl shadow bg-white mt-6">
           <div className="border-b border-slate-200 px-6 py-4">
-            <h3 className="text-lg font-semibold">
-              Últimos pedidos pagados
-            </h3>
+            <h3 className="text-lg font-semibold">Últimos pedidos pagados</h3>
           </div>
 
           <div className="overflow-x-auto">
@@ -104,12 +96,12 @@ export default async function Dashboard() {
                 </tr>
               </thead>
               <tbody>
-                {paidOrders.slice(0, 5).map((order: any) => (
+                {paidOrders.slice(0, 5).map((order) => (
                   <tr key={order.id} className="border-t border-slate-200">
                     <td className="px-4 py-3 font-semibold">#{order.id}</td>
                     <td className="px-4 py-3">{order.customer_name}</td>
                     <td className="px-4 py-3">${Number(order.total).toFixed(2)}</td>
-                    <td className="px-4 py-3">{new Date(order.created_at).toLocaleDateString()}</td>
+                    <td className="px-4 py-3">{new Date(order.created_at ?? "").toLocaleDateString()}</td>
                   </tr>
                 ))}
                 {paidOrders.length === 0 && (

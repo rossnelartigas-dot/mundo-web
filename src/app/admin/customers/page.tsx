@@ -2,8 +2,27 @@ import { getOrders } from "@/services/orderService";
 
 export const dynamic = "force-dynamic";
 
+interface OrderRecord {
+  customer_email?: string;
+  customer_name?: string;
+  customer_phone?: string;
+  customer_address?: string;
+  created_at?: string;
+  total?: number | string;
+}
+
+interface CustomerSummary {
+  name: string;
+  phone: string;
+  email: string;
+  address: string;
+  orders: number;
+  totalSpent: number;
+  lastOrderAt: string;
+}
+
 export default async function CustomersPage() {
-  let orders = [];
+  let orders: OrderRecord[] = [];
 
   try {
     orders = await getOrders();
@@ -12,17 +31,9 @@ export default async function CustomersPage() {
     orders = [];
   }
 
-  const customersMap = new Map<string, {
-    name: string;
-    phone: string;
-    email: string;
-    address: string;
-    orders: number;
-    totalSpent: number;
-    lastOrderAt: string;
-  }>();
+  const customersMap = new Map<string, CustomerSummary>();
 
-  orders.forEach((order: any) => {
+  orders.forEach((order) => {
     const key = order.customer_email || `${order.customer_name}-${order.customer_phone}`;
     const existing = customersMap.get(key);
     const orderDate = order.created_at ? new Date(order.created_at).toISOString() : "";

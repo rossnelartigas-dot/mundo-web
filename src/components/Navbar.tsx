@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -39,10 +40,13 @@ export default function Navbar() {
 
           <Link href="/" className="flex items-center gap-3" style={{ color: settings.primaryColor }}>
             {settings.logoUrl ? (
-              <img
+              <Image
                 src={settings.logoUrl}
                 alt={settings.storeName || "Logo de la tienda"}
+                width={40}
+                height={40}
                 className="h-10 w-10 rounded-full object-cover"
+                unoptimized
               />
             ) : (
               <div className="flex h-10 w-10 items-center justify-center rounded-full border border-current text-sm font-bold">

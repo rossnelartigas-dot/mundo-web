@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { FaFacebook, FaInstagram, FaWhatsapp } from "react-icons/fa";
 import { useStoreSettings } from "@/context/StoreSettingsContext";
 
@@ -13,7 +14,14 @@ export default function Footer() {
         <div>
           <div className="flex items-center gap-3">
             {settings.logoUrl ? (
-              <img src={settings.logoUrl} alt={settings.storeName} className="h-12 w-12 rounded-full object-cover" />
+              <Image
+                src={settings.logoUrl}
+                alt={settings.storeName}
+                width={48}
+                height={48}
+                className="h-12 w-12 rounded-full object-cover"
+                unoptimized
+              />
             ) : (
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500 text-lg font-bold text-white">
                 {settings.storeName.slice(0, 2).toUpperCase()}

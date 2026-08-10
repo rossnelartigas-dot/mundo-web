@@ -7,9 +7,9 @@ export default async function ProductosPage() {
   return (
     <main className="min-h-screen bg-slate-100 px-4 py-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <a href="/" className="mb-4 inline-flex items-center text-sm font-medium text-cyan-600 hover:text-cyan-700">
+        <Link href="/" className="mb-4 inline-flex items-center text-sm font-medium text-cyan-600 hover:text-cyan-700">
           ← Volver al inicio
-        </a>
+        </Link>
         <h1 className="text-3xl font-bold text-slate-900">Productos</h1>
         <p className="mt-2 text-slate-600">Explora todos los productos disponibles en la tienda.</p>
 
