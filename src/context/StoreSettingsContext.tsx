@@ -45,25 +45,27 @@ interface StoreSettingsContextType {
 const StoreSettingsContext = createContext<StoreSettingsContextType | undefined>(undefined);
 
 export function StoreSettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettingsState] = useState<StoreSettings>(() => {
+  const [settings, setSettingsState] = useState<StoreSettings>(defaultSettings);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  useEffect(() => {
     if (typeof window === "undefined") {
-      return defaultSettings;
+      return;
     }
 
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
 
-      if (!saved) {
-        return defaultSettings;
+      if (saved) {
+        const parsed = JSON.parse(saved) as Partial<StoreSettings>;
+        setSettingsState({ ...defaultSettings, ...parsed });
       }
-
-      const parsed = JSON.parse(saved) as Partial<StoreSettings>;
-      return { ...defaultSettings, ...parsed };
     } catch (error) {
       console.error("Error cargando configuración:", error);
-      return defaultSettings;
+    } finally {
+      setIsHydrated(true);
     }
-  });
+  }, []);
 
   const persistSettings = useCallback((value: StoreSettings) => {
     if (typeof window === "undefined") {
@@ -80,8 +82,12 @@ export function StoreSettingsProvider({ children }: { children: React.ReactNode 
   }, []);
 
   useEffect(() => {
+    if (!isHydrated || typeof window === "undefined") {
+      return;
+    }
+
     persistSettings(settings);
-  }, [settings, persistSettings]);
+  }, [settings, isHydrated, persistSettings]);
 
   useEffect(() => {
     if (typeof window === "undefined") {

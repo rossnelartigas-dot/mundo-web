@@ -46,7 +46,7 @@ export default function Navbar() {
               />
             ) : (
               <div className="flex h-10 w-10 items-center justify-center rounded-full border border-current text-sm font-bold">
-                {(settings.storeName || "MW").slice(0, 2).toUpperCase()}
+                {(settings.storeName || "Mundo Web").slice(0, 2).toUpperCase()}
               </div>
             )}
             <span className="text-2xl sm:text-3xl font-bold">
