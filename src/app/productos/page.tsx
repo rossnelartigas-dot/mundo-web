@@ -49,11 +49,11 @@ export default async function ProductosPage({
 
         {query && (
           <p className="mt-4 text-sm text-slate-500">
-            Resultados para:{" "}
-            <span className="font-semibold text-slate-700">
-              "{query}"
-            </span>
-          </p>
+  Resultados para:{" "}
+  <span className="font-semibold text-slate-700">
+    &quot;{query}&quot;
+  </span>
+</p>
         )}
 
         {filteredProducts.length === 0 ? (
