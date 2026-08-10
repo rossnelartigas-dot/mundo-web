@@ -45,26 +45,25 @@ interface StoreSettingsContextType {
 const StoreSettingsContext = createContext<StoreSettingsContextType | undefined>(undefined);
 
 export function StoreSettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettingsState] = useState<StoreSettings>(defaultSettings);
-
-  useEffect(() => {
+  const [settings, setSettingsState] = useState<StoreSettings>(() => {
     if (typeof window === "undefined") {
-      return;
+      return defaultSettings;
     }
 
     try {
       const saved = window.localStorage.getItem(STORAGE_KEY);
 
       if (!saved) {
-        return;
+        return defaultSettings;
       }
 
       const parsed = JSON.parse(saved) as Partial<StoreSettings>;
-      setSettingsState({ ...defaultSettings, ...parsed });
+      return { ...defaultSettings, ...parsed };
     } catch (error) {
       console.error("Error cargando configuración:", error);
+      return defaultSettings;
     }
-  }, []);
+  });
 
   const persistSettings = useCallback((value: StoreSettings) => {
     if (typeof window === "undefined") {

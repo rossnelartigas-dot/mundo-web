@@ -39,14 +39,18 @@ export default function Navbar() {
 
           <Link href="/" className="flex items-center gap-3" style={{ color: settings.primaryColor }}>
             {settings.logoUrl ? (
-              <img src={settings.logoUrl} alt={settings.storeName} className="h-10 w-10 rounded-full object-cover" />
+              <img
+                src={settings.logoUrl}
+                alt={settings.storeName || "Logo de la tienda"}
+                className="h-10 w-10 rounded-full object-cover"
+              />
             ) : (
               <div className="flex h-10 w-10 items-center justify-center rounded-full border border-current text-sm font-bold">
-                {settings.storeName.slice(0, 2).toUpperCase()}
+                {(settings.storeName || "MW").slice(0, 2).toUpperCase()}
               </div>
             )}
             <span className="text-2xl sm:text-3xl font-bold">
-              {settings.storeName}
+              {settings.storeName || "Mundo Web"}
             </span>
           </Link>
 
