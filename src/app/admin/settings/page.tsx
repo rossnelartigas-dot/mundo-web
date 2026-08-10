@@ -129,6 +129,51 @@ export default function SettingsPage() {
               />
             </div>
             <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Teléfono 1</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                value={settings.phone1}
+                onChange={(e) => updateSettings({ phone1: e.target.value })}
+                placeholder="+58 412 000 0000"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Teléfono 2</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                value={settings.phone2}
+                onChange={(e) => updateSettings({ phone2: e.target.value })}
+                placeholder="+58 424 000 0000"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Facebook</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                value={settings.facebook}
+                onChange={(e) => updateSettings({ facebook: e.target.value })}
+                placeholder="https://facebook.com/tuempresa"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Instagram</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                value={settings.instagram}
+                onChange={(e) => updateSettings({ instagram: e.target.value })}
+                placeholder="https://instagram.com/tuempresa"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Instagram 2</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                value={settings.instagram2}
+                onChange={(e) => updateSettings({ instagram2: e.target.value })}
+                placeholder="https://instagram.com/tuempresa2"
+              />
+            </div>
+            <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Banner principal</label>
               <input className="w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="URL de la imagen" />
             </div>

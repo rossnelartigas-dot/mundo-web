@@ -19,6 +19,11 @@ export interface StoreSettings {
   currency: string;
   primaryColor: string;
   logoUrl: string;
+  phone1: string;
+  phone2: string;
+  facebook: string;
+  instagram: string;
+  instagram2: string;
 }
 
 const STORAGE_KEY = "store-settings";
@@ -33,6 +38,11 @@ const defaultSettings: StoreSettings = {
   currency: "USD",
   primaryColor: "#0891b2",
   logoUrl: "",
+  phone1: "+58 412 000 0000",
+  phone2: "+58 424 000 0000",
+  facebook: "",
+  instagram: "",
+  instagram2: "",
 };
 
 interface StoreSettingsContextType {
