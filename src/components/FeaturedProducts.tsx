@@ -1,5 +1,6 @@
 
 import Link from "next/link";
+import Image from "next/image";
 
 import { getProducts } from "@/services/productService";
 
@@ -24,8 +25,6 @@ export default async function FeaturedProducts() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
 
         {featuredProducts.map((product) => (
-<<<<<<< HEAD
-
           <div
             key={product.id}
             className="
@@ -39,14 +38,8 @@ export default async function FeaturedProducts() {
               min-w-0
             "
           >
-
-            <Link
-              href={`/productos/${product.slug}`}
-              className="block"
-            >
-
+            <Link href={`/productos/${product.slug}`} className="block">
               {product.image ? (
-
                 <div className="w-full h-56 sm:h-60 lg:h-56 relative">
                   <Image
                     src={product.image}
@@ -56,9 +49,7 @@ export default async function FeaturedProducts() {
                     sizes="(min-width:1024px) 14rem, (min-width:640px) 15rem, 100vw"
                   />
                 </div>
-
               ) : (
-
                 <div
                   className="
                     w-full
@@ -68,20 +59,13 @@ export default async function FeaturedProducts() {
                     bg-gray-100
                   "
                 />
-
               )}
-
             </Link>
 
-
             <div className="p-4 sm:p-5">
-
               <div className="flex justify-between items-center">
-
                 <div className="flex">
-
                   {[1, 2, 3, 4, 5].map((star) => (
-
                     <Star
                       key={star}
                       size={16}
@@ -92,11 +76,8 @@ export default async function FeaturedProducts() {
                         text-yellow-400
                       "
                     />
-
                   ))}
-
                 </div>
-
 
                 <button
                   type="button"
@@ -108,14 +89,9 @@ export default async function FeaturedProducts() {
                 >
                   <Heart size={20} />
                 </button>
-
               </div>
 
-
-              <Link
-                href={`/productos/${product.slug}`}
-              >
-
+              <Link href={`/productos/${product.slug}`}>
                 <h3
                   className="
                     font-bold
@@ -130,121 +106,7 @@ export default async function FeaturedProducts() {
                 >
                   {product.name}
                 </h3>
-
               </Link>
-
-=======
-
-          <div
-            key={product.id}
-            className="
-              bg-white
-              rounded-2xl
-              shadow
-              hover:shadow-xl
-              transition
-              overflow-hidden
-              w-full
-              min-w-0
-            "
-          >
-
-            <Link
-              href={`/productos/${product.slug}`}
-              className="block"
-            >
-
-              {product.image ? (
-
-                <img
-                  src={product.image}
-                  alt={product.name ?? "Producto"}
-                  className="
-                    w-full
-                    h-56
-                    sm:h-60
-                    lg:h-56
-                    object-cover
-                  "
-                />
-
-              ) : (
-
-                <div
-                  className="
-                    w-full
-                    h-56
-                    sm:h-60
-                    lg:h-56
-                    bg-gray-100
-                  "
-                />
-
-              )}
-
-            </Link>
-
-
-            <div className="p-4 sm:p-5">
-
-              <div className="flex justify-between items-center">
-
-                <div className="flex">
-
-                  {[1, 2, 3, 4, 5].map((star) => (
-
-                    <Star
-                      key={star}
-                      size={16}
-                      className="
-                        sm:w-[18px]
-                        sm:h-[18px]
-                        fill-yellow-400
-                        text-yellow-400
-                      "
-                    />
-
-                  ))}
-
-                </div>
-
-
-                <button
-                  type="button"
-                  aria-label="Agregar a favoritos"
-                  className="
-                    hover:text-red-500
-                    transition
-                  "
-                >
-                  <Heart size={20} />
-                </button>
-
-              </div>
-
-
-              <Link
-                href={`/productos/${product.slug}`}
-              >
-
-                <h3
-                  className="
-                    font-bold
-                    text-base
-                    sm:text-lg
-                    mt-3
-                    hover:text-cyan-600
-                    transition
-                    line-clamp-2
-                    min-h-[3rem]
-                  "
-                >
-                  {product.name}
-                </h3>
-
-              </Link>
-
->>>>>>> 64b8134c48bb348674bf3ce31b13c261c8c412e7
 
               <p
                 className="
