@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 
 import { CartProvider } from "@/context/CartContext";
+import { StoreSettingsProvider } from "@/context/StoreSettingsContext";
 
 
 
@@ -91,11 +92,9 @@ inter.variable
 
 
 <CartProvider>
-
-
-{children}
-
-
+  <StoreSettingsProvider>
+    {children}
+  </StoreSettingsProvider>
 </CartProvider>
 
 

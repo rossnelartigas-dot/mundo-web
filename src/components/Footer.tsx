@@ -1,17 +1,22 @@
+"use client";
+
 import { FaFacebook, FaInstagram, FaWhatsapp } from "react-icons/fa";
+import { useStoreSettings } from "@/context/StoreSettingsContext";
 
 export default function Footer() {
+  const { settings } = useStoreSettings();
+
   return (
     <footer className="bg-slate-900 text-white mt-20">
       <div className="max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-4 gap-10">
 
         <div>
           <h3 className="text-2xl font-bold text-cyan-400">
-            Mundo Web
+            {settings.storeName}
           </h3>
 
           <p className="mt-4 text-slate-300">
-            Tu tienda de tecnología en Venezuela.
+            {settings.description}
           </p>
         </div>
 
@@ -49,7 +54,7 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-slate-700 py-6 text-center text-slate-400">
-        © 2026 Mundo Web. Todos los derechos reservados.
+        © 2026 {settings.storeName}. Todos los derechos reservados.
       </div>
     </footer>
   );

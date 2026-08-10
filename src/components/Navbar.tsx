@@ -12,9 +12,11 @@ import {
 } from "react-icons/fa";
 
 import { useCart } from "@/context/CartContext";
+import { useStoreSettings } from "@/context/StoreSettingsContext";
 
 export default function Navbar() {
   const { cart } = useCart();
+  const { settings } = useStoreSettings();
 
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -37,9 +39,10 @@ export default function Navbar() {
 
           <Link
             href="/"
-            className="text-2xl sm:text-3xl font-bold text-cyan-400"
+            className="text-2xl sm:text-3xl font-bold"
+            style={{ color: settings.primaryColor }}
           >
-            Mundo Web
+            {settings.storeName}
           </Link>
 
 
