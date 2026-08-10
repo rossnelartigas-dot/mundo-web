@@ -4,6 +4,7 @@ import { getProducts } from "@/services/productService";
 interface Props {
   searchParams: Promise<{
     q?: string;
+    categoria?: string;
   }>;
 }
 
@@ -15,18 +16,23 @@ export default async function ProductosPage({
   const params = await searchParams;
 
   const query = params.q?.trim().toLowerCase() || "";
+  const category = params.categoria?.trim() || "";
 
-  const filteredProducts = query
-    ? products.filter((product) => {
-        const name = product.name?.toLowerCase() || "";
-        const brand = product.brand?.toLowerCase() || "";
+  const filteredProducts = products.filter((product) => {
+    const name = product.name?.toLowerCase() || "";
+    const brand = product.brand?.toLowerCase() || "";
 
-        return (
-          name.includes(query) ||
-          brand.includes(query)
-        );
-      })
-    : products;
+    const matchesSearch =
+      !query ||
+      name.includes(query) ||
+      brand.includes(query);
+
+    const matchesCategory =
+      !category ||
+      product.category === category;
+
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <main className="min-h-screen bg-slate-50 py-10">
@@ -49,11 +55,36 @@ export default async function ProductosPage({
 
         {query && (
           <p className="mt-4 text-sm text-slate-500">
-  Resultados para:{" "}
-  <span className="font-semibold text-slate-700">
-    &quot;{query}&quot;
-  </span>
-</p>
+            Resultados para:{" "}
+            <span className="font-semibold text-slate-700">
+              &quot;{query}&quot;
+            </span>
+          </p>
+        )}
+
+        {category && (
+          <p className="mt-2 text-sm text-slate-500">
+            Categoría:{" "}
+            <span className="font-semibold text-slate-700">
+              {category}
+            </span>
+          </p>
+        )}
+
+        {(query || category) && (
+          <Link
+            href="/productos"
+            className="
+              mt-4
+              inline-block
+              text-sm
+              font-medium
+              text-cyan-600
+              hover:text-cyan-700
+            "
+          >
+            Ver todos los productos
+          </Link>
         )}
 
         {filteredProducts.length === 0 ? (
@@ -63,15 +94,8 @@ export default async function ProductosPage({
             </h2>
 
             <p className="mt-2 text-slate-500">
-              Intenta buscar con otro nombre o marca.
+              Intenta buscar con otro nombre, marca o categoría.
             </p>
-
-            <Link
-              href="/productos"
-              className="mt-6 inline-block rounded-lg bg-cyan-500 px-5 py-2.5 font-medium text-white transition hover:bg-cyan-600"
-            >
-              Ver todos los productos
-            </Link>
           </div>
         ) : (
           <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -79,7 +103,17 @@ export default async function ProductosPage({
               <Link
                 key={product.id}
                 href={`/productos/${product.slug}`}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+                className="
+                  rounded-2xl
+                  border
+                  border-slate-200
+                  bg-white
+                  p-5
+                  shadow-sm
+                  transition
+                  hover:-translate-y-1
+                  hover:shadow-md
+                "
               >
                 <h2 className="text-lg font-semibold text-slate-800">
                   {product.name}
