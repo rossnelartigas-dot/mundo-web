@@ -6,6 +6,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useCallback,
 } from "react";
 
 export interface StoreSettings {
@@ -17,6 +18,7 @@ export interface StoreSettings {
   openingHours: string;
   currency: string;
   primaryColor: string;
+  logoUrl: string;
 }
 
 const STORAGE_KEY = "store-settings";
@@ -30,12 +32,14 @@ const defaultSettings: StoreSettings = {
   openingHours: "Lunes a Viernes 8am - 6pm",
   currency: "USD",
   primaryColor: "#0891b2",
+  logoUrl: "",
 };
 
 interface StoreSettingsContextType {
   settings: StoreSettings;
   updateSettings: (value: Partial<StoreSettings>) => void;
   setSettings: (value: StoreSettings) => void;
+  saveSettings: () => void;
 }
 
 const StoreSettingsContext = createContext<StoreSettingsContextType | undefined>(undefined);
@@ -62,22 +66,67 @@ export function StoreSettingsProvider({ children }: { children: React.ReactNode 
     }
   }, []);
 
+  const persistSettings = useCallback((value: StoreSettings) => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+      document.documentElement.style.setProperty("--store-primary", value.primaryColor);
+      window.dispatchEvent(new CustomEvent("store-settings-updated", { detail: value }));
+    } catch (error) {
+      console.error("Error guardando configuración:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    persistSettings(settings);
+  }, [settings, persistSettings]);
+
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
 
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-    document.documentElement.style.setProperty("--store-primary", settings.primaryColor);
-  }, [settings]);
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== STORAGE_KEY || !event.newValue) {
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(event.newValue) as Partial<StoreSettings>;
+        setSettingsState({ ...defaultSettings, ...parsed });
+      } catch (error) {
+        console.error("Error actualizando configuración desde storage:", error);
+      }
+    };
+
+    const handleCustomEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<StoreSettings>;
+      setSettingsState(customEvent.detail);
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("store-settings-updated", handleCustomEvent as EventListener);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("store-settings-updated", handleCustomEvent as EventListener);
+    };
+  }, []);
 
   const updateSettings = (value: Partial<StoreSettings>) => {
     setSettingsState((current) => ({ ...current, ...value }));
   };
 
+  const saveSettings = () => {
+    persistSettings(settings);
+  };
+
   const contextValue = useMemo(
-    () => ({ settings, updateSettings, setSettings: setSettingsState }),
-    [settings]
+    () => ({ settings, updateSettings, setSettings: setSettingsState, saveSettings }),
+    [settings, persistSettings]
   );
 
   return (

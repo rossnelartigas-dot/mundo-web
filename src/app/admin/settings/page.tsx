@@ -4,11 +4,11 @@ import { useState } from "react";
 import { useStoreSettings } from "@/context/StoreSettingsContext";
 
 export default function SettingsPage() {
-  const { settings, updateSettings, setSettings } = useStoreSettings();
+  const { settings, updateSettings, saveSettings } = useStoreSettings();
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
-    setSettings({ ...settings });
+    saveSettings();
     setSaved(true);
     window.setTimeout(() => setSaved(false), 2000);
   };
@@ -119,6 +119,15 @@ export default function SettingsPage() {
         <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-slate-800">Personalización</h2>
           <div className="mt-4 space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium text-slate-700">Logo de la tienda</label>
+              <input
+                className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                value={settings.logoUrl}
+                onChange={(e) => updateSettings({ logoUrl: e.target.value })}
+                placeholder="URL de la imagen del logo"
+              />
+            </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-slate-700">Banner principal</label>
               <input className="w-full rounded-lg border border-slate-300 px-3 py-2" placeholder="URL de la imagen" />

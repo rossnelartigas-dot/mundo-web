@@ -11,9 +11,18 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-4 gap-10">
 
         <div>
-          <h3 className="text-2xl font-bold text-cyan-400">
-            {settings.storeName}
-          </h3>
+          <div className="flex items-center gap-3">
+            {settings.logoUrl ? (
+              <img src={settings.logoUrl} alt={settings.storeName} className="h-12 w-12 rounded-full object-cover" />
+            ) : (
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-cyan-500 text-lg font-bold text-white">
+                {settings.storeName.slice(0, 2).toUpperCase()}
+              </div>
+            )}
+            <h3 className="text-2xl font-bold text-cyan-400">
+              {settings.storeName}
+            </h3>
+          </div>
 
           <p className="mt-4 text-slate-300">
             {settings.description}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { Geist, Geist_Mono, Inter } from "next/font/google";
+import { headers } from "next/headers";
 
 import "./globals.css";
 
@@ -10,6 +11,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 import { CartProvider } from "@/context/CartContext";
 import { StoreSettingsProvider } from "@/context/StoreSettingsContext";
+import StoreSettingsHead from "@/components/StoreSettingsHead";
 
 
 
@@ -42,13 +44,19 @@ const geistMono = Geist_Mono({
 
 
 
-export const metadata: Metadata = {
+export async function generateMetadata(): Promise<Metadata> {
+  const headersList = await headers();
+  const host = headersList.get("host") ?? "localhost";
+  const isLocal = host.includes("localhost") || host.includes("127.0.0.1");
 
-  title:"Mundo Web",
-
-  description:"Tienda de tecnología",
-
-};
+  return {
+    title: "Mundo Web",
+    description: "Tienda de tecnología",
+    icons: {
+      icon: isLocal ? "/favicon.ico" : "/favicon.ico",
+    },
+  };
+}
 
 
 
@@ -93,6 +101,7 @@ inter.variable
 
 <CartProvider>
   <StoreSettingsProvider>
+    <StoreSettingsHead />
     {children}
   </StoreSettingsProvider>
 </CartProvider>
