@@ -39,13 +39,24 @@ export default async function ProductosPage({
   ).sort();
 
   let filteredProducts = products.filter((product) => {
-    const name = product.name?.toLowerCase() || "";
-    const productBrand = product.brand?.trim() || "";
+    const name =
+      product.name?.toLowerCase() || "";
+
+    const productBrand =
+      product.brand?.trim() || "";
+
+    const productCategory =
+      product.category?.toLowerCase() || "";
+
+    const sku =
+      product.sku?.toLowerCase() || "";
 
     const matchesSearch =
       !query ||
       name.includes(query) ||
-      productBrand.toLowerCase().includes(query);
+      productBrand.toLowerCase().includes(query) ||
+      productCategory.includes(query) ||
+      sku.includes(query);
 
     const matchesCategory =
       !category ||
@@ -95,6 +106,7 @@ export default async function ProductosPage({
 
   return (
     <main className="min-h-screen bg-slate-50 py-10">
+
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 
         <Link
@@ -126,6 +138,7 @@ export default async function ProductosPage({
             shadow-sm
           "
         >
+
           {query && (
             <input
               type="hidden"
@@ -141,7 +154,13 @@ export default async function ProductosPage({
             <div>
               <label
                 htmlFor="categoria"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="
+                  mb-2
+                  block
+                  text-sm
+                  font-medium
+                  text-slate-700
+                "
               >
                 Categoría
               </label>
@@ -186,7 +205,13 @@ export default async function ProductosPage({
             <div>
               <label
                 htmlFor="marca"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="
+                  mb-2
+                  block
+                  text-sm
+                  font-medium
+                  text-slate-700
+                "
               >
                 Marca
               </label>
@@ -231,7 +256,13 @@ export default async function ProductosPage({
             <div>
               <label
                 htmlFor="orden"
-                className="mb-2 block text-sm font-medium text-slate-700"
+                className="
+                  mb-2
+                  block
+                  text-sm
+                  font-medium
+                  text-slate-700
+                "
               >
                 Ordenar por
               </label>
@@ -320,6 +351,7 @@ export default async function ProductosPage({
             )}
 
           </div>
+
         </form>
 
         {/* INFORMACIÓN DE FILTROS */}
@@ -394,6 +426,7 @@ export default async function ProductosPage({
           </div>
         ) : (
           <>
+
             <p className="mt-8 text-sm text-slate-500">
               {filteredProducts.length}{" "}
               {filteredProducts.length === 1
@@ -402,6 +435,7 @@ export default async function ProductosPage({
             </p>
 
             <div className="mt-4 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+
               {filteredProducts.map((product) => (
                 <Link
                   key={product.id}
@@ -418,6 +452,7 @@ export default async function ProductosPage({
                     hover:shadow-md
                   "
                 >
+
                   <h2 className="text-lg font-semibold text-slate-800">
                     {product.name}
                   </h2>
@@ -433,13 +468,17 @@ export default async function ProductosPage({
                   <p className="mt-4 font-semibold text-cyan-600">
                     ${product.price}
                   </p>
+
                 </Link>
               ))}
+
             </div>
+
           </>
         )}
 
       </div>
+
     </main>
   );
 }

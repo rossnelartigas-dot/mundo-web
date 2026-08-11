@@ -1,108 +1,24 @@
-import Link from "next/link";
-import Image from 'next/image';
+import { notFound } from "next/navigation";
 
-import {
-  getProductBySlug
-} from "@/services/productService";
+import { getProductBySlug } from "@/services/productService";
+import ProductDetails from "@/components/ProductDetails";
 
 interface Props {
-  params: Promise<{
-    slug:string;
-  }>;
+params: Promise<{
+slug: string;
+}>;
 }
 
 export default async function ProductPage({
-  params
-}:Props){
+params,
+}: Props) {
+const { slug } = await params;
 
-  const {slug}= await params;
-  const product = await getProductBySlug(slug);
+const product = await getProductBySlug(slug);
 
-  if(!product){
-    return (
-      <div className="p-10">
-        <h1 className="text-3xl font-bold">
-          Producto no encontrado
-        </h1>
-      </div>
-    );
-  }
+if (!product) {
+notFound();
+}
 
-  const finalPrice =
-    product.discount > 0
-    ?
-    product.price -
-    (product.price * product.discount / 100)
-    :
-    product.price;
-
-  return (
-    <article>
-      <div className="grid md:grid-cols-2 gap-10">
-
-        <div>
-          <Image
-            src={product.image ?? '/placeholder.png'}
-            alt={product.name ?? 'product'}
-            width={800}
-            height={480}
-            className="object-contain w-full"
-          />
-        </div>
-
-        <div>
-          <h1 className="text-4xl font-bold mb-4">
-            {product.name}
-          </h1>
-
-          <p className="text-gray-500 mb-2">
-            Marca:
-            <strong>{product.brand}</strong>
-          </p>
-
-          <p className="text-gray-500 mb-5">
-            Categoría:
-            <strong>{product.category}</strong>
-          </p>
-
-          <p className="text-gray-400 line-through text-xl">
-            ${product.price}
-          </p>
-
-          <p className="text-4xl font-bold text-cyan-600 mb-5">
-            ${finalPrice}
-          </p>
-
-          <p className="mb-4">
-            {product.description}
-          </p>
-
-          <div className="space-y-2 mb-6">
-            <p>
-              Stock disponible:
-              <strong>{product.stock}</strong>
-            </p>
-
-            <p>
-              SKU:
-              <strong>{product.sku}</strong>
-            </p>
-
-            <p>
-              Peso:
-              <strong>{product.weight} Kg</strong>
-            </p>
-          </div>
-
-          <Link
-            href="https://wa.me/+584264433849"
-            className="bg-green-600 text-white px-6 py-3 rounded-lg inline-block"
-          >
-            Consultar por WhatsApp
-          </Link>
-        </div>
-
-      </div>
-    </article>
-  );
+return <ProductDetails product={product} />;
 }

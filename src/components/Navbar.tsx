@@ -11,15 +11,18 @@ import {
   FaSearch,
   FaBars,
   FaTimes,
+  FaHeart,
 } from "react-icons/fa";
 
 import { useCart } from "@/context/CartContext";
+import { useFavorites } from "@/context/FavoritesContext";
 import { useStoreSettings } from "@/context/StoreSettingsContext";
 
 export default function Navbar() {
   const router = useRouter();
 
   const { cart } = useCart();
+  const { favorites } = useFavorites();
   const { settings } = useStoreSettings();
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -31,6 +34,8 @@ export default function Navbar() {
     0
   );
 
+  const favoritesCount = favorites.length;
+
   function closeMenu() {
     setMenuOpen(false);
   }
@@ -41,7 +46,9 @@ export default function Navbar() {
     const query = search.trim();
 
     if (query) {
-      router.push(`/productos?q=${encodeURIComponent(query)}`);
+      router.push(
+        `/productos?q=${encodeURIComponent(query)}`
+      );
     } else {
       router.push("/productos");
     }
@@ -65,7 +72,10 @@ export default function Navbar() {
           {settings.logoUrl ? (
             <Image
               src={settings.logoUrl}
-              alt={settings.storeName || "Logo de la tienda"}
+              alt={
+                settings.storeName ||
+                "Logo de la tienda"
+              }
               width={40}
               height={40}
               className="h-10 w-10 rounded-full object-cover"
@@ -139,7 +149,9 @@ export default function Navbar() {
               <input
                 type="search"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
                 placeholder="Buscar..."
                 autoFocus
                 className="
@@ -186,6 +198,37 @@ export default function Navbar() {
               <FaSearch />
             </button>
           )}
+
+          {/* FAVORITOS */}
+
+          <Link
+            href="/favoritos"
+            className="relative hover:text-red-500 transition"
+            aria-label="Favoritos"
+          >
+            <FaHeart />
+
+            {favoritesCount > 0 && (
+              <span
+                className="
+                  absolute
+                  -top-3
+                  -right-3
+                  bg-red-500
+                  text-white
+                  text-xs
+                  w-5
+                  h-5
+                  rounded-full
+                  flex
+                  items-center
+                  justify-center
+                "
+              >
+                {favoritesCount}
+              </span>
+            )}
+          </Link>
 
           {/* CARRITO */}
 
@@ -269,7 +312,9 @@ export default function Navbar() {
             <input
               type="search"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) =>
+                setSearch(e.target.value)
+              }
               placeholder="Buscar productos..."
               autoFocus
               className="
@@ -378,6 +423,46 @@ export default function Navbar() {
               "
             >
               Ofertas
+            </Link>
+
+            <Link
+              href="/favoritos"
+              onClick={closeMenu}
+              className="
+                py-3
+                px-2
+                rounded-lg
+                hover:bg-slate-800
+                hover:text-red-400
+                transition
+                flex
+                items-center
+                justify-between
+              "
+            >
+              <span className="flex items-center gap-3">
+                <FaHeart />
+                Favoritos
+              </span>
+
+              {favoritesCount > 0 && (
+                <span
+                  className="
+                    bg-red-500
+                    text-white
+                    text-xs
+                    min-w-5
+                    h-5
+                    px-1
+                    rounded-full
+                    flex
+                    items-center
+                    justify-center
+                  "
+                >
+                  {favoritesCount}
+                </span>
+              )}
             </Link>
 
             <Link

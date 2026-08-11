@@ -92,40 +92,15 @@ setLoading(true);
 
 
 
-await createOrder({
-
-
-...form,
-
-
-products:cart,
-
-
-total
-
-
-
+const order = await createOrder({
+  ...form,
+  products: cart,
+  total,
 });
-
-
-
-
-
-alert(
-
-"Pedido creado correctamente"
-
-);
-
-
-
-
 
 clearCart();
 
-
-router.push("/");
-
+router.push(`/pedido/${order.id}`);
 
 
 
