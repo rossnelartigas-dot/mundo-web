@@ -47,52 +47,90 @@ const defaultSettings: StoreSettings = {
 
 interface StoreSettingsContextType {
   settings: StoreSettings;
-  updateSettings: (value: Partial<StoreSettings>) => void;
+  updateSettings: (
+    value: Partial<StoreSettings>
+  ) => void;
   setSettings: (value: StoreSettings) => void;
   saveSettings: () => void;
 }
 
-const StoreSettingsContext = createContext<StoreSettingsContextType | undefined>(undefined);
+const StoreSettingsContext =
+  createContext<StoreSettingsContextType | undefined>(
+    undefined
+  );
 
-export function StoreSettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettingsState] = useState<StoreSettings>(() => {
-    if (typeof window === "undefined") {
-      return defaultSettings;
-    }
-
-    try {
-      const saved = window.localStorage.getItem(STORAGE_KEY);
-
-      if (saved) {
-        const parsed = JSON.parse(saved) as Partial<StoreSettings>;
-        return { ...defaultSettings, ...parsed };
+export function StoreSettingsProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [settings, setSettingsState] =
+    useState<StoreSettings>(() => {
+      if (typeof window === "undefined") {
+        return defaultSettings;
       }
-    } catch (error) {
-      console.error("Error cargando configuración:", error);
-    }
 
-    return defaultSettings;
-  });
+      try {
+        const saved =
+          window.localStorage.getItem(
+            STORAGE_KEY
+          );
 
-  const persistSettings = useCallback((value: StoreSettings) => {
-    if (typeof window === "undefined") {
-      return;
-    }
+        if (saved) {
+          const parsed =
+            JSON.parse(saved) as Partial<StoreSettings>;
 
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
-      document.documentElement.style.setProperty("--store-primary", value.primaryColor);
-      window.dispatchEvent(new CustomEvent("store-settings-updated", { detail: value }));
-    } catch (error) {
-      console.error("Error guardando configuración:", error);
-    }
-  }, []);
+          return {
+            ...defaultSettings,
+            ...parsed,
+          };
+        }
+      } catch (error) {
+        console.error(
+          "Error cargando configuración:",
+          error
+        );
+      }
+
+      return defaultSettings;
+    });
+
+  const persistSettings = useCallback(
+    (value: StoreSettings) => {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      try {
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify(value)
+        );
+
+        document.documentElement.style.setProperty(
+          "--store-primary",
+          value.primaryColor
+        );
+
+        window.dispatchEvent(
+          new CustomEvent(
+            "store-settings-updated",
+            {
+              detail: value,
+            }
+          )
+        );
+      } catch (error) {
+        console.error(
+          "Error guardando configuración:",
+          error
+        );
+      }
+    },
+    []
+  );
 
   useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
     persistSettings(settings);
   }, [persistSettings, settings]);
 
@@ -101,58 +139,116 @@ export function StoreSettingsProvider({ children }: { children: React.ReactNode 
       return;
     }
 
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key !== STORAGE_KEY || !event.newValue) {
+    const handleStorage = (
+      event: StorageEvent
+    ) => {
+      if (
+        event.key !== STORAGE_KEY ||
+        !event.newValue
+      ) {
         return;
       }
 
       try {
-        const parsed = JSON.parse(event.newValue) as Partial<StoreSettings>;
-        setSettingsState({ ...defaultSettings, ...parsed });
+        const parsed =
+          JSON.parse(event.newValue) as Partial<StoreSettings>;
+
+        const nextSettings: StoreSettings = {
+          ...defaultSettings,
+          ...parsed,
+        };
+
+        queueMicrotask(() => {
+          setSettingsState(nextSettings);
+        });
       } catch (error) {
-        console.error("Error actualizando configuración desde storage:", error);
+        console.error(
+          "Error actualizando configuración desde storage:",
+          error
+        );
       }
     };
 
-    const handleCustomEvent = (event: Event) => {
-      const customEvent = event as CustomEvent<StoreSettings>;
-      setSettingsState(customEvent.detail);
+    const handleCustomEvent = (
+      event: Event
+    ) => {
+      const customEvent =
+        event as CustomEvent<StoreSettings>;
+
+      queueMicrotask(() => {
+        setSettingsState(customEvent.detail);
+      });
     };
 
-    window.addEventListener("storage", handleStorage);
-    window.addEventListener("store-settings-updated", handleCustomEvent as EventListener);
+    window.addEventListener(
+      "storage",
+      handleStorage
+    );
+
+    window.addEventListener(
+      "store-settings-updated",
+      handleCustomEvent
+    );
 
     return () => {
-      window.removeEventListener("storage", handleStorage);
-      window.removeEventListener("store-settings-updated", handleCustomEvent as EventListener);
+      window.removeEventListener(
+        "storage",
+        handleStorage
+      );
+
+      window.removeEventListener(
+        "store-settings-updated",
+        handleCustomEvent
+      );
     };
   }, []);
 
-  const updateSettings = useCallback((value: Partial<StoreSettings>) => {
-    setSettingsState((current) => ({ ...current, ...value }));
-  }, []);
+  const updateSettings = useCallback(
+    (value: Partial<StoreSettings>) => {
+      setSettingsState((current) => ({
+        ...current,
+        ...value,
+      }));
+    },
+    []
+  );
 
   const saveSettings = useCallback(() => {
     persistSettings(settings);
   }, [persistSettings, settings]);
 
   const contextValue = useMemo(
-    () => ({ settings, updateSettings, setSettings: setSettingsState, saveSettings }),
-    [saveSettings, settings, updateSettings]
+    () => ({
+      settings,
+      updateSettings,
+      setSettings: setSettingsState,
+      saveSettings,
+    }),
+    [
+      settings,
+      updateSettings,
+      saveSettings,
+    ]
   );
 
   return (
-    <StoreSettingsContext.Provider value={contextValue}>
+    <StoreSettingsContext.Provider
+      value={contextValue}
+    >
       {children}
     </StoreSettingsContext.Provider>
   );
 }
 
 export function useStoreSettings() {
-  const context = useContext(StoreSettingsContext);
+  const context = useContext(
+    StoreSettingsContext
+  );
 
   if (!context) {
-    throw new Error("useStoreSettings debe usarse dentro de StoreSettingsProvider");
+    throw new Error(
+      "useStoreSettings debe usarse dentro de StoreSettingsProvider"
+    );
   }
 
   return context;

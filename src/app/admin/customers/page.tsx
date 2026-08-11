@@ -1,137 +1,185 @@
+import DashboardCard from "@/components/admin/DashboardCard";
 import { getOrders } from "@/services/orderService";
+import { getProducts } from "@/services/productService";
 
 export const dynamic = "force-dynamic";
 
 interface OrderRecord {
+  id?: string | number;
+  status?: string;
+  total?: number | string;
   customer_email?: string;
   customer_name?: string;
   customer_phone?: string;
-  customer_address?: string;
   created_at?: string;
-  total?: number | string;
 }
 
-interface CustomerSummary {
-  name: string;
-  phone: string;
-  email: string;
-  address: string;
-  orders: number;
-  totalSpent: number;
-  lastOrderAt: string;
+interface ProductRecord {
+  id?: string | number;
 }
 
-export default async function CustomersPage() {
+export default async function Dashboard() {
   let orders: OrderRecord[] = [];
+  let products: ProductRecord[] = [];
 
   try {
     orders = await getOrders();
   } catch (error) {
-    console.error("Error loading customer data:", error);
+    console.error("Error loading dashboard orders:", error);
     orders = [];
   }
 
-  const customersMap = new Map<string, CustomerSummary>();
+  try {
+    products = await getProducts();
+  } catch (error) {
+    console.error("Error loading dashboard products:", error);
+    products = [];
+  }
 
-  orders.forEach((order) => {
-    const key = order.customer_email || `${order.customer_name}-${order.customer_phone}`;
-    const existing = customersMap.get(key);
-    const orderDate = order.created_at ? new Date(order.created_at).toISOString() : "";
+  const totalOrders = orders.length;
+  const totalProducts = products.length;
 
-    if (existing) {
-      customersMap.set(key, {
-        ...existing,
-        orders: existing.orders + 1,
-        totalSpent: existing.totalSpent + Number(order.total ?? 0),
-        lastOrderAt: existing.lastOrderAt > orderDate ? existing.lastOrderAt : orderDate,
-      });
-    } else {
-      customersMap.set(key, {
-        name: order.customer_name || "Sin nombre",
-        phone: order.customer_phone || "Sin teléfono",
-        email: order.customer_email || "Sin email",
-        address: order.customer_address || "Sin dirección",
-        orders: 1,
-        totalSpent: Number(order.total ?? 0),
-        lastOrderAt: orderDate,
-      });
-    }
-  });
-
-  const customers = Array.from(customersMap.values()).sort(
-    (a, b) => (b.lastOrderAt || "").localeCompare(a.lastOrderAt || "")
+  const paidOrders = orders.filter(
+    (order) => order.status === "paid"
   );
-  const totalCustomers = customers.length;
-  const totalRevenue = customers.reduce((sum, customer) => sum + customer.totalSpent, 0);
+
+  const totalPaidSales = paidOrders.reduce(
+    (sum: number, order) =>
+      sum + Number(order.total ?? 0),
+    0
+  );
+
+  const uniqueCustomers = new Set(
+    orders.map(
+      (order) =>
+        order.customer_email ||
+        `${order.customer_name}-${order.customer_phone}`
+    )
+  ).size;
+
+  const averageSale =
+    paidOrders.length > 0
+      ? totalPaidSales / paidOrders.length
+      : 0;
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Clientes</h1>
-        <p className="mt-2 text-slate-500">
-          Resumen funcional de clientes creado a partir de los pedidos.
-        </p>
+    <div>
+      <h1 className="text-3xl font-bold mb-8">
+        Dashboard
+      </h1>
+
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <DashboardCard
+          title="Productos"
+          value={totalProducts}
+        />
+
+        <DashboardCard
+          title="Pedidos"
+          value={totalOrders}
+        />
+
+        <DashboardCard
+          title="Clientes"
+          value={uniqueCustomers}
+        />
+
+        <DashboardCard
+          title="Ventas"
+          value={`$${totalPaidSales.toFixed(2)}`}
+        />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-        <div className="bg-white rounded-xl shadow p-6">
-          <p className="text-slate-500">Clientes únicos</p>
-          <h2 className="text-4xl font-bold mt-3">{totalCustomers}</h2>
-        </div>
-        <div className="bg-white rounded-xl shadow p-6">
-          <p className="text-slate-500">Ingresos totales</p>
-          <h2 className="text-4xl font-bold mt-3">${totalRevenue.toFixed(2)}</h2>
-        </div>
-        <div className="bg-white rounded-xl shadow p-6">
-          <p className="text-slate-500">Promedio por cliente</p>
-          <h2 className="text-4xl font-bold mt-3">
-            ${totalCustomers > 0 ? (totalRevenue / totalCustomers).toFixed(2) : "0.00"}
-          </h2>
-        </div>
-      </div>
+      <section className="mt-10">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h2 className="text-2xl font-semibold">
+              Resumen de ventas pagadas
+            </h2>
 
-      <div className="overflow-hidden rounded-xl shadow bg-white">
-        <div className="border-b border-slate-200 px-6 py-4">
-          <h2 className="text-xl font-semibold">Últimos clientes por actividad</h2>
+            <p className="text-slate-500 mt-2">
+              Totales y últimos pedidos que ya están en estado
+              &quot;Pagado&quot;.
+            </p>
+          </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-100 text-slate-600 uppercase text-xs tracking-wider">
-              <tr>
-                <th className="px-4 py-3">Cliente</th>
-                <th className="px-4 py-3">Email</th>
-                <th className="px-4 py-3">Teléfono</th>
-                <th className="px-4 py-3">Pedidos</th>
-                <th className="px-4 py-3">Gastado</th>
-                <th className="px-4 py-3">Último pedido</th>
-              </tr>
-            </thead>
-            <tbody>
-              {customers.map((customer) => (
-                <tr key={customer.email + customer.phone} className="border-t border-slate-200">
-                  <td className="px-4 py-3 font-semibold">{customer.name}</td>
-                  <td className="px-4 py-3">{customer.email}</td>
-                  <td className="px-4 py-3">{customer.phone}</td>
-                  <td className="px-4 py-3">{customer.orders}</td>
-                  <td className="px-4 py-3">${customer.totalSpent.toFixed(2)}</td>
-                  <td className="px-4 py-3">
-                    {customer.lastOrderAt
-                      ? new Date(customer.lastOrderAt).toLocaleDateString()
-                      : "-"}
-                  </td>
-                </tr>
-              ))}
-              {customers.length === 0 && (
+
+        <div className="grid md:grid-cols-3 gap-6 mt-6">
+          <DashboardCard
+            title="Pedidos pagados"
+            value={paidOrders.length}
+          />
+
+          <DashboardCard
+            title="Total pagado"
+            value={`$${totalPaidSales.toFixed(2)}`}
+          />
+
+          <DashboardCard
+            title="Ticket promedio"
+            value={`$${averageSale.toFixed(2)}`}
+          />
+        </div>
+
+        <div className="overflow-hidden rounded-xl shadow bg-white mt-6">
+          <div className="border-b border-slate-200 px-6 py-4">
+            <h3 className="text-lg font-semibold">
+              Últimos pedidos pagados
+            </h3>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-slate-100 text-slate-600 uppercase text-xs tracking-wider">
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
-                    No se encontraron clientes.
-                  </td>
+                  <th className="px-4 py-3">Pedido</th>
+                  <th className="px-4 py-3">Cliente</th>
+                  <th className="px-4 py-3">Total</th>
+                  <th className="px-4 py-3">Fecha</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+
+              <tbody>
+                {paidOrders.slice(0, 5).map((order) => (
+                  <tr
+                    key={order.id}
+                    className="border-t border-slate-200"
+                  >
+                    <td className="px-4 py-3 font-semibold">
+                      #{order.id}
+                    </td>
+
+                    <td className="px-4 py-3">
+                      {order.customer_name}
+                    </td>
+
+                    <td className="px-4 py-3">
+                      ${Number(order.total).toFixed(2)}
+                    </td>
+
+                    <td className="px-4 py-3">
+                      {new Date(
+                        order.created_at ?? ""
+                      ).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+
+                {paidOrders.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-4 py-6 text-center text-slate-500"
+                    >
+                      No hay pedidos pagados todavía.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }
