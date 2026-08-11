@@ -51,14 +51,39 @@ export default function OrderStatusSelect({
       value={value}
       onChange={handleChange}
       disabled={loading}
-      className="border rounded-lg px-3 py-2 bg-white"
+      className="
+        rounded-lg
+        border
+        border-slate-300
+        bg-white
+        px-3
+        py-2
+        text-sm
+        font-medium
+        text-slate-700
+        outline-none
+        transition
+        focus:border-cyan-400
+        focus:ring-2
+        focus:ring-cyan-100
+        disabled:cursor-not-allowed
+        disabled:opacity-50
+      "
     >
       <option value="pending">
         Pendiente
       </option>
 
+      <option value="confirmed">
+        Confirmado
+      </option>
+
       <option value="paid">
         Pagado
+      </option>
+
+      <option value="preparing">
+        Preparando
       </option>
 
       <option value="shipped">

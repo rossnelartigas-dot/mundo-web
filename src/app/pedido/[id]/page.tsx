@@ -1,35 +1,43 @@
 import Link from "next/link";
 
-import { getOrder } from "@/services/orderService";
+import { getOrderByIdAndEmail } from "@/services/orderService";
+import OrderStatusTracker from "@/components/OrderStatusTracker";
 
 interface Props {
   params: Promise<{
     id: string;
   }>;
+
+  searchParams: Promise<{
+    email?: string;
+  }>;
 }
 
 export default async function OrderConfirmationPage({
   params,
+  searchParams,
 }: Props) {
   const { id } = await params;
+  const { email } = await searchParams;
 
   const orderId = Number(id);
 
-  if (Number.isNaN(orderId)) {
+  if (Number.isNaN(orderId) || !email) {
     return (
       <main className="min-h-screen bg-slate-50 py-10">
         <div className="mx-auto max-w-3xl px-4">
           <div className="rounded-2xl border border-red-200 bg-white p-8 text-center shadow-sm">
+
             <h1 className="text-2xl font-bold text-red-600">
-              Pedido inválido
+              Consulta inválida
             </h1>
 
             <p className="mt-3 text-slate-500">
-              No se pudo identificar el pedido.
+              Debes proporcionar el número de pedido y el correo electrónico utilizado durante la compra.
             </p>
 
             <Link
-              href="/"
+              href="/consultar-pedido"
               className="
                 mt-6
                 inline-flex
@@ -43,31 +51,36 @@ export default async function OrderConfirmationPage({
                 hover:bg-cyan-600
               "
             >
-              Volver a la tienda
+              Consultar pedido
             </Link>
+
           </div>
         </div>
       </main>
     );
   }
 
-  const order = await getOrder(orderId);
+  const order = await getOrderByIdAndEmail(
+    orderId,
+    email
+  );
 
   if (!order) {
     return (
       <main className="min-h-screen bg-slate-50 py-10">
         <div className="mx-auto max-w-3xl px-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+
             <h1 className="text-2xl font-bold text-slate-800">
               Pedido no encontrado
             </h1>
 
             <p className="mt-3 text-slate-500">
-              No encontramos un pedido con el número #{orderId}.
+              El número de pedido y el correo electrónico no coinciden con ningún pedido registrado.
             </p>
 
             <Link
-              href="/"
+              href="/consultar-pedido"
               className="
                 mt-6
                 inline-flex
@@ -81,8 +94,9 @@ export default async function OrderConfirmationPage({
                 hover:bg-cyan-600
               "
             >
-              Volver a la tienda
+              Intentar nuevamente
             </Link>
+
           </div>
         </div>
       </main>
@@ -95,9 +109,12 @@ export default async function OrderConfirmationPage({
 
   return (
     <main className="min-h-screen bg-slate-50 py-10">
+
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
+
+          {/* ENCABEZADO */}
 
           <div className="text-center">
 
@@ -106,11 +123,11 @@ export default async function OrderConfirmationPage({
             </div>
 
             <h1 className="mt-5 text-3xl font-bold text-slate-900">
-              ¡Pedido recibido!
+              Pedido encontrado
             </h1>
 
             <p className="mt-2 text-slate-600">
-              Tu pedido fue registrado correctamente.
+              Información y seguimiento de tu pedido.
             </p>
 
             <p className="mt-4 text-lg font-semibold text-cyan-600">
@@ -119,17 +136,23 @@ export default async function OrderConfirmationPage({
 
           </div>
 
+
+          {/* SEGUIMIENTO */}
+
           <div className="mt-8 rounded-xl bg-slate-50 p-5">
 
             <h2 className="text-xl font-bold text-slate-800">
-              Estado del pedido
+              Seguimiento del pedido
             </h2>
 
-            <p className="mt-2 inline-block rounded-full bg-yellow-100 px-4 py-1.5 text-sm font-medium text-yellow-700">
-              {order.status}
-            </p>
+            <OrderStatusTracker
+              status={order.status}
+            />
 
           </div>
+
+
+          {/* DATOS DEL CLIENTE */}
 
           <div className="mt-8">
 
@@ -162,6 +185,9 @@ export default async function OrderConfirmationPage({
             </div>
 
           </div>
+
+
+          {/* PRODUCTOS */}
 
           <div className="mt-8">
 
@@ -207,11 +233,13 @@ export default async function OrderConfirmationPage({
                     </div>
 
                     <p className="font-semibold text-slate-800">
+
                       $
                       {(
                         product.price *
                         product.quantity
                       ).toFixed(2)}
+
                     </p>
 
                   </div>
@@ -221,6 +249,9 @@ export default async function OrderConfirmationPage({
             </div>
 
           </div>
+
+
+          {/* TOTAL */}
 
           <div className="mt-8 border-t border-slate-200 pt-6">
 
@@ -237,6 +268,9 @@ export default async function OrderConfirmationPage({
             </div>
 
           </div>
+
+
+          {/* BOTONES */}
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
 
@@ -282,6 +316,7 @@ export default async function OrderConfirmationPage({
         </div>
 
       </div>
+
     </main>
   );
 }
