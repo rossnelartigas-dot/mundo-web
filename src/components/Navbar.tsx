@@ -550,7 +550,7 @@ export default function Navbar() {
 
                     <div className="py-1">
                       <Link
-                        href="/pedidos"
+                        href="/pedido"
                         onClick={closeMenu}
                         className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition hover:bg-white/5 hover:text-cyan-400"
                       >
