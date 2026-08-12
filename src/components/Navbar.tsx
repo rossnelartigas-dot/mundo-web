@@ -732,7 +732,7 @@ export default function Navbar() {
 
                   <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-800/60">
                     <Link
-                      href="/pedidos"
+                      href="/pedido"
                       onClick={closeMenu}
                       className="flex items-center justify-center gap-2 rounded-lg bg-slate-800 py-2 text-xs font-medium text-slate-200"
                     >
