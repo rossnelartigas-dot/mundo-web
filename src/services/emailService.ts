@@ -66,7 +66,7 @@ export async function sendOrderStatusEmail({
           </p>
 
           <a
-            href="https://mundo-web-snowy.vercel.app/pedido/${orderId}?Email=${encodeURIComponent(customerEmail.trim().toLowerCase())}"
+            href="https://mundo-web-snowy.vercel.app/pedido/${orderId}?email=${encodeURIComponent(customerEmail.trim().toLowerCase())}"
             target="_blank"
             rel="noopener noreferrer"
             style="
