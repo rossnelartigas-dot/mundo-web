@@ -30,20 +30,21 @@ export interface StoreSettings {
   instagram2: string;
 }
 
+// Configuración vacía por defecto para reflejar exactamente lo de Supabase
 const defaultSettings: StoreSettings = {
-  storeName: "Mundo Web",
-  description: "Tu tienda de tecnología en Venezuela.",
-  whatsapp: "+584264433849",
-  email: "contacto@tienda.com",
-  address: "Calle 123, Ciudad",
-  openingHours: "Lunes a Viernes 8am - 6pm",
+  storeName: "",
+  description: "",
+  whatsapp: "",
+  email: "",
+  address: "",
+  openingHours: "",
   currency: "USD",
   shippingOption: "Gratis por compras mayores",
   primaryColor: "#0891b2",
   logoUrl: "",
   bannerUrl: "",
-  phone1: "+58 412 000 0000",
-  phone2: "+58 424 000 0000",
+  phone1: "",
+  phone2: "",
   facebook: "",
   instagram: "",
   instagram2: "",
@@ -82,25 +83,26 @@ export function StoreSettingsProvider({
         if (error) {
           console.error("Error al cargar la configuración de Supabase:", error);
         } else if (data) {
+          // Usamos Nullish Coalescing (??) para respetar cadenas vacías o valores reales de Supabase
           const loadedSettings: StoreSettings = {
             id: data.id,
-            storeName: data.store_name || defaultSettings.storeName,
-            description: data.description || defaultSettings.description,
-            whatsapp: data.whatsapp || defaultSettings.whatsapp,
-            email: data.email || defaultSettings.email,
-            address: data.address || defaultSettings.address,
-            openingHours: data.schedule || defaultSettings.openingHours,
-            currency: data.currency || defaultSettings.currency,
+            storeName: data.store_name ?? "",
+            description: data.description ?? "",
+            whatsapp: data.whatsapp ?? "",
+            email: data.email ?? "",
+            address: data.address ?? "",
+            openingHours: data.schedule ?? data.opening_hours ?? "",
+            currency: data.currency ?? "USD",
             shippingOption:
-              data.shipping_option || defaultSettings.shippingOption,
-            primaryColor: data.primary_color || defaultSettings.primaryColor,
-            logoUrl: data.logo_url || "",
-            bannerUrl: data.banner_url || "",
-            phone1: data.phone1 || "",
-            phone2: data.phone2 || "",
-            facebook: data.facebook || "",
-            instagram: data.instagram || "",
-            instagram2: data.instagram2 || "",
+              data.shipping_option ?? "Gratis por compras mayores",
+            primaryColor: data.primary_color ?? "#0891b2",
+            logoUrl: data.logo_url ?? "",
+            bannerUrl: data.banner_url ?? "",
+            phone1: data.phone1 ?? "",
+            phone2: data.phone2 ?? "",
+            facebook: data.facebook ?? "",
+            instagram: data.instagram ?? "",
+            instagram2: data.instagram2 ?? "",
           };
 
           setSettingsState(loadedSettings);
@@ -122,7 +124,7 @@ export function StoreSettingsProvider({
     fetchSettings();
   }, []);
 
-  // 2. Modificar el estado local en vivo (mientras el usuario escribe en los campos)
+  // 2. Modificar el estado local en vivo
   const updateSettings = useCallback((value: Partial<StoreSettings>) => {
     setSettingsState((current) => ({
       ...current,
@@ -169,7 +171,7 @@ export function StoreSettingsProvider({
       } else if (data) {
         setSettingsState((prev) => ({ ...prev, id: data.id }));
 
-        if (typeof window !== "undefined") {
+        if (typeof window !== "undefined" && settings.primaryColor) {
           document.documentElement.style.setProperty(
             "--store-primary",
             settings.primaryColor

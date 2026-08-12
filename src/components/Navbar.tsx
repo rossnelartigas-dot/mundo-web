@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 import {
@@ -13,11 +13,22 @@ import {
   FaTimes,
   FaHeart,
   FaChevronDown,
+  FaShoppingBag,
+  FaCog,
+  FaSignOutAlt,
 } from "react-icons/fa";
 
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useStoreSettings } from "@/context/StoreSettingsContext";
+import { supabase } from "@/lib/supabase";
+
+interface UserProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  role: string;
+}
 
 export default function Navbar() {
   const router = useRouter();
@@ -30,16 +41,94 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  const cartCount = cart.reduce(
-    (total, item) => total + item.quantity,
-    0
-  );
+  // Estado del usuario autenticado
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [loadingUser, setLoadingUser] = useState(true);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
+  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
   const favoritesCount = favorites.length;
+
+  // Escuchar sesión activa
+  useEffect(() => {
+    async function loadUserSession() {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session?.user) {
+          const { data } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", session.user.id)
+            .maybeSingle();
+
+          setUserProfile(
+            data || {
+              id: session.user.id,
+              email: session.user.email || "",
+              full_name: session.user.user_metadata?.full_name || "",
+              role: "customer",
+            }
+          );
+        } else {
+          setUserProfile(null);
+        }
+      } catch (error) {
+        console.error("Error al cargar sesión de usuario:", error);
+      } finally {
+        setLoadingUser(false);
+      }
+    }
+
+    loadUserSession();
+
+    // Escuchar cambios de autenticación en tiempo real
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) {
+          loadUserSession();
+        } else {
+          setUserProfile(null);
+          setLoadingUser(false);
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Cerrar desplegable si se hace clic afuera
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   function closeMenu() {
     setMenuOpen(false);
+    setUserMenuOpen(false);
   }
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUserProfile(null);
+    closeMenu();
+    router.push("/");
+    router.refresh();
+  };
 
   function handleSearch(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -59,7 +148,6 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/95 text-white shadow-xl backdrop-blur-md">
-
       {/* Línea tecnológica superior */}
       <div
         className="h-1 w-full"
@@ -69,10 +157,8 @@ export default function Navbar() {
       />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-
         {/* NAVBAR PRINCIPAL */}
         <div className="flex h-[76px] items-center justify-between gap-4">
-
           {/* LOGO */}
           <Link
             href="/"
@@ -141,7 +227,6 @@ export default function Navbar() {
 
           {/* MENÚ DESKTOP */}
           <nav className="hidden items-center gap-1 md:flex">
-
             <Link
               href="/"
               className="
@@ -231,12 +316,10 @@ export default function Navbar() {
             >
               Contacto
             </Link>
-
           </nav>
 
           {/* ACCIONES */}
           <div className="flex items-center gap-1 sm:gap-2">
-
             {/* BUSCADOR */}
             {searchOpen ? (
               <form
@@ -417,29 +500,131 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* USUARIO */}
-            <button
-              type="button"
-              aria-label="Usuario"
-              className="
-                hidden
-                h-10
-                w-10
-                items-center
-                justify-center
-                rounded-xl
-                border
-                border-slate-800
-                text-slate-300
-                transition
-                hover:border-cyan-500/40
-                hover:bg-cyan-500/10
-                hover:text-cyan-400
-                sm:flex
-              "
-            >
-              <FaUser />
-            </button>
+            {/* USUARIO CON DESPLEGABLE */}
+            {loadingUser ? (
+              <div className="hidden h-10 w-10 animate-pulse rounded-xl bg-slate-800 sm:block" />
+            ) : userProfile ? (
+              <div className="relative hidden sm:block" ref={userMenuRef}>
+                <button
+                  type="button"
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="
+                    flex
+                    h-10
+                    items-center
+                    gap-2
+                    rounded-xl
+                    border
+                    border-slate-800
+                    bg-slate-900/60
+                    px-3
+                    text-slate-300
+                    transition
+                    hover:border-cyan-500/40
+                    hover:bg-cyan-500/10
+                    hover:text-cyan-400
+                  "
+                >
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-cyan-500/20 text-xs font-bold text-cyan-400">
+                    {userProfile.full_name
+                      ? userProfile.full_name.charAt(0).toUpperCase()
+                      : <FaUser className="text-xs" />}
+                  </div>
+                  <span className="max-w-[100px] truncate text-xs font-semibold">
+                    {userProfile.full_name || "Mi Cuenta"}
+                  </span>
+                  <FaChevronDown className="text-[10px] opacity-60" />
+                </button>
+
+                {/* DESPLEGABLE DESKTOP */}
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-800 bg-slate-900 p-1.5 shadow-2xl backdrop-blur-xl z-50">
+                    <div className="border-b border-slate-800 px-3 py-2.5">
+                      <p className="truncate text-xs font-bold text-white">
+                        {userProfile.full_name || "Usuario"}
+                      </p>
+                      <p className="truncate text-[11px] text-slate-400">
+                        {userProfile.email}
+                      </p>
+                    </div>
+
+                    <div className="py-1">
+                      <Link
+                        href="/pedidos"
+                        onClick={closeMenu}
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition hover:bg-white/5 hover:text-cyan-400"
+                      >
+                        <FaShoppingBag className="text-cyan-400" />
+                        <span>Mis Pedidos</span>
+                      </Link>
+
+                      <Link
+                        href="/carrito"
+                        onClick={closeMenu}
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition hover:bg-white/5 hover:text-cyan-400"
+                      >
+                        <FaShoppingCart className="text-cyan-400" />
+                        <span>Mi Carrito</span>
+                      </Link>
+
+                      <Link
+                        href="/perfil"
+                        onClick={closeMenu}
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition hover:bg-white/5 hover:text-cyan-400"
+                      >
+                        <FaCog className="text-cyan-400" />
+                        <span>Configuración</span>
+                      </Link>
+
+                      {userProfile.role === "admin" && (
+                        <Link
+                          href="/admin"
+                          onClick={closeMenu}
+                          className="flex items-center gap-2.5 rounded-xl bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-400 transition hover:bg-cyan-500/20"
+                        >
+                          <FaUser />
+                          <span>Panel Admin</span>
+                        </Link>
+                      )}
+                    </div>
+
+                    <div className="border-t border-slate-800 pt-1">
+                      <button
+                        type="button"
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-red-400 transition hover:bg-red-500/10"
+                      >
+                        <FaSignOutAlt />
+                        <span>Cerrar Sesión</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                aria-label="Usuario"
+                className="
+                  hidden
+                  h-10
+                  w-10
+                  items-center
+                  justify-center
+                  rounded-xl
+                  border
+                  border-slate-800
+                  text-slate-300
+                  transition
+                  hover:border-cyan-500/40
+                  hover:bg-cyan-500/10
+                  hover:text-cyan-400
+                  sm:flex
+                "
+              >
+                <FaUser />
+              </Link>
+            )}
 
             {/* MENÚ MÓVIL */}
             <button
@@ -466,7 +651,6 @@ export default function Navbar() {
             >
               {menuOpen ? <FaTimes /> : <FaBars />}
             </button>
-
           </div>
         </div>
 
@@ -525,15 +709,76 @@ export default function Navbar() {
 
         {/* MENÚ MÓVIL */}
         {menuOpen && (
-          <nav
-            className="
-              border-t
-              border-slate-800
-              py-4
-              md:hidden
-            "
-          >
+          <nav className="border-t border-slate-800 py-4 md:hidden">
             <div className="space-y-1">
+              {/* Sección de Usuario en Móvil */}
+              {userProfile ? (
+                <div className="mb-3 rounded-xl border border-slate-800 bg-slate-900/80 p-3">
+                  <div className="mb-2 flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/20 text-sm font-bold text-cyan-400">
+                      {userProfile.full_name
+                        ? userProfile.full_name.charAt(0).toUpperCase()
+                        : <FaUser />}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-bold text-white">
+                        {userProfile.full_name || "Usuario"}
+                      </p>
+                      <p className="truncate text-[11px] text-slate-400">
+                        {userProfile.email}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-800/60">
+                    <Link
+                      href="/pedidos"
+                      onClick={closeMenu}
+                      className="flex items-center justify-center gap-2 rounded-lg bg-slate-800 py-2 text-xs font-medium text-slate-200"
+                    >
+                      <FaShoppingBag className="text-cyan-400" />
+                      Mis Pedidos
+                    </Link>
+                    <Link
+                      href="/perfil"
+                      onClick={closeMenu}
+                      className="flex items-center justify-center gap-2 rounded-lg bg-slate-800 py-2 text-xs font-medium text-slate-200"
+                    >
+                      <FaCog className="text-cyan-400" />
+                      Configuración
+                    </Link>
+                  </div>
+
+                  {userProfile.role === "admin" && (
+                    <Link
+                      href="/admin"
+                      onClick={closeMenu}
+                      className="mt-1.5 flex items-center justify-center gap-2 rounded-lg bg-cyan-500/10 py-2 text-xs font-semibold text-cyan-400"
+                    >
+                      <FaUser />
+                      Panel Administrativo
+                    </Link>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 py-2 text-xs font-medium text-red-400"
+                  >
+                    <FaSignOutAlt />
+                    Cerrar Sesión
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={closeMenu}
+                  className="mb-3 flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-400"
+                >
+                  <FaUser />
+                  Iniciar Sesión
+                </Link>
+              )}
 
               <Link
                 href="/"
@@ -614,9 +859,7 @@ export default function Navbar() {
                 "
               >
                 <span>Ofertas</span>
-                <span className="text-xs text-cyan-400">
-                  ⚡
-                </span>
+                <span className="text-xs text-cyan-400">⚡</span>
               </Link>
 
               <Link
@@ -698,11 +941,9 @@ export default function Navbar() {
               >
                 Contacto
               </Link>
-
             </div>
           </nav>
         )}
-
       </div>
     </header>
   );
