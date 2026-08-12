@@ -73,6 +73,7 @@ export default function ContactoPage() {
               ) : null}
             </div>
           </div>
+          
 
           <div className="rounded-2xl bg-slate-50 p-6">
             <h2 className="text-lg font-semibold text-slate-800">Horario</h2>
