@@ -20,57 +20,64 @@ interface Order {
   created_at: string;
   customer_email?: string;
   email?: string;
-  items?: OrderItem[]; // Por si los productos vienen en la misma fila en formato JSON
+  items?: OrderItem[];
 }
 
 export default function PedidoPage() {
   const [loading, setLoading] = useState(true);
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
-  // Estados para búsqueda de invitados
+  // Estados para búsqueda manual / invitado
   const [searchEmail, setSearchEmail] = useState('');
   const [searchOrderNumber, setSearchOrderNumber] = useState('');
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
 
-  // Cargar pedidos si el usuario inició sesión
+  // 1. Obtener sesión y cargar pedidos por el EMAIL del usuario
   useEffect(() => {
-    async function checkAuthAndFetchOrders() {
+    async function fetchOrders() {
       setLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
 
-      if (session?.user) {
-        setUserId(session.user.id);
-        
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentEmail = session?.user?.email;
+
+      if (currentEmail) {
+        setUserEmail(currentEmail);
+
+        // Trae todos los pedidos donde coincida el correo (customer_email o email)
         const { data, error } = await supabase
           .from('orders')
           .select('*')
-          .or(`user_id.eq.${session.user.id},customer_email.eq.${session.user.email},email.eq.${session.user.email}`)
+          .or(`customer_email.eq.${currentEmail},email.eq.${currentEmail}`)
           .order('created_at', { ascending: false });
 
         if (!error && data) {
           setOrders(data);
         }
       }
+
       setLoading(false);
     }
 
-    checkAuthAndFetchOrders();
+    fetchOrders();
   }, []);
 
-  // Manejador de búsqueda para usuarios no autenticados
+  // 2. Búsqueda manual para usuarios sin sesión / invitados
   const handleGuestSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setSearchError(null);
     setSearching(true);
 
+    const emailToSearch = searchEmail.trim();
+    const orderNumToSearch = searchOrderNumber.trim();
+
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .eq('customer_email', searchEmail.trim())
-      .or(`order_number.eq.${searchOrderNumber.trim()},id.eq.${searchOrderNumber.trim()}`);
+      .or(`customer_email.eq.${emailToSearch},email.eq.${emailToSearch}`)
+      .or(`order_number.eq.${orderNumToSearch},id.eq.${orderNumToSearch}`);
 
     setSearching(false);
 
@@ -79,16 +86,14 @@ export default function PedidoPage() {
       setOrders([]);
     } else {
       setOrders(data);
-      if (data.length > 0) setExpandedOrderId(data[0].id); // Desplegar el resultado automáticamente
+      if (data.length > 0) setExpandedOrderId(data[0].id);
     }
   };
 
-  // Alternar apertura/cierre de tarjeta de pedido
   const toggleOrder = (orderId: string) => {
     setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
   };
 
-  // Función para obtener estilos de color según estado
   const getStatusBadge = (status?: string) => {
     const s = (status || 'Procesando').toLowerCase();
     if (s.includes('completado') || s.includes('entregado')) {
@@ -119,19 +124,19 @@ export default function PedidoPage() {
       {/* Encabezado */}
       <div className="border-b border-slate-800 pb-5">
         <h1 className="text-3xl font-extrabold text-white tracking-tight">
-          {userId ? 'Mis Pedidos' : 'Consulta de Pedidos'}
+          {userEmail ? 'Mis Pedidos' : 'Consulta de Pedidos'}
         </h1>
         <p className="text-slate-400 text-sm mt-1">
-          {userId
-            ? 'Revisa el historial y el estado en tiempo real de tus compras.'
+          {userEmail
+            ? `Mostrando pedidos asociados a ${userEmail}`
             : 'Ingresa los datos de tu compra para consultar el estado actual.'}
         </p>
       </div>
 
-      {/* Formulario de búsqueda si es invitado */}
-      {!userId && (
+      {/* Formulario de búsqueda manual (Solo si no está logueado) */}
+      {!userEmail && (
         <form onSubmit={handleGuestSearch} className="bg-slate-900/80 backdrop-blur-md p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
-          <h2 className="text-base font-semibold text-slate-200">Consultar como invitado</h2>
+          <h2 className="text-base font-semibold text-slate-200">Consultar pedido</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-400 mb-1.5">Correo Electrónico</label>
@@ -168,16 +173,13 @@ export default function PedidoPage() {
         </form>
       )}
 
-      {/* Lista Desplegable de Pedidos */}
+      {/* Listado de Pedidos Desplegables */}
       <div className="space-y-4">
         {orders.length === 0 ? (
           <div className="text-center py-12 bg-slate-900/40 rounded-2xl border border-slate-800/60 p-6">
-            <svg className="w-12 h-12 text-slate-600 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
             <p className="text-slate-400 text-sm font-medium">
-              {userId
-                ? 'Aún no has realizado ninguna compra.'
+              {userEmail
+                ? 'Aún no tienes pedidos registrados con este correo.'
                 : 'Utiliza el formulario superior para consultar un pedido.'}
             </p>
           </div>
@@ -193,7 +195,7 @@ export default function PedidoPage() {
                 key={order.id}
                 className="bg-slate-900/90 border border-slate-800 hover:border-slate-700/80 rounded-2xl overflow-hidden transition shadow-lg"
               >
-                {/* Cabecera Clicable (Resumen del pedido) */}
+                {/* Cabecera para desplegar */}
                 <button
                   onClick={() => toggleOrder(order.id)}
                   className="w-full p-5 text-left flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer select-none"
@@ -206,17 +208,16 @@ export default function PedidoPage() {
                       </span>
                     </div>
                     <p className="text-xs text-slate-400">
-                      Realizado el {new Date(order.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      Fecha: {new Date(order.created_at).toLocaleDateString()}
                     </p>
                   </div>
 
                   <div className="flex items-center justify-between md:justify-end space-x-6 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-slate-800/60">
                     <div className="text-left md:text-right">
-                      <span className="block text-[10px] text-slate-500 uppercase tracking-wider font-semibold">Total</span>
+                      <span className="block text-[10px] text-slate-500 uppercase font-semibold">Total</span>
                       <span className="font-extrabold text-cyan-400 text-lg">${total.toLocaleString()}</span>
                     </div>
 
-                    {/* Icono de Desplegar */}
                     <div className={`p-2 rounded-xl bg-slate-800/50 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180 bg-slate-800 text-white' : ''}`}>
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -225,27 +226,26 @@ export default function PedidoPage() {
                   </div>
                 </button>
 
-                {/* Contenido Desplegable (Detalles del Pedido) */}
+                {/* Detalle desplegable */}
                 {isExpanded && (
-                  <div className="border-t border-slate-800/80 bg-slate-950/50 p-5 space-y-5 animate-fadeIn">
+                  <div className="border-t border-slate-800/80 bg-slate-950/50 p-5 space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-300 bg-slate-900/60 p-4 rounded-xl border border-slate-800/60">
                       <div>
                         <span className="text-slate-500 block mb-0.5">Correo del cliente:</span>
                         <span className="font-medium text-white">{email}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 block mb-0.5">Identificador Único (ID):</span>
+                        <span className="text-slate-500 block mb-0.5">ID del pedido:</span>
                         <span className="font-mono text-slate-400">{order.id}</span>
                       </div>
                     </div>
 
-                    {/* Lista de Productos Comprados (Si están guardados como Array) */}
-                    <div>
-                      <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">Detalle de Artículos</h4>
-                      {order.items && Array.isArray(order.items) && order.items.length > 0 ? (
+                    {order.items && Array.isArray(order.items) && order.items.length > 0 && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Productos</h4>
                         <div className="divide-y divide-slate-800/60 border border-slate-800/60 rounded-xl overflow-hidden bg-slate-900/30">
                           {order.items.map((item, idx) => (
-                            <div key={idx} className="p-3.5 flex justify-between items-center text-sm">
+                            <div key={idx} className="p-3 flex justify-between items-center text-sm">
                               <div>
                                 <p className="font-medium text-white">{item.product_name || item.name || 'Producto'}</p>
                                 <p className="text-xs text-slate-500">Cantidad: {item.quantity}</p>
@@ -254,10 +254,8 @@ export default function PedidoPage() {
                             </div>
                           ))}
                         </div>
-                      ) : (
-                        <p className="text-xs text-slate-500 italic">Los detalles individuales de los productos no están disponibles para este pedido.</p>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
