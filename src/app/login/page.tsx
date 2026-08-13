@@ -4,9 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useStoreSettings } from "@/context/StoreSettingsContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { settings } = useStoreSettings();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -60,9 +63,27 @@ export default function LoginPage() {
     "w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all font-mono";
   const labelStyles = "mb-1 block text-xs font-mono uppercase tracking-wider text-slate-400";
 
+  // Formatear el número de WhatsApp para la URL
+  const whatsappNumber = settings.whatsapp?.replace(/[^0-9]/g, "") || "";
+  const whatsappUrl = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}`
+    : "#";
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 p-4 text-slate-100">
-      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-8 shadow-2xl">
+    <div className="flex min-h-screen flex-col items-center justify-between bg-slate-950 p-4 sm:p-6 text-slate-100">
+      
+      {/* Botón superior de Ir al Inicio */}
+      <div className="w-full max-w-md flex justify-start pt-2">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 px-4 py-2 rounded-xl text-xs font-mono transition-all backdrop-blur-md"
+        >
+          ← Ir al inicio
+        </Link>
+      </div>
+
+      {/* Tarjeta de Inicio de Sesión */}
+      <div className="w-full max-w-md my-auto rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-8 shadow-2xl">
         
         <div>
           <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
@@ -138,6 +159,65 @@ export default function LoginPage() {
         </p>
 
       </div>
+
+      {/* Pie de página con accesos a WhatsApp y Redes Sociales */}
+      <footer className="w-full max-w-md pt-4 pb-2 flex flex-col items-center gap-3">
+        <div className="flex items-center justify-center gap-3 flex-wrap">
+          
+          {/* Botón WhatsApp */}
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-3 py-1.5 rounded-xl text-xs font-mono transition-all"
+          >
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+            WhatsApp
+          </a>
+
+          {/* Facebook */}
+          {settings.facebook && (
+            <a
+              href={settings.facebook}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-mono transition-all"
+            >
+              Facebook
+            </a>
+          )}
+
+          {/* Instagram 1 */}
+          {settings.instagram && (
+            <a
+              href={settings.instagram}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-mono transition-all"
+            >
+              Instagram
+            </a>
+          )}
+
+          {/* Instagram 2 */}
+          {settings.instagram2 && (
+            <a
+              href={settings.instagram2}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-mono transition-all"
+            >
+              Instagram 2
+            </a>
+          )}
+
+        </div>
+
+        <p className="text-[10px] font-mono text-slate-600">
+          {settings.storeName || "Mundo Store"} © {new Date().getFullYear()}
+        </p>
+      </footer>
+
     </div>
   );
 }
