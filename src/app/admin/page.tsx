@@ -63,10 +63,15 @@ export default async function Dashboard() {
       : 0;
 
   return (
-    <div>
-      <h1 className="text-3xl font-bold mb-8">
-        Dashboard
-      </h1>
+    <div className="space-y-8 text-slate-100">
+      <div>
+        <h1 className="text-3xl font-extrabold text-white tracking-tight">
+          Dashboard
+        </h1>
+        <p className="text-xs text-slate-400 font-mono mt-1">
+          Resumen operativo en tiempo real.
+        </p>
+      </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
         <DashboardCard
@@ -90,21 +95,21 @@ export default async function Dashboard() {
         />
       </div>
 
-      <section className="mt-10">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <section className="mt-10 space-y-6">
+        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold">
+            <h2 className="text-2xl font-bold text-white tracking-wide">
               Resumen de ventas pagadas
             </h2>
 
-            <p className="text-slate-500 mt-2">
+            <p className="text-slate-400 text-sm mt-1">
               Totales y últimos pedidos que ya están en estado
               &quot;Pagado&quot;.
             </p>
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6 mt-6">
+        <div className="grid md:grid-cols-3 gap-6">
           <DashboardCard
             title="Pedidos pagados"
             value={paidOrders.length}
@@ -121,43 +126,44 @@ export default async function Dashboard() {
           />
         </div>
 
-        <div className="overflow-hidden rounded-xl shadow bg-white mt-6">
-          <div className="border-b border-slate-200 px-6 py-4">
-            <h3 className="text-lg font-semibold">
+        {/* Tabla cibernética de pedidos */}
+        <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md shadow-2xl">
+          <div className="border-b border-slate-800 px-6 py-4 bg-slate-950/40">
+            <h3 className="text-base font-bold text-white font-mono tracking-wide">
               Últimos pedidos pagados
             </h3>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-100 text-slate-600 uppercase text-xs tracking-wider">
+            <table className="w-full text-left text-sm text-slate-300">
+              <thead className="bg-slate-950/80 text-cyan-400 font-mono text-xs uppercase tracking-wider border-b border-slate-800">
                 <tr>
-                  <th className="px-4 py-3">Pedido</th>
-                  <th className="px-4 py-3">Cliente</th>
-                  <th className="px-4 py-3">Total</th>
-                  <th className="px-4 py-3">Fecha</th>
+                  <th className="px-6 py-3.5">Pedido</th>
+                  <th className="px-6 py-3.5">Cliente</th>
+                  <th className="px-6 py-3.5">Total</th>
+                  <th className="px-6 py-3.5">Fecha</th>
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody className="divide-y divide-slate-800/60">
                 {paidOrders.slice(0, 5).map((order) => (
                   <tr
                     key={order.id}
-                    className="border-t border-slate-200"
+                    className="hover:bg-slate-800/40 transition-colors"
                   >
-                    <td className="px-4 py-3 font-semibold">
+                    <td className="px-6 py-4 font-mono font-bold text-cyan-400">
                       #{order.id}
                     </td>
 
-                    <td className="px-4 py-3">
-                      {order.customer_name}
+                    <td className="px-6 py-4 font-medium text-slate-200">
+                      {order.customer_name || "Cliente general"}
                     </td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4 font-mono font-semibold text-emerald-400">
                       ${Number(order.total).toFixed(2)}
                     </td>
 
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4 font-mono text-xs text-slate-400">
                       {new Date(
                         order.created_at ?? ""
                       ).toLocaleDateString()}
@@ -169,7 +175,7 @@ export default async function Dashboard() {
                   <tr>
                     <td
                       colSpan={4}
-                      className="px-4 py-6 text-center text-slate-500"
+                      className="px-6 py-8 text-center text-slate-500 font-mono text-xs"
                     >
                       No hay pedidos pagados todavía.
                     </td>
