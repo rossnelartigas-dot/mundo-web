@@ -48,52 +48,80 @@ export default async function CategoriesPage() {
   const topCategory = categories[0];
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold">Categorías</h1>
-        <p className="mt-2 text-slate-500">
+    <div className="space-y-8 text-slate-100">
+      <div>
+        <h1 className="text-3xl font-extrabold text-white tracking-tight">
+          Categorías
+        </h1>
+        <p className="mt-1 text-xs text-slate-400 font-mono">
           Sección funcional de categorías basada en los productos cargados.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-        <div className="bg-white rounded-xl shadow p-6">
-          <p className="text-slate-500">Categorías encontradas</p>
-          <h2 className="text-4xl font-bold mt-3">{totalCategories}</h2>
+      {/* Tarjetas de Métricas Neón */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <p className="text-xs font-mono uppercase tracking-wider text-slate-400">
+            Categorías encontradas
+          </p>
+          <h2 className="text-4xl font-extrabold font-mono text-cyan-400 mt-2">
+            {totalCategories}
+          </h2>
         </div>
-        <div className="bg-white rounded-xl shadow p-6">
-          <p className="text-slate-500">Productos totales</p>
-          <h2 className="text-4xl font-bold mt-3">{totalProducts}</h2>
+
+        <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <p className="text-xs font-mono uppercase tracking-wider text-slate-400">
+            Productos totales
+          </p>
+          <h2 className="text-4xl font-extrabold font-mono text-cyan-400 mt-2">
+            {totalProducts}
+          </h2>
         </div>
-        <div className="bg-white rounded-xl shadow p-6">
-          <p className="text-slate-500">Categoría con más productos</p>
-          <h2 className="text-4xl font-bold mt-3">
+
+        <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl p-6 shadow-xl">
+          <p className="text-xs font-mono uppercase tracking-wider text-slate-400">
+            Categoría con más productos
+          </p>
+          <h2 className="text-3xl font-bold font-mono text-cyan-400 mt-2 truncate">
             {topCategory ? topCategory.name : "-"}
           </h2>
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-xl shadow bg-white">
-        <div className="border-b border-slate-200 px-6 py-4">
-          <h2 className="text-xl font-semibold">Resumen por categoría</h2>
+      {/* Tabla Cibernética de Categorías */}
+      <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md shadow-2xl">
+        <div className="border-b border-slate-800 px-6 py-4 bg-slate-950/40">
+          <h2 className="text-base font-bold text-white font-mono tracking-wide">
+            Resumen por categoría
+          </h2>
         </div>
+        
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-slate-100 text-slate-600 uppercase text-xs tracking-wider">
+          <table className="w-full text-left text-sm text-slate-300">
+            <thead className="bg-slate-950/80 text-cyan-400 font-mono text-xs uppercase tracking-wider border-b border-slate-800">
               <tr>
-                <th className="px-4 py-3">Categoría</th>
-                <th className="px-4 py-3">Productos</th>
-                <th className="px-4 py-3">Ingresos</th>
-                <th className="px-4 py-3">Último producto</th>
+                <th className="px-6 py-3.5">Categoría</th>
+                <th className="px-6 py-3.5">Productos</th>
+                <th className="px-6 py-3.5">Ingresos</th>
+                <th className="px-6 py-3.5">Último producto</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-800/60">
               {categories.map((category) => (
-                <tr key={category.name} className="border-t border-slate-200">
-                  <td className="px-4 py-3 font-semibold">{category.name}</td>
-                  <td className="px-4 py-3">{category.count}</td>
-                  <td className="px-4 py-3">${category.revenue.toFixed(2)}</td>
-                  <td className="px-4 py-3">
+                <tr 
+                  key={category.name} 
+                  className="hover:bg-slate-800/40 transition-colors"
+                >
+                  <td className="px-6 py-4 font-semibold text-slate-100">
+                    {category.name}
+                  </td>
+                  <td className="px-6 py-4 font-mono text-cyan-400">
+                    {category.count}
+                  </td>
+                  <td className="px-6 py-4 font-mono font-semibold text-emerald-400">
+                    ${category.revenue.toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 font-mono text-xs text-slate-400">
                     {category.lastProductAt
                       ? new Date(category.lastProductAt).toLocaleDateString()
                       : "-"}
@@ -102,7 +130,10 @@ export default async function CategoriesPage() {
               ))}
               {categories.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-6 text-center text-slate-500">
+                  <td 
+                    colSpan={4} 
+                    className="px-6 py-8 text-center text-slate-500 font-mono text-xs"
+                  >
                     No se encontraron categorías.
                   </td>
                 </tr>
