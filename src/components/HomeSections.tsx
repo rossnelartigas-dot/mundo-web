@@ -14,7 +14,7 @@ const links = [
   {
     href: "/ofertas",
     label: "Ofertas",
-    icon: "🔥",
+    icon: "⚡",
   },
   {
     href: "/consultar-pedido",
@@ -30,11 +30,9 @@ const links = [
 
 export default function HomeSections() {
   return (
-    <section className="border-b border-slate-200 bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-
+    <section className="border-b border-slate-900 bg-slate-950 text-slate-100">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-
           {links.map((link) => (
             <Link
               key={link.href}
@@ -44,31 +42,35 @@ export default function HomeSections() {
                 flex
                 items-center
                 justify-center
-                gap-2
+                gap-2.5
                 rounded-xl
                 border
-                border-slate-200
-                bg-slate-50
+                border-slate-800
+                bg-slate-900/80
                 px-4
-                py-3
-                text-sm
-                font-semibold
-                text-slate-700
+                py-3.5
+                text-xs
+                font-mono
+                font-bold
+                text-slate-300
+                backdrop-blur-md
+                shadow-lg
                 transition-all
-                duration-200
+                duration-300
                 hover:-translate-y-0.5
-                hover:border-cyan-400
-                hover:bg-cyan-50
-                hover:text-cyan-700
-                hover:shadow-sm
+                hover:border-cyan-500/50
+                hover:bg-slate-900
+                hover:text-cyan-400
+                hover:shadow-[0_0_20px_rgba(6,182,212,0.18)]
+                active:scale-[0.98]
               "
             >
               <span
                 className="
-                  text-lg
+                  text-base
                   transition-transform
-                  duration-200
-                  group-hover:scale-110
+                  duration-300
+                  group-hover:scale-125
                 "
               >
                 {link.icon}
@@ -77,9 +79,7 @@ export default function HomeSections() {
               <span>{link.label}</span>
             </Link>
           ))}
-
         </div>
-
       </div>
     </section>
   );
