@@ -56,29 +56,39 @@ export default function LoginPage() {
     }
   };
 
+  const inputStyles =
+    "w-full rounded-xl border border-slate-800 bg-slate-950/80 px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/50 transition-all font-mono";
+  const labelStyles = "mb-1 block text-xs font-mono uppercase tracking-wider text-slate-400";
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900">Iniciar Sesión</h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Ingresa tus credenciales para acceder a tu cuenta
-        </p>
+    <div className="flex min-h-screen items-center justify-center bg-slate-950 p-4 text-slate-100">
+      <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-8 shadow-2xl">
+        
+        <div>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
+            Iniciar Sesión
+          </h1>
+          <p className="mt-1 text-xs text-slate-400 font-mono">
+            Ingresa tus credenciales para acceder a la plataforma.
+          </p>
+        </div>
 
         {error && (
-          <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 border border-red-200">
+          <div className="mt-5 rounded-xl bg-rose-500/10 border border-rose-500/20 p-3.5 text-xs font-mono text-rose-400 flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-rose-500 animate-pulse" />
             {error}
           </div>
         )}
 
         <form onSubmit={handleLogin} className="mt-6 space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className={labelStyles}>
               Correo Electrónico
             </label>
             <input
               type="email"
               required
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className={inputStyles}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
@@ -87,14 +97,14 @@ export default function LoginPage() {
 
           <div>
             <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-slate-700">
+              <label className={labelStyles}>
                 Contraseña
               </label>
             </div>
             <input
               type="password"
               required
-              className="w-full rounded-lg border border-slate-300 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              className={inputStyles}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -104,21 +114,29 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-cyan-600 py-2.5 font-medium text-white hover:bg-cyan-700 transition disabled:opacity-50"
+            className="w-full rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-mono font-bold py-2.5 text-xs uppercase tracking-wider transition-all shadow-[0_0_15px_rgba(6,182,212,0.25)] hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] disabled:opacity-50 disabled:cursor-not-allowed mt-2"
           >
-            {loading ? "Iniciando sesión..." : "Ingresar"}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-slate-950 animate-ping" />
+                Iniciando sesión...
+              </span>
+            ) : (
+              "Ingresar"
+            )}
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-600">
+        <p className="mt-6 text-center text-xs font-mono text-slate-400">
           ¿No tienes una cuenta aún?{" "}
           <Link
             href="/register"
-            className="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline"
+            className="font-bold text-cyan-400 hover:text-cyan-300 transition-colors"
           >
             Regístrate aquí
           </Link>
         </p>
+
       </div>
     </div>
   );
