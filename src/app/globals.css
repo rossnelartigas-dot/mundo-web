@@ -48,40 +48,40 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Configuración Dark Cyberpunk por defecto en toda la app */
+/* Configuración Cyberpunk por defecto */
 :root {
-  --background: oklch(0.12 0.02 250); /* #020617 Slate 950 ultra oscuro */
-  --foreground: oklch(0.96 0.01 240); /* Texto claro */
+  --background: oklch(0.12 0.02 250);
+  --foreground: oklch(0.96 0.01 240);
   
-  --card: oklch(0.18 0.03 250 / 80%); /* Cristal translúcido slate-900 */
+  --card: oklch(0.18 0.03 250 / 80%);
   --card-foreground: oklch(0.96 0.01 240);
   
   --popover: oklch(0.15 0.02 250);
   --popover-foreground: oklch(0.96 0.01 240);
   
-  --primary: oklch(0.72 0.17 200); /* Cyan Neón */
+  --primary: oklch(0.72 0.17 200);
   --primary-foreground: oklch(0.12 0.02 250);
   
-  --secondary: oklch(0.22 0.03 250); /* Slate 800 */
+  --secondary: oklch(0.22 0.03 250);
   --secondary-foreground: oklch(0.96 0.01 240);
   
   --muted: oklch(0.20 0.02 250);
   --muted-foreground: oklch(0.65 0.03 240);
   
-  --accent: oklch(0.72 0.17 200 / 15%); /* Cyan tenue */
+  --accent: oklch(0.72 0.17 200 / 15%);
   --accent-foreground: oklch(0.72 0.17 200);
   
   --destructive: oklch(0.60 0.22 25);
   
-  --border: oklch(1 1 1 / 8%); /* Borde muy tenue estilo cristal */
+  --border: oklch(1 1 1 / 8%);
   --input: oklch(1 1 1 / 10%);
   --ring: oklch(0.72 0.17 200 / 50%);
   
-  --chart-1: oklch(0.72 0.17 200); /* Cyan */
-  --chart-2: oklch(0.75 0.18 160); /* Esmeralda */
-  --chart-3: oklch(0.65 0.20 300); /* Violeta */
-  --chart-4: oklch(0.80 0.15 85);  /* Dorado / Amarillo */
-  --chart-5: oklch(0.65 0.22 25);  /* Coral */
+  --chart-1: oklch(0.72 0.17 200);
+  --chart-2: oklch(0.75 0.18 160);
+  --chart-3: oklch(0.65 0.20 300);
+  --chart-4: oklch(0.80 0.15 85);
+  --chart-5: oklch(0.65 0.22 25);
   
   --radius: 0.75rem;
   
@@ -96,7 +96,6 @@
 }
 
 .dark {
-  /* Mantener el mismo comportamiento oscuro en modo dark explicito */
   --background: oklch(0.12 0.02 250);
   --foreground: oklch(0.96 0.01 240);
   --card: oklch(0.18 0.03 250 / 80%);
@@ -134,10 +133,11 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   html {
-    @apply font-sans color-scheme-dark;
+    @apply font-sans;
+    color-scheme: dark;
   }
 
-  /* Barras de desplazamiento personalizadas estilo cibernético */
+  /* Scrollbars estilizadas */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
