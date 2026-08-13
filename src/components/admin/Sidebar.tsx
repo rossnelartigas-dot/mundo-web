@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
     LayoutDashboard,
     Package,
+    Boxes,
     FolderTree,
     ShoppingCart,
     Users,
@@ -22,6 +23,11 @@ const links = [
         href: "/admin/products",
         label: "Productos",
         icon: Package,
+    },
+    {
+        href: "/admin/inventario",
+        label: "Inventario",
+        icon: Boxes,
     },
     {
         href: "/admin/categories",

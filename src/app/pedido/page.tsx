@@ -45,7 +45,7 @@ export default function PedidoPage() {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
-        const email = session.user.email;
+        const email = session.user.email?.toLowerCase();
         const uid = session.user.id;
         
         setUserEmail(email || null);
@@ -71,16 +71,24 @@ export default function PedidoPage() {
   const handleGuestSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setSearchError(null);
+
+    const emailQuery = searchEmail.trim().toLowerCase();
+    const orderIdNum = parseInt(searchOrderNumber.trim(), 10);
+
+    // Validar que el ID sea numérico
+    if (isNaN(orderIdNum)) {
+      setSearchError('SISTEMA: El ID de la orden debe ser un número válido.');
+      return;
+    }
+
     setSearching(true);
 
-    const emailQuery = searchEmail.trim();
-    const orderNumQuery = searchOrderNumber.trim();
-
+    // Primero busca por ID numérico y luego por Correo
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .eq('customer_email', emailQuery)
-      .eq('id', orderNumQuery);
+      .eq('id', orderIdNum)
+      .eq('customer_email', emailQuery);
 
     setSearching(false);
 
@@ -136,7 +144,6 @@ export default function PedidoPage() {
   }
 
   return (
-    /* Contenedor principal con fondo personalizado */
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black text-slate-100 py-8 px-4 md:px-8 relative overflow-hidden">
       
       {/* Glow ambiental de fondo */}
@@ -193,6 +200,19 @@ export default function PedidoPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-mono text-slate-400 uppercase mb-1.5">
+                  ID de Orden
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={searchOrderNumber}
+                  onChange={(e) => setSearchOrderNumber(e.target.value)}
+                  placeholder="Ej: 19"
+                  className="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-500 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none transition focus:ring-1 focus:ring-cyan-500/30 font-mono"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-mono text-slate-400 uppercase mb-1.5">
                   Correo Registrado
                 </label>
                 <input
@@ -204,25 +224,12 @@ export default function PedidoPage() {
                   className="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-500 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none transition focus:ring-1 focus:ring-cyan-500/30"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-mono text-slate-400 uppercase mb-1.5">
-                  ID de Orden
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={searchOrderNumber}
-                  onChange={(e) => setSearchOrderNumber(e.target.value)}
-                  placeholder="Ej: 19"
-                  className="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-500 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none transition focus:ring-1 focus:ring-cyan-500/30"
-                />
-              </div>
             </div>
 
             <button
               type="submit"
               disabled={searching}
-              className="w-full md:w-auto relative bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold px-6 py-3 rounded-xl text-sm hover:brightness-110 active:scale-[0.98] disabled:opacity-50 transition shadow-lg shadow-cyan-500/20"
+              className="w-full md:w-auto relative bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold px-6 py-3 rounded-xl text-sm hover:brightness-110 active:scale-[0.98] disabled:opacity-50 transition shadow-lg shadow-cyan-500/20 cursor-pointer"
             >
               {searching ? 'Buscando...' : 'Rastrear Pedido →'}
             </button>

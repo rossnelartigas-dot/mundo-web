@@ -1,6 +1,5 @@
 import { supabase } from "@/lib/supabase";
 
-
 export interface OrderProduct {
   id: number;
   name: string;
@@ -14,21 +13,26 @@ export interface OrderData {
   customer_phone: string;
   customer_email: string;
   customer_address: string;
+  payment_method: string;     // <-- Añadido
+  payment_reference?: string; // <-- Añadido (ej. # de referencia Pago Móvil/Zelle)
   products: OrderProduct[];
   total: number;
 }
 
+/**
+ * Crea un pedido (incluyendo método y referencia de pago) y descuenta automáticamente del inventario.
+ */
 export async function createOrder(order: OrderData) {
-  const {
-    data,
-    error,
-  } = await supabase
+  // 1. Guardar el pedido en la base de datos
+  const { data, error } = await supabase
     .from("orders")
     .insert({
       customer_name: order.customer_name,
       customer_phone: order.customer_phone,
       customer_email: order.customer_email,
       customer_address: order.customer_address,
+      payment_method: order.payment_method,           // <-- Se guarda el método
+      payment_reference: order.payment_reference || null, // <-- Se guarda la referencia
       products: order.products,
       total: order.total,
       status: "pending",
@@ -40,14 +44,32 @@ export async function createOrder(order: OrderData) {
     throw error;
   }
 
+  // 2. Descontar el inventario de cada producto comprado
+  if (Array.isArray(order.products)) {
+    for (const item of order.products) {
+      const { data: productData, error: fetchError } = await supabase
+        .from("products")
+        .select("stock")
+        .eq("id", item.id)
+        .single();
+
+      if (!fetchError && productData) {
+        const currentStock = productData.stock ?? 0;
+        const newStock = Math.max(0, currentStock - Number(item.quantity || 1));
+
+        await supabase
+          .from("products")
+          .update({ stock: newStock })
+          .eq("id", item.id);
+      }
+    }
+  }
+
   return data;
 }
 
 export async function getOrders() {
-  const {
-    data,
-    error,
-  } = await supabase
+  const { data, error } = await supabase
     .from("orders")
     .select("*")
     .order("created_at", {
@@ -62,10 +84,7 @@ export async function getOrders() {
 }
 
 export async function getOrder(id: number) {
-  const {
-    data,
-    error,
-  } = await supabase
+  const { data, error } = await supabase
     .from("orders")
     .select("*")
     .eq("id", id)
@@ -80,21 +99,11 @@ export async function getOrder(id: number) {
 
 /*
   Consulta un pedido utilizando:
-
   - Número del pedido
   - Correo electrónico del cliente
-
-  Esto evita que una persona pueda consultar
-  cualquier pedido simplemente cambiando el ID.
 */
-export async function getOrderByIdAndEmail(
-  id: number,
-  email: string
-) {
-  const {
-    data,
-    error,
-  } = await supabase
+export async function getOrderByIdAndEmail(id: number, email: string) {
+  const { data, error } = await supabase
     .from("orders")
     .select("*")
     .eq("id", id)
@@ -108,61 +117,96 @@ export async function getOrderByIdAndEmail(
   return data;
 }
 
-export async function updateOrderStatus(
-  id: number,
-  status: string
-) {
-  // Primero buscamos el pedido
-  const {
-    data: order,
-    error: getError,
-  } = await supabase
+/**
+ * Actualiza el estado del pedido y gestiona la devolución/descuento de inventario.
+ */
+export async function updateOrderStatus(id: number, status: string) {
+  // 1. Buscamos el pedido actual para conocer sus items y estado anterior
+  const { data: order, error: getError } = await supabase
     .from("orders")
     .select("*")
     .eq("id", id)
     .single();
 
-  if (getError) {
-    throw getError;
+  if (getError || !order) {
+    throw getError || new Error("Pedido no encontrado");
   }
 
-  // Actualizamos el estado
-  const {
-    error: updateError,
-  } = await supabase
+  const previousStatus = order.status;
+
+  // 2. Actualizamos el nuevo estado en la BD
+  const { error: updateError } = await supabase
     .from("orders")
-    .update({
-      status,
-    })
+    .update({ status })
     .eq("id", id);
 
   if (updateError) {
     throw updateError;
   }
 
-  // Enviamos el correo mediante una ruta del servidor
-  try {
-    const response = await fetch(
-      "/api/order-status",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          customerEmail:
-            order.customer_email,
+  // Identificar si el estado es o era 'cancelled' / 'cancelado'
+  const isCancelled = (st: string) =>
+    st.toLowerCase() === "cancelled" || st.toLowerCase() === "cancelado";
 
-          customerName:
-            order.customer_name,
+  const isNewStatusCancelled = isCancelled(status);
+  const wasPreviousStatusCancelled = isCancelled(previousStatus);
 
-          orderId:
-            order.id,
+  // 3. RESTAURAR STOCK: Si pasa de NO cancelado -> CANCELADO
+  if (isNewStatusCancelled && !wasPreviousStatusCancelled && Array.isArray(order.products)) {
+    for (const item of order.products) {
+      const { data: productData } = await supabase
+        .from("products")
+        .select("stock")
+        .eq("id", item.id)
+        .single();
 
-          status,
-        }),
+      if (productData) {
+        const currentStock = productData.stock ?? 0;
+        const restoredStock = currentStock + Number(item.quantity || 1);
+
+        await supabase
+          .from("products")
+          .update({ stock: restoredStock })
+          .eq("id", item.id);
       }
-    );
+    }
+  }
+
+  // 4. DESCONTAR STOCK DE NUEVO: Si pasa de CANCELADO -> ACTIVO
+  if (!isNewStatusCancelled && wasPreviousStatusCancelled && Array.isArray(order.products)) {
+    for (const item of order.products) {
+      const { data: productData } = await supabase
+        .from("products")
+        .select("stock")
+        .eq("id", item.id)
+        .single();
+
+      if (productData) {
+        const currentStock = productData.stock ?? 0;
+        const newStock = Math.max(0, currentStock - Number(item.quantity || 1));
+
+        await supabase
+          .from("products")
+          .update({ stock: newStock })
+          .eq("id", item.id);
+      }
+    }
+  }
+
+  // 5. Enviamos el correo de notificación
+  try {
+    const response = await fetch("/api/order-status", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        customerEmail: order.customer_email,
+        customerName: order.customer_name,
+        orderId: order.id,
+        status,
+      }),
+    });
 
     if (!response.ok) {
       console.error(
@@ -180,12 +224,7 @@ export async function updateOrderStatus(
 }
 
 export async function deleteOrder(id: number) {
-  const {
-    error,
-  } = await supabase
-    .from("orders")
-    .delete()
-    .eq("id", id);
+  const { error } = await supabase.from("orders").delete().eq("id", id);
 
   if (error) {
     throw error;
