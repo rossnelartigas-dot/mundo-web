@@ -3,29 +3,33 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 
-interface OrderItem {
-  id?: string;
-  product_name?: string;
+interface ProductItem {
+  id?: number | string;
   name?: string;
-  quantity: number;
-  price: number;
+  price?: number;
+  quantity?: number;
+  image?: string;
 }
 
 interface Order {
-  id: string;
-  order_number: string;
-  status: string;
-  total_amount: number;
+  id: string | number;
+  customer_email?: string;
+  customer_name?: string;
+  customer_phone?: string;
+  customer_address?: string;
+  status?: string;
+  total?: number;
   created_at: string;
-  email?: string;
-  items?: OrderItem[]; // Por si tienes el desglose de productos en la tabla
+  user_id?: string | null;
+  products?: ProductItem[] | string; // Puede venir como array o como string JSON
 }
 
 export default function PedidoPage() {
   const [loading, setLoading] = useState(true);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | number | null>(null);
 
   // Estados para búsqueda de invitados
   const [searchEmail, setSearchEmail] = useState('');
@@ -33,44 +37,52 @@ export default function PedidoPage() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
 
-  // 1. Validar sesión al cargar (Lógica intacta)
+  // 1. Cargar pedidos al montar el componente
   useEffect(() => {
-    async function checkAuthAndFetchOrders() {
+    async function fetchOrders() {
       setLoading(true);
-      
+
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
-        setUserId(session.user.id);
+        const email = session.user.email;
+        const uid = session.user.id;
         
-        // Obtenemos sus pedidos por user_id exactamente igual
+        setUserEmail(email || null);
+        setUserId(uid);
+
+        // Busca por user_id O por customer_email para traer tanto viejos como nuevos
         const { data, error } = await supabase
           .from('orders')
           .select('*')
-          .eq('user_id', session.user.id)
+          .or(`user_id.eq.${uid},customer_email.eq.${email}`)
           .order('created_at', { ascending: false });
 
         if (!error && data) {
           setOrders(data);
         }
       }
+
       setLoading(false);
     }
 
-    checkAuthAndFetchOrders();
+    fetchOrders();
   }, []);
 
-  // 2. Manejador de búsqueda para usuarios no autenticados (Lógica intacta)
+  // 2. Búsqueda manual como invitado
   const handleGuestSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setSearchError(null);
     setSearching(true);
 
+    const emailQuery = searchEmail.trim();
+    const orderNumQuery = searchOrderNumber.trim();
+
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .eq('email', searchEmail.trim())
-      .eq('order_number', searchOrderNumber.trim());
+      .eq('customer_email', emailQuery)
+      .eq('id', orderNumQuery);
 
     setSearching(false);
 
@@ -79,25 +91,36 @@ export default function PedidoPage() {
       setOrders([]);
     } else {
       setOrders(data);
-      if (data.length > 0) setExpandedOrderId(data[0].id); // Despliega el resultado de búsqueda
+      if (data.length > 0) setExpandedOrderId(data[0].id);
     }
   };
 
-  // Función para abrir/cerrar detalles del pedido
-  const toggleOrderDetails = (orderId: string) => {
-    setExpandedOrderId((prev) => (prev === orderId ? null : orderId));
+  // Alternar acordeón desplegable
+  const toggleOrder = (id: string | number) => {
+    setExpandedOrderId((prev) => (prev === id ? null : id));
   };
 
-  // Helper para asignar colores dinámicos al estado del pedido
+  // Parsear productos en formato JSON si vienen como String
+  const parseProducts = (productsRaw: ProductItem[] | string | undefined): ProductItem[] => {
+    if (!productsRaw) return [];
+    if (Array.isArray(productsRaw)) return productsRaw;
+    try {
+      return JSON.parse(productsRaw);
+    } catch {
+      return [];
+    }
+  };
+
+  // Badge de estado dinámico
   const getStatusBadge = (status?: string) => {
-    const s = (status || 'Procesando').toLowerCase();
-    if (s.includes('completado') || s.includes('entregado')) {
+    const s = (status || 'pending').toLowerCase();
+    if (s === 'paid' || s === 'completado' || s === 'delivered') {
       return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
     }
-    if (s.includes('pendiente') || s.includes('espera')) {
+    if (s === 'pending' || s === 'pendiente') {
       return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
     }
-    if (s.includes('cancelado')) {
+    if (s === 'cancelled' || s === 'cancelado') {
       return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
     }
     return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
@@ -116,19 +139,19 @@ export default function PedidoPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
-      {/* Título Principal */}
+      {/* Encabezado */}
       <div className="border-b border-slate-800 pb-4">
         <h1 className="text-3xl font-extrabold text-white tracking-tight">
-          {userId ? 'Mis Pedidos' : 'Consulta de Pedidos'}
+          {userEmail ? 'Mis Pedidos' : 'Consulta de Pedidos'}
         </h1>
         <p className="text-slate-400 text-sm mt-1">
-          {userId
-            ? 'Gestiona y revisa el estado detallado de tus compras.'
-            : 'Ingresa los datos de tu compra para obtener los detalles.'}
+          {userEmail
+            ? `Mostrando historial de compras de ${userEmail}`
+            : 'Ingresa los datos de tu compra para consultar el estado actual.'}
         </p>
       </div>
 
-      {/* Formulario para invitados si no hay sesión */}
+      {/* Formulario Invitados */}
       {!userId && (
         <form onSubmit={handleGuestSearch} className="bg-slate-900/90 backdrop-blur-md p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
           <h2 className="text-base font-semibold text-slate-200">Consultar como invitado</h2>
@@ -145,13 +168,13 @@ export default function PedidoPage() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1.5">Número de Pedido</label>
+              <label className="block text-xs font-semibold text-slate-400 mb-1.5">ID / Número de Pedido</label>
               <input
                 type="text"
                 required
                 value={searchOrderNumber}
                 onChange={(e) => setSearchOrderNumber(e.target.value)}
-                placeholder="Ej: 12345"
+                placeholder="Ej: 19"
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-cyan-500 transition"
               />
             </div>
@@ -168,45 +191,43 @@ export default function PedidoPage() {
         </form>
       )}
 
-      {/* Listado de Pedidos en Acordeón */}
+      {/* Lista de Pedidos */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-slate-200">
-          {userId ? 'Historial de Compras' : 'Resultado de Búsqueda'}
-        </h2>
-
         {orders.length === 0 ? (
           <div className="text-center py-12 bg-slate-900/40 rounded-2xl border border-slate-800 p-6">
             <p className="text-slate-400 text-sm">
-              {userId
-                ? 'Aún no tienes pedidos registrados en tu cuenta.'
+              {userEmail
+                ? 'No se encontraron pedidos asociados a tu cuenta.'
                 : 'Ingresa tus datos arriba para consultar tu pedido.'}
             </p>
           </div>
         ) : (
           orders.map((order) => {
             const isExpanded = expandedOrderId === order.id;
+            const productList = parseProducts(order.products);
+            const totalAmount = Number(order.total || 0);
 
             return (
               <div
                 key={order.id}
                 className="bg-slate-900/90 border border-slate-800 hover:border-slate-700/80 rounded-2xl overflow-hidden transition shadow-lg"
               >
-                {/* Cabecera del pedido (Presionable) */}
+                {/* Cabecera del pedido */}
                 <button
-                  onClick={() => toggleOrderDetails(order.id)}
+                  onClick={() => toggleOrder(order.id)}
                   className="w-full p-5 text-left flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer select-none"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center space-x-3">
                       <span className="font-bold text-white text-base">
-                        Pedido #{order.order_number || order.id.substring(0, 8)}
+                        Pedido #{order.id}
                       </span>
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full border font-semibold ${getStatusBadge(order.status)}`}>
-                        {order.status || 'Procesando'}
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full border font-semibold capitalize ${getStatusBadge(order.status)}`}>
+                        {order.status || 'pending'}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400">
-                      Fecha: {new Date(order.created_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                    <p className="text-xs text-slate-400" suppressHydrationWarning>
+                      Fecha: {new Date(order.created_at).toLocaleDateString()}
                     </p>
                   </div>
 
@@ -214,11 +235,10 @@ export default function PedidoPage() {
                     <div className="text-left md:text-right">
                       <span className="block text-[10px] text-slate-500 uppercase font-semibold">Total</span>
                       <span className="font-extrabold text-cyan-400 text-lg">
-                        ${order.total_amount ? order.total_amount.toLocaleString() : '0'}
+                        ${totalAmount.toLocaleString()}
                       </span>
                     </div>
 
-                    {/* Flecha indicadora de apertura */}
                     <div className={`p-2 rounded-xl bg-slate-800/50 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180 bg-slate-800 text-white' : ''}`}>
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -230,31 +250,49 @@ export default function PedidoPage() {
                 {/* Desplegable con los detalles */}
                 {isExpanded && (
                   <div className="border-t border-slate-800 bg-slate-950/60 p-5 space-y-4">
+                    {/* Datos del Cliente */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-300 bg-slate-900/60 p-4 rounded-xl border border-slate-800/80">
                       <div>
-                        <span className="text-slate-500 block mb-0.5">Correo de contacto:</span>
-                        <span className="font-medium text-white">{order.email || 'No especificado'}</span>
+                        <span className="text-slate-500 block mb-0.5">Cliente:</span>
+                        <span className="font-medium text-white">{order.customer_name || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 block mb-0.5">ID Interno de Orden:</span>
-                        <span className="font-mono text-slate-400">{order.id}</span>
+                        <span className="text-slate-500 block mb-0.5">Correo:</span>
+                        <span className="font-medium text-white">{order.customer_email || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Teléfono:</span>
+                        <span className="text-slate-300">{order.customer_phone || 'N/A'}</span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500 block mb-0.5">Dirección de Entrega:</span>
+                        <span className="text-slate-300 whitespace-pre-line">{order.customer_address || 'N/A'}</span>
                       </div>
                     </div>
 
-                    {/* Sección para lista de productos (Si vienen en order.items) */}
-                    {order.items && Array.isArray(order.items) && order.items.length > 0 && (
+                    {/* Desglose de Productos comprados */}
+                    {productList.length > 0 && (
                       <div>
                         <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Artículos comprados</h4>
                         <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl overflow-hidden bg-slate-900/40">
-                          {order.items.map((item, idx) => (
-                            <div key={idx} className="p-3 flex justify-between items-center text-sm">
-                              <div>
-                                <p className="font-medium text-white">{item.product_name || item.name || 'Producto'}</p>
-                                <p className="text-xs text-slate-500">Cantidad: {item.quantity}</p>
+                          {productList.map((prod, idx) => {
+                            const qty = prod.quantity || 1;
+                            const price = prod.price || 0;
+                            return (
+                              <div key={idx} className="p-3 flex justify-between items-center text-sm">
+                                <div className="flex items-center space-x-3">
+                                  {prod.image && (
+                                    <img src={prod.image} alt={prod.name} className="w-10 h-10 object-cover rounded-lg border border-slate-800" />
+                                  )}
+                                  <div>
+                                    <p className="font-medium text-white">{prod.name || 'Producto'}</p>
+                                    <p className="text-xs text-slate-500">Cantidad: {qty} x ${price}</p>
+                                  </div>
+                                </div>
+                                <span className="font-semibold text-slate-200">${(price * qty).toLocaleString()}</span>
                               </div>
-                              <span className="font-semibold text-slate-200">${(item.price * item.quantity).toLocaleString()}</span>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
