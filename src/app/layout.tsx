@@ -55,6 +55,7 @@ export default function RootLayout({
       lang="es"
       className={cn(
         "h-full",
+        "dark", // 👈 Forzamos el modo oscuro global de Tailwind
         "antialiased",
         geistSans.variable,
         geistMono.variable,
@@ -62,7 +63,8 @@ export default function RootLayout({
         inter.variable
       )}
     >
-      <body className="min-h-full flex flex-col">
+      {/* 👈 Añadimos bg-slate-950 y text-slate-100 para que toda la pantalla sea oscura por defecto */}
+      <body className="min-h-full flex flex-col bg-slate-950 text-slate-100 selection:bg-cyan-500 selection:text-slate-950">
 
         <CartProvider>
           <FavoritesProvider>
