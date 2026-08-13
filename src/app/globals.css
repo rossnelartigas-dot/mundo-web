@@ -48,83 +48,108 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Configuración Dark Cyberpunk por defecto en toda la app */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --background: oklch(0.12 0.02 250); /* #020617 Slate 950 ultra oscuro */
+  --foreground: oklch(0.96 0.01 240); /* Texto claro */
+  
+  --card: oklch(0.18 0.03 250 / 80%); /* Cristal translúcido slate-900 */
+  --card-foreground: oklch(0.96 0.01 240);
+  
+  --popover: oklch(0.15 0.02 250);
+  --popover-foreground: oklch(0.96 0.01 240);
+  
+  --primary: oklch(0.72 0.17 200); /* Cyan Neón */
+  --primary-foreground: oklch(0.12 0.02 250);
+  
+  --secondary: oklch(0.22 0.03 250); /* Slate 800 */
+  --secondary-foreground: oklch(0.96 0.01 240);
+  
+  --muted: oklch(0.20 0.02 250);
+  --muted-foreground: oklch(0.65 0.03 240);
+  
+  --accent: oklch(0.72 0.17 200 / 15%); /* Cyan tenue */
+  --accent-foreground: oklch(0.72 0.17 200);
+  
+  --destructive: oklch(0.60 0.22 25);
+  
+  --border: oklch(1 1 1 / 8%); /* Borde muy tenue estilo cristal */
+  --input: oklch(1 1 1 / 10%);
+  --ring: oklch(0.72 0.17 200 / 50%);
+  
+  --chart-1: oklch(0.72 0.17 200); /* Cyan */
+  --chart-2: oklch(0.75 0.18 160); /* Esmeralda */
+  --chart-3: oklch(0.65 0.20 300); /* Violeta */
+  --chart-4: oklch(0.80 0.15 85);  /* Dorado / Amarillo */
+  --chart-5: oklch(0.65 0.22 25);  /* Coral */
+  
+  --radius: 0.75rem;
+  
+  --sidebar: oklch(0.14 0.02 250);
+  --sidebar-foreground: oklch(0.96 0.01 240);
+  --sidebar-primary: oklch(0.72 0.17 200);
+  --sidebar-primary-foreground: oklch(0.12 0.02 250);
+  --sidebar-accent: oklch(0.22 0.03 250);
+  --sidebar-accent-foreground: oklch(0.72 0.17 200);
+  --sidebar-border: oklch(1 1 1 / 8%);
+  --sidebar-ring: oklch(0.72 0.17 200 / 50%);
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  /* Mantener el mismo comportamiento oscuro en modo dark explicito */
+  --background: oklch(0.12 0.02 250);
+  --foreground: oklch(0.96 0.01 240);
+  --card: oklch(0.18 0.03 250 / 80%);
+  --card-foreground: oklch(0.96 0.01 240);
+  --popover: oklch(0.15 0.02 250);
+  --popover-foreground: oklch(0.96 0.01 240);
+  --primary: oklch(0.72 0.17 200);
+  --primary-foreground: oklch(0.12 0.02 250);
+  --secondary: oklch(0.22 0.03 250);
+  --secondary-foreground: oklch(0.96 0.01 240);
+  --muted: oklch(0.20 0.02 250);
+  --muted-foreground: oklch(0.65 0.03 240);
+  --accent: oklch(0.72 0.17 200 / 15%);
+  --accent-foreground: oklch(0.72 0.17 200);
+  --destructive: oklch(0.60 0.22 25);
+  --border: oklch(1 1 1 / 8%);
+  --input: oklch(1 1 1 / 10%);
+  --ring: oklch(0.72 0.17 200 / 50%);
+  --sidebar: oklch(0.14 0.02 250);
+  --sidebar-foreground: oklch(0.96 0.01 240);
+  --sidebar-primary: oklch(0.72 0.17 200);
+  --sidebar-primary-foreground: oklch(0.12 0.02 250);
+  --sidebar-accent: oklch(0.22 0.03 250);
+  --sidebar-accent-foreground: oklch(0.72 0.17 200);
+  --sidebar-border: oklch(1 1 1 / 8%);
+  --sidebar-ring: oklch(0.72 0.17 200 / 50%);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-slate-800/80 outline-cyan-500/30;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-slate-950 text-slate-100 antialiased selection:bg-cyan-500 selection:text-slate-950;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
   html {
-    @apply font-sans;
+    @apply font-sans color-scheme-dark;
+  }
+
+  /* Barras de desplazamiento personalizadas estilo cibernético */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #020617;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #06b6d4;
   }
 }
