@@ -38,19 +38,20 @@ const categories = [
 
 export default function Categories() {
   return (
-    <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+    <section className="mx-auto max-w-7xl px-6 py-16 lg:px-8 text-slate-100">
+      {/* ENCABEZADO DE LA SECCIÓN */}
       <div className="mb-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-semibold uppercase tracking-wider text-cyan-600">
+          <p className="text-xs font-mono font-bold uppercase tracking-widest text-cyan-400">
             Explora nuestra tienda
           </p>
 
-          <h2 className="mt-2 text-3xl font-bold text-slate-900">
+          <h2 className="mt-2 text-3xl font-extrabold text-white tracking-tight">
             Compra por categoría
           </h2>
 
-          <p className="mt-2 max-w-2xl text-slate-500">
-            Encuentra rápidamente los productos que necesitas.
+          <p className="mt-1 text-xs font-mono text-slate-400 max-w-2xl">
+            Encuentra rápidamente los componentes y dispositivos que necesitas.
           </p>
         </div>
 
@@ -60,18 +61,22 @@ export default function Categories() {
             inline-flex
             items-center
             gap-2
-            text-sm
-            font-semibold
-            text-cyan-600
-            transition
-            hover:text-cyan-700
+            text-xs
+            font-mono
+            font-bold
+            text-cyan-400
+            transition-all
+            hover:text-cyan-300
+            hover:translate-x-1
+            w-fit
           "
         >
-          Ver todas
-          <ArrowRight size={17} />
+          <span>Ver todas</span>
+          <ArrowRight size={16} />
         </Link>
       </div>
 
+      {/* GRILLA DE CATEGORÍAS */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
         {categories.map((category) => {
           const Icon = category.icon;
@@ -79,77 +84,87 @@ export default function Categories() {
           return (
             <Link
               key={category.name}
-              href={`/productos?categoria=${encodeURIComponent(
-                category.name
-              )}`}
+              href={`/productos?categoria=${encodeURIComponent(category.name)}`}
               className="
                 group
+                relative
                 flex
-                min-h-[170px]
+                min-h-[180px]
                 flex-col
                 items-center
                 justify-center
                 rounded-2xl
                 border
-                border-slate-200
-                bg-white
+                border-slate-800
+                bg-slate-900/80
                 p-5
                 text-center
-                shadow-sm
-                transition
+                backdrop-blur-md
+                shadow-xl
+                transition-all
                 duration-300
-                hover:-translate-y-1
-                hover:border-cyan-200
-                hover:shadow-xl
+                hover:-translate-y-1.5
+                hover:border-cyan-500/50
+                hover:bg-slate-900
+                hover:shadow-[0_0_25px_rgba(6,182,212,0.18)]
               "
             >
+              {/* ÍCONO CON GLOW */}
               <div
                 className="
                   flex
-                  h-16
-                  w-16
+                  h-14
+                  w-14
                   items-center
                   justify-center
                   rounded-2xl
-                  bg-cyan-50
-                  text-cyan-500
-                  transition
+                  bg-cyan-500/10
+                  border
+                  border-cyan-500/30
+                  text-cyan-400
+                  shadow-[0_0_15px_rgba(6,182,212,0.15)]
+                  transition-all
                   duration-300
+                  group-hover:scale-110
                   group-hover:bg-cyan-500
-                  group-hover:text-white
+                  group-hover:text-slate-950
+                  group-hover:border-cyan-400
+                  group-hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]
                 "
               >
-                <Icon size={32} strokeWidth={1.8} />
+                <Icon size={28} strokeWidth={1.8} />
               </div>
 
+              {/* TÍTULO */}
               <h3
                 className="
-                  mt-5
+                  mt-4
                   text-sm
                   font-bold
-                  text-slate-800
-                  transition
-                  group-hover:text-cyan-600
+                  text-white
+                  transition-colors
+                  group-hover:text-cyan-400
                 "
               >
                 {category.name}
               </h3>
 
+              {/* ACTION TEXT */}
               <span
                 className="
                   mt-2
                   inline-flex
                   items-center
                   gap-1
-                  text-xs
-                  font-medium
-                  text-slate-400
-                  transition
-                  group-hover:text-cyan-500
+                  text-[11px]
+                  font-mono
+                  text-slate-500
+                  transition-colors
+                  group-hover:text-cyan-300
                 "
               >
                 Ver productos
-                <ArrowRight size={12} />
+                <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
               </span>
             </Link>
           );
