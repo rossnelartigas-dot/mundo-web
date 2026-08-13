@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getProducts } from "@/services/productService";
 
 interface Props {
@@ -436,41 +437,62 @@ export default async function ProductosPage({
 
             <div className="mt-4 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
 
-              {filteredProducts.map((product) => (
-                <Link
-                  key={product.id}
-                  href={`/productos/${product.slug}`}
-                  className="
-                    rounded-2xl
-                    border
-                    border-slate-200
-                    bg-white
-                    p-5
-                    shadow-sm
-                    transition
-                    hover:-translate-y-1
-                    hover:shadow-md
-                  "
-                >
+              {filteredProducts.map((product) => {
+                const imageUrl = product.image || "/placeholder.png";
 
-                  <h2 className="text-lg font-semibold text-slate-800">
-                    {product.name}
-                  </h2>
+                return (
+                  <Link
+                    key={product.id}
+                    href={`/productos/${product.slug}`}
+                    className="
+                      group
+                      flex
+                      flex-col
+                      overflow-hidden
+                      rounded-2xl
+                      border
+                      border-slate-200
+                      bg-white
+                      p-5
+                      shadow-sm
+                      transition
+                      hover:-translate-y-1
+                      hover:shadow-md
+                    "
+                  >
+                    {/* CONTENEDOR DE IMAGEN */}
+                    <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-xl bg-slate-100">
+                      <Image
+                        src={imageUrl}
+                        alt={product.name}
+                        fill
+                        className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
 
-                  <p className="mt-2 text-sm text-slate-500">
-                    {product.brand}
-                  </p>
+                    <div className="flex flex-1 flex-col justify-between">
+                      <div>
+                        <h2 className="text-lg font-semibold text-slate-800 transition group-hover:text-cyan-600">
+                          {product.name}
+                        </h2>
 
-                  <p className="mt-1 text-sm text-slate-400">
-                    {product.category}
-                  </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                          {product.brand}
+                        </p>
 
-                  <p className="mt-4 font-semibold text-cyan-600">
-                    ${product.price}
-                  </p>
+                        <p className="mt-0.5 text-xs text-slate-400">
+                          {product.category}
+                        </p>
+                      </div>
 
-                </Link>
-              ))}
+                      <p className="mt-4 text-xl font-bold text-cyan-600">
+                        ${product.price}
+                      </p>
+                    </div>
+
+                  </Link>
+                );
+              })}
 
             </div>
 
