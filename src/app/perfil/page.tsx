@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import { FaUser, FaEnvelope, FaPhone, FaSignOutAlt, FaShoppingBag } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhone, FaSignOutAlt, FaShoppingBag, FaShieldAlt } from "react-icons/fa";
 
 interface UserProfile {
   id: string;
@@ -38,7 +38,7 @@ export default function ProfilePage() {
 
         const user = session.user;
 
-        // 2. Cargar perfil usando maybeSingle() para evitar lanzar excepciones si la fila no existe
+        // 2. Cargar perfil usando maybeSingle()
         const { data, error } = await supabase
           .from("profiles")
           .select("*")
@@ -54,7 +54,7 @@ export default function ProfilePage() {
           setFullName(data.full_name || "");
           setPhone(data.phone || "");
         } else {
-          // Si aún no existe en la tabla profiles, creamos un fallback con la data de auth
+          // Fallback en caso de no existir perfil aún
           const fallbackProfile: UserProfile = {
             id: user.id,
             email: user.email || "",
@@ -112,33 +112,33 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50">
-        <div className="flex items-center gap-3 rounded-xl bg-white px-6 py-4 shadow-sm border border-slate-200">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-cyan-600 border-t-transparent"></div>
-          <span className="text-sm font-medium text-slate-600">Cargando perfil...</span>
+      <div className="flex min-h-screen items-center justify-center bg-slate-950">
+        <div className="flex items-center gap-3 rounded-2xl bg-slate-900/80 px-6 py-4 shadow-2xl border border-slate-800 backdrop-blur-md">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-cyan-400 border-t-transparent"></div>
+          <span className="text-xs font-mono text-slate-300">Cargando datos del perfil...</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-950 py-10 px-4 sm:px-6 lg:px-8 text-slate-100">
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* Cabecera del Perfil */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-white rounded-2xl p-6 border border-slate-200 shadow-sm gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-slate-900/80 rounded-2xl p-6 border border-slate-800 shadow-xl backdrop-blur-md gap-4">
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-cyan-600 text-white flex items-center justify-center font-bold text-2xl shadow-inner">
+            <div className="h-16 w-16 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 flex items-center justify-center font-extrabold text-2xl shadow-[0_0_15px_rgba(6,182,212,0.15)]">
               {profile?.full_name ? profile.full_name.charAt(0).toUpperCase() : <FaUser />}
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">
-                {profile?.full_name || "Usuario de la Tienda"}
+              <h1 className="text-xl font-bold text-white tracking-tight">
+                {profile?.full_name || "Usuario registrado"}
               </h1>
-              <p className="text-sm text-slate-500">{profile?.email}</p>
+              <p className="text-xs font-mono text-slate-400 mt-0.5">{profile?.email}</p>
               {profile?.role === "admin" && (
-                <span className="inline-block mt-1 rounded-full bg-cyan-100 px-2.5 py-0.5 text-xs font-semibold text-cyan-800">
-                  Administrador
+                <span className="inline-flex items-center gap-1 mt-2 rounded-lg bg-cyan-500/10 border border-cyan-500/30 px-2.5 py-0.5 text-[11px] font-mono text-cyan-400">
+                  <FaShieldAlt className="text-[10px]" /> Administrador
                 </span>
               )}
             </div>
@@ -146,20 +146,20 @@ export default function ProfilePage() {
 
           <button
             onClick={handleLogout}
-            className="flex items-center justify-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-100"
+            className="flex items-center justify-center gap-2 rounded-xl border border-rose-900/50 bg-rose-950/40 px-4 py-2 text-xs font-mono text-rose-400 hover:bg-rose-900/40 hover:border-rose-500/50 transition-all backdrop-blur-md"
           >
             <FaSignOutAlt />
             <span>Cerrar Sesión</span>
           </button>
         </div>
 
-        {/* Notificación de Éxito o Error */}
+        {/* Notificaciones */}
         {message && (
           <div
-            className={`p-4 rounded-xl text-sm font-medium border ${
+            className={`p-4 rounded-xl text-xs font-mono border backdrop-blur-md ${
               message.type === "success"
-                ? "bg-emerald-50 border-emerald-200 text-emerald-700"
-                : "bg-red-50 border-red-200 text-red-700"
+                ? "bg-emerald-950/40 border-emerald-500/40 text-emerald-400"
+                : "bg-rose-950/40 border-rose-500/40 text-rose-400"
             }`}
           >
             {message.text}
@@ -168,26 +168,26 @@ export default function ProfilePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           
-          {/* Accesos Rápidos */}
+          {/* Menú de Accesos Rápidos */}
           <div className="space-y-3">
-            <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-2">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-                Menú
+            <div className="bg-slate-900/80 rounded-2xl p-5 border border-slate-800 shadow-xl backdrop-blur-md space-y-2">
+              <h2 className="text-[11px] font-mono font-bold uppercase tracking-wider text-slate-500 mb-3">
+                Menú de Usuario
               </h2>
               <Link
                 href="/carrito"
-                className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition text-slate-700 font-medium text-sm"
+                className="flex items-center gap-3 p-3 rounded-xl bg-slate-950/50 border border-slate-800/80 hover:border-cyan-500/40 hover:bg-slate-900 transition text-slate-300 font-medium text-sm group"
               >
-                <FaShoppingBag className="text-cyan-600" />
+                <FaShoppingBag className="text-cyan-400 group-hover:scale-110 transition-transform" />
                 <span>Ver Mi Carrito</span>
               </Link>
               {profile?.role === "admin" && (
                 <Link
                   href="/admin"
-                  className="flex items-center gap-3 p-3 rounded-xl hover:bg-cyan-50 transition text-cyan-700 font-medium text-sm"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-cyan-500/5 border border-cyan-500/20 hover:bg-cyan-500/10 transition text-cyan-400 font-medium text-sm group"
                 >
-                  <FaUser className="text-cyan-600" />
-                  <span>Ir al Panel Admin</span>
+                  <FaShieldAlt className="text-cyan-400 group-hover:scale-110 transition-transform" />
+                  <span>Panel de Admin</span>
                 </Link>
               )}
             </div>
@@ -195,23 +195,23 @@ export default function ProfilePage() {
 
           {/* Formulario de Información Personal */}
           <div className="md:col-span-2">
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-900 mb-4">
+            <div className="bg-slate-900/80 rounded-2xl p-6 border border-slate-800 shadow-xl backdrop-blur-md">
+              <h2 className="text-base font-bold text-white mb-4">
                 Información Personal
               </h2>
 
               <form onSubmit={handleUpdateProfile} className="space-y-4">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-xs font-mono text-slate-300">
                     Nombre Completo
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
                       <FaUser />
                     </span>
                     <input
                       type="text"
-                      className="w-full rounded-xl border border-slate-300 pl-10 pr-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-10 pr-3 py-2.5 text-sm text-slate-200 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="Tu nombre y apellido"
@@ -220,36 +220,36 @@ export default function ProfilePage() {
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-xs font-mono text-slate-300">
                     Correo Electrónico
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-600">
                       <FaEnvelope />
                     </span>
                     <input
                       type="email"
                       disabled
-                      className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 py-2 text-slate-500 cursor-not-allowed"
+                      className="w-full rounded-xl border border-slate-800/60 bg-slate-950/40 pl-10 pr-3 py-2.5 text-sm text-slate-500 cursor-not-allowed select-none"
                       value={profile?.email || ""}
                     />
                   </div>
-                  <p className="mt-1 text-xs text-slate-400">
-                    El correo electrónico no se puede modificar directamente.
+                  <p className="mt-1.5 text-[11px] font-mono text-slate-500">
+                    El correo electrónico está vinculado a tu cuenta y no puede cambiarse.
                   </p>
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-slate-700">
+                  <label className="mb-2 block text-xs font-mono text-slate-300">
                     Teléfono / WhatsApp
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
                       <FaPhone />
                     </span>
                     <input
                       type="text"
-                      className="w-full rounded-xl border border-slate-300 pl-10 pr-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                      className="w-full rounded-xl border border-slate-800 bg-slate-950 pl-10 pr-3 py-2.5 text-sm text-slate-200 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all"
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       placeholder="+58 412 0000000"
@@ -257,11 +257,11 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <div className="pt-2">
+                <div className="pt-3">
                   <button
                     type="submit"
                     disabled={saving}
-                    className="rounded-xl bg-cyan-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-cyan-700 transition disabled:opacity-50"
+                    className="rounded-xl bg-cyan-500 px-6 py-2.5 text-xs font-mono font-bold text-slate-950 hover:bg-cyan-400 transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {saving ? "Guardando..." : "Guardar Cambios"}
                   </button>
