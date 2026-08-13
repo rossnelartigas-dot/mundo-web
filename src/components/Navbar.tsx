@@ -147,12 +147,12 @@ export default function Navbar() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-800/80 bg-slate-950/95 text-white shadow-xl backdrop-blur-md">
-      {/* Línea tecnológica superior */}
+    <header className="sticky top-0 z-50 border-b border-slate-900 bg-slate-950/90 text-slate-100 shadow-2xl backdrop-blur-md">
+      {/* Línea neón superior con degradado dinámico */}
       <div
         className="h-1 w-full"
         style={{
-          background: `linear-gradient(90deg, transparent, ${settings.primaryColor}, #22d3ee, ${settings.primaryColor}, transparent)`,
+          background: `linear-gradient(90deg, transparent, ${settings.primaryColor || "#06b6d4"}, #22d3ee, ${settings.primaryColor || "#06b6d4"}, transparent)`,
         }}
       />
 
@@ -178,14 +178,13 @@ export default function Navbar() {
                 border
                 bg-slate-900
                 shadow-lg
-                transition
+                transition-all
                 duration-300
                 group-hover:scale-105
-                group-hover:shadow-cyan-500/20
               "
               style={{
-                borderColor: settings.primaryColor,
-                boxShadow: `0 0 18px ${settings.primaryColor}20`,
+                borderColor: settings.primaryColor || "#0891b2",
+                boxShadow: `0 0 15px ${settings.primaryColor || "#06b6d4"}25`,
               }}
             >
               {settings.logoUrl ? (
@@ -199,8 +198,8 @@ export default function Navbar() {
                 />
               ) : (
                 <span
-                  className="text-sm font-black tracking-tight"
-                  style={{ color: settings.primaryColor }}
+                  className="font-mono text-sm font-black tracking-tight"
+                  style={{ color: settings.primaryColor || "#22d3ee" }}
                 >
                   {(settings.storeName || "Mundo Web")
                     .slice(0, 2)
@@ -212,13 +211,13 @@ export default function Navbar() {
             </div>
 
             <div className="hidden sm:block">
-              <span className="block text-xl font-black tracking-tight text-white">
+              <span className="block text-xl font-extrabold tracking-tight text-white">
                 {settings.storeName || "Mundo Web"}
               </span>
 
               <span
-                className="block text-[10px] font-semibold uppercase tracking-[0.28em]"
-                style={{ color: settings.primaryColor }}
+                className="block font-mono text-[9px] font-bold uppercase tracking-[0.25em]"
+                style={{ color: settings.primaryColor || "#22d3ee" }}
               >
                 Tecnología & innovación
               </span>
@@ -230,14 +229,15 @@ export default function Navbar() {
             <Link
               href="/"
               className="
-                rounded-lg
+                rounded-xl
                 px-4
-                py-2.5
-                text-sm
-                font-semibold
+                py-2
+                font-mono
+                text-xs
+                font-bold
                 text-slate-300
-                transition
-                hover:bg-white/5
+                transition-all
+                hover:bg-slate-900
                 hover:text-cyan-400
               "
             >
@@ -247,14 +247,15 @@ export default function Navbar() {
             <Link
               href="/productos"
               className="
-                rounded-lg
+                rounded-xl
                 px-4
-                py-2.5
-                text-sm
-                font-semibold
+                py-2
+                font-mono
+                text-xs
+                font-bold
                 text-slate-300
-                transition
-                hover:bg-white/5
+                transition-all
+                hover:bg-slate-900
                 hover:text-cyan-400
               "
             >
@@ -264,14 +265,15 @@ export default function Navbar() {
             <Link
               href="/categorias"
               className="
-                rounded-lg
+                rounded-xl
                 px-4
-                py-2.5
-                text-sm
-                font-semibold
+                py-2
+                font-mono
+                text-xs
+                font-bold
                 text-slate-300
-                transition
-                hover:bg-white/5
+                transition-all
+                hover:bg-slate-900
                 hover:text-cyan-400
               "
             >
@@ -285,32 +287,34 @@ export default function Navbar() {
                 flex
                 items-center
                 gap-1.5
-                rounded-lg
+                rounded-xl
                 px-4
-                py-2.5
-                text-sm
-                font-semibold
+                py-2
+                font-mono
+                text-xs
+                font-bold
                 text-slate-300
-                transition
-                hover:bg-white/5
+                transition-all
+                hover:bg-slate-900
                 hover:text-cyan-400
               "
             >
-              Ofertas
+              <span>Ofertas</span>
               <FaChevronDown className="text-[9px] opacity-60 transition group-hover:rotate-180" />
             </Link>
 
             <Link
               href="/contacto"
               className="
-                rounded-lg
+                rounded-xl
                 px-4
-                py-2.5
-                text-sm
-                font-semibold
+                py-2
+                font-mono
+                text-xs
+                font-bold
                 text-slate-300
-                transition
-                hover:bg-white/5
+                transition-all
+                hover:bg-slate-900
                 hover:text-cyan-400
               "
             >
@@ -329,27 +333,29 @@ export default function Navbar() {
                   items-center
                   rounded-xl
                   border
-                  border-slate-700
-                  bg-slate-900
+                  border-slate-800
+                  bg-slate-900/90
                   px-2
                   shadow-lg
+                  backdrop-blur-md
                   sm:flex
                 "
               >
-                <FaSearch className="ml-2 text-sm text-cyan-400" />
+                <FaSearch className="ml-2 text-xs text-cyan-400" />
 
                 <input
                   type="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar productos..."
+                  placeholder="Buscar componentes..."
                   autoFocus
                   className="
                     w-32
                     bg-transparent
                     px-3
-                    py-2.5
-                    text-sm
+                    py-2
+                    font-mono
+                    text-xs
                     text-white
                     outline-none
                     placeholder:text-slate-500
@@ -367,14 +373,14 @@ export default function Navbar() {
                   aria-label="Cerrar búsqueda"
                   className="
                     rounded-lg
-                    p-2
+                    p-1.5
                     text-slate-400
                     transition
-                    hover:bg-white/5
+                    hover:bg-slate-800
                     hover:text-white
                   "
                 >
-                  <FaTimes />
+                  <FaTimes className="text-xs" />
                 </button>
               </form>
             ) : (
@@ -391,15 +397,16 @@ export default function Navbar() {
                   rounded-xl
                   border
                   border-slate-800
+                  bg-slate-900/60
                   text-slate-300
-                  transition
+                  transition-all
                   hover:border-cyan-500/50
-                  hover:bg-cyan-500/10
                   hover:text-cyan-400
+                  hover:shadow-[0_0_15px_rgba(6,182,212,0.15)]
                   sm:flex
                 "
               >
-                <FaSearch />
+                <FaSearch size={14} />
               </button>
             )}
 
@@ -417,14 +424,15 @@ export default function Navbar() {
                 rounded-xl
                 border
                 border-slate-800
+                bg-slate-900/60
                 text-slate-300
-                transition
-                hover:border-red-500/40
-                hover:bg-red-500/10
-                hover:text-red-400
+                transition-all
+                hover:border-rose-500/50
+                hover:text-rose-400
+                hover:shadow-[0_0_15px_rgba(244,63,94,0.15)]
               "
             >
-              <FaHeart />
+              <FaHeart size={14} />
 
               {favoritesCount > 0 && (
                 <span
@@ -438,8 +446,9 @@ export default function Navbar() {
                     items-center
                     justify-center
                     rounded-full
-                    bg-red-500
+                    bg-rose-500
                     px-1
+                    font-mono
                     text-[10px]
                     font-bold
                     text-white
@@ -465,14 +474,15 @@ export default function Navbar() {
                 rounded-xl
                 border
                 border-slate-800
+                bg-slate-900/60
                 text-slate-300
-                transition
-                hover:border-cyan-500/40
-                hover:bg-cyan-500/10
+                transition-all
+                hover:border-cyan-500/50
                 hover:text-cyan-400
+                hover:shadow-[0_0_15px_rgba(6,182,212,0.15)]
               "
             >
-              <FaShoppingCart />
+              <FaShoppingCart size={14} />
 
               {cartCount > 0 && (
                 <span
@@ -488,11 +498,11 @@ export default function Navbar() {
                     rounded-full
                     bg-cyan-500
                     px-1
+                    font-mono
                     text-[10px]
                     font-bold
                     text-slate-950
-                    shadow-lg
-                    shadow-cyan-500/30
+                    shadow-[0_0_10px_rgba(6,182,212,0.4)]
                   "
                 >
                   {cartCount}
@@ -502,7 +512,7 @@ export default function Navbar() {
 
             {/* USUARIO CON DESPLEGABLE */}
             {loadingUser ? (
-              <div className="hidden h-10 w-10 animate-pulse rounded-xl bg-slate-800 sm:block" />
+              <div className="hidden h-10 w-10 animate-pulse rounded-xl border border-slate-800 bg-slate-900 sm:block" />
             ) : userProfile ? (
               <div className="relative hidden sm:block" ref={userMenuRef}>
                 <button
@@ -519,31 +529,31 @@ export default function Navbar() {
                     bg-slate-900/60
                     px-3
                     text-slate-300
-                    transition
-                    hover:border-cyan-500/40
-                    hover:bg-cyan-500/10
+                    transition-all
+                    hover:border-cyan-500/50
                     hover:text-cyan-400
+                    hover:shadow-[0_0_15px_rgba(6,182,212,0.15)]
                   "
                 >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-cyan-500/20 text-xs font-bold text-cyan-400">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/30 font-mono text-xs font-bold text-cyan-400">
                     {userProfile.full_name
                       ? userProfile.full_name.charAt(0).toUpperCase()
-                      : <FaUser className="text-xs" />}
+                      : <FaUser className="text-[10px]" />}
                   </div>
-                  <span className="max-w-[100px] truncate text-xs font-semibold">
+                  <span className="max-w-[100px] truncate font-mono text-xs font-bold">
                     {userProfile.full_name || "Mi Cuenta"}
                   </span>
-                  <FaChevronDown className="text-[10px] opacity-60" />
+                  <FaChevronDown className="text-[9px] opacity-60" />
                 </button>
 
                 {/* DESPLEGABLE DESKTOP */}
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-800 bg-slate-900 p-1.5 shadow-2xl backdrop-blur-xl z-50">
-                    <div className="border-b border-slate-800 px-3 py-2.5">
-                      <p className="truncate text-xs font-bold text-white">
+                  <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-800 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-xl z-50">
+                    <div className="border-b border-slate-800/80 px-3 py-2.5">
+                      <p className="truncate font-mono text-xs font-bold text-white">
                         {userProfile.full_name || "Usuario"}
                       </p>
-                      <p className="truncate text-[11px] text-slate-400">
+                      <p className="truncate font-mono text-[10px] text-slate-400">
                         {userProfile.email}
                       </p>
                     </div>
@@ -552,7 +562,7 @@ export default function Navbar() {
                       <Link
                         href="/pedido"
                         onClick={closeMenu}
-                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition hover:bg-white/5 hover:text-cyan-400"
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-mono text-xs font-bold text-slate-300 transition hover:bg-slate-800 hover:text-cyan-400"
                       >
                         <FaShoppingBag className="text-cyan-400" />
                         <span>Mis Pedidos</span>
@@ -561,7 +571,7 @@ export default function Navbar() {
                       <Link
                         href="/carrito"
                         onClick={closeMenu}
-                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition hover:bg-white/5 hover:text-cyan-400"
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-mono text-xs font-bold text-slate-300 transition hover:bg-slate-800 hover:text-cyan-400"
                       >
                         <FaShoppingCart className="text-cyan-400" />
                         <span>Mi Carrito</span>
@@ -570,7 +580,7 @@ export default function Navbar() {
                       <Link
                         href="/perfil"
                         onClick={closeMenu}
-                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-slate-300 transition hover:bg-white/5 hover:text-cyan-400"
+                        className="flex items-center gap-2.5 rounded-xl px-3 py-2 font-mono text-xs font-bold text-slate-300 transition hover:bg-slate-800 hover:text-cyan-400"
                       >
                         <FaCog className="text-cyan-400" />
                         <span>Configuración</span>
@@ -580,7 +590,7 @@ export default function Navbar() {
                         <Link
                           href="/admin"
                           onClick={closeMenu}
-                          className="flex items-center gap-2.5 rounded-xl bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-400 transition hover:bg-cyan-500/20"
+                          className="flex items-center gap-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 px-3 py-2 font-mono text-xs font-bold text-cyan-400 transition hover:bg-cyan-500/20"
                         >
                           <FaUser />
                           <span>Panel Admin</span>
@@ -588,11 +598,11 @@ export default function Navbar() {
                       )}
                     </div>
 
-                    <div className="border-t border-slate-800 pt-1">
+                    <div className="border-t border-slate-800/80 pt-1">
                       <button
                         type="button"
                         onClick={handleLogout}
-                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-medium text-red-400 transition hover:bg-red-500/10"
+                        className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 font-mono text-xs font-bold text-rose-400 transition hover:bg-rose-500/10"
                       >
                         <FaSignOutAlt />
                         <span>Cerrar Sesión</span>
@@ -614,15 +624,16 @@ export default function Navbar() {
                   rounded-xl
                   border
                   border-slate-800
+                  bg-slate-900/60
                   text-slate-300
-                  transition
-                  hover:border-cyan-500/40
-                  hover:bg-cyan-500/10
+                  transition-all
+                  hover:border-cyan-500/50
                   hover:text-cyan-400
+                  hover:shadow-[0_0_15px_rgba(6,182,212,0.15)]
                   sm:flex
                 "
               >
-                <FaUser />
+                <FaUser size={14} />
               </Link>
             )}
 
@@ -640,16 +651,15 @@ export default function Navbar() {
                 rounded-xl
                 border
                 border-slate-800
-                text-lg
+                bg-slate-900/60
                 text-slate-300
-                transition
-                hover:border-cyan-500/40
-                hover:bg-cyan-500/10
+                transition-all
+                hover:border-cyan-500/50
                 hover:text-cyan-400
                 md:hidden
               "
             >
-              {menuOpen ? <FaTimes /> : <FaBars />}
+              {menuOpen ? <FaTimes size={16} /> : <FaBars size={16} />}
             </button>
           </div>
         </div>
@@ -664,11 +674,11 @@ export default function Navbar() {
                 overflow-hidden
                 rounded-xl
                 border
-                border-slate-700
+                border-slate-800
                 bg-slate-900
               "
             >
-              <FaSearch className="ml-4 mt-3.5 text-cyan-400" />
+              <FaSearch className="ml-4 mt-3.5 text-xs text-cyan-400" />
 
               <input
                 type="search"
@@ -681,8 +691,9 @@ export default function Navbar() {
                   flex-1
                   bg-transparent
                   px-3
-                  py-3
-                  text-sm
+                  py-2.5
+                  font-mono
+                  text-xs
                   text-white
                   outline-none
                   placeholder:text-slate-500
@@ -693,8 +704,9 @@ export default function Navbar() {
                 type="submit"
                 className="
                   bg-cyan-500
-                  px-5
-                  text-sm
+                  px-4
+                  font-mono
+                  text-xs
                   font-bold
                   text-slate-950
                   transition
@@ -709,32 +721,32 @@ export default function Navbar() {
 
         {/* MENÚ MÓVIL */}
         {menuOpen && (
-          <nav className="border-t border-slate-800 py-4 md:hidden">
+          <nav className="border-t border-slate-900 py-4 md:hidden">
             <div className="space-y-1">
               {/* Sección de Usuario en Móvil */}
               {userProfile ? (
                 <div className="mb-3 rounded-xl border border-slate-800 bg-slate-900/80 p-3">
                   <div className="mb-2 flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/20 text-sm font-bold text-cyan-400">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/30 font-mono text-xs font-bold text-cyan-400">
                       {userProfile.full_name
                         ? userProfile.full_name.charAt(0).toUpperCase()
                         : <FaUser />}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-bold text-white">
+                      <p className="truncate font-mono text-xs font-bold text-white">
                         {userProfile.full_name || "Usuario"}
                       </p>
-                      <p className="truncate text-[11px] text-slate-400">
+                      <p className="truncate font-mono text-[10px] text-slate-400">
                         {userProfile.email}
                       </p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-800/60">
+                  <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-800/80">
                     <Link
                       href="/pedido"
                       onClick={closeMenu}
-                      className="flex items-center justify-center gap-2 rounded-lg bg-slate-800 py-2 text-xs font-medium text-slate-200"
+                      className="flex items-center justify-center gap-2 rounded-lg bg-slate-800/80 py-2 font-mono text-[11px] font-bold text-slate-200"
                     >
                       <FaShoppingBag className="text-cyan-400" />
                       Mis Pedidos
@@ -742,7 +754,7 @@ export default function Navbar() {
                     <Link
                       href="/perfil"
                       onClick={closeMenu}
-                      className="flex items-center justify-center gap-2 rounded-lg bg-slate-800 py-2 text-xs font-medium text-slate-200"
+                      className="flex items-center justify-center gap-2 rounded-lg bg-slate-800/80 py-2 font-mono text-[11px] font-bold text-slate-200"
                     >
                       <FaCog className="text-cyan-400" />
                       Configuración
@@ -753,17 +765,17 @@ export default function Navbar() {
                     <Link
                       href="/admin"
                       onClick={closeMenu}
-                      className="mt-1.5 flex items-center justify-center gap-2 rounded-lg bg-cyan-500/10 py-2 text-xs font-semibold text-cyan-400"
+                      className="mt-1.5 flex items-center justify-center gap-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 py-2 font-mono text-[11px] font-bold text-cyan-400"
                     >
                       <FaUser />
-                      Panel Administrativo
+                      Panel Admin
                     </Link>
                   )}
 
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 py-2 text-xs font-medium text-red-400"
+                    className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-rose-500/20 bg-rose-500/10 py-2 font-mono text-[11px] font-bold text-rose-400"
                   >
                     <FaSignOutAlt />
                     Cerrar Sesión
@@ -773,7 +785,7 @@ export default function Navbar() {
                 <Link
                   href="/login"
                   onClick={closeMenu}
-                  className="mb-3 flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-400"
+                  className="mb-3 flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-3 font-mono text-xs font-bold text-slate-950 transition hover:bg-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
                 >
                   <FaUser />
                   Iniciar Sesión
@@ -788,12 +800,13 @@ export default function Navbar() {
                   items-center
                   rounded-xl
                   px-4
-                  py-3.5
-                  text-sm
-                  font-semibold
+                  py-3
+                  font-mono
+                  text-xs
+                  font-bold
                   text-slate-300
                   transition
-                  hover:bg-cyan-500/10
+                  hover:bg-slate-900
                   hover:text-cyan-400
                 "
               >
@@ -808,12 +821,13 @@ export default function Navbar() {
                   items-center
                   rounded-xl
                   px-4
-                  py-3.5
-                  text-sm
-                  font-semibold
+                  py-3
+                  font-mono
+                  text-xs
+                  font-bold
                   text-slate-300
                   transition
-                  hover:bg-cyan-500/10
+                  hover:bg-slate-900
                   hover:text-cyan-400
                 "
               >
@@ -828,12 +842,13 @@ export default function Navbar() {
                   items-center
                   rounded-xl
                   px-4
-                  py-3.5
-                  text-sm
-                  font-semibold
+                  py-3
+                  font-mono
+                  text-xs
+                  font-bold
                   text-slate-300
                   transition
-                  hover:bg-cyan-500/10
+                  hover:bg-slate-900
                   hover:text-cyan-400
                 "
               >
@@ -849,12 +864,13 @@ export default function Navbar() {
                   justify-between
                   rounded-xl
                   px-4
-                  py-3.5
-                  text-sm
-                  font-semibold
+                  py-3
+                  font-mono
+                  text-xs
+                  font-bold
                   text-slate-300
                   transition
-                  hover:bg-cyan-500/10
+                  hover:bg-slate-900
                   hover:text-cyan-400
                 "
               >
@@ -871,13 +887,14 @@ export default function Navbar() {
                   justify-between
                   rounded-xl
                   px-4
-                  py-3.5
-                  text-sm
-                  font-semibold
+                  py-3
+                  font-mono
+                  text-xs
+                  font-bold
                   text-slate-300
                   transition
-                  hover:bg-red-500/10
-                  hover:text-red-400
+                  hover:bg-rose-500/10
+                  hover:text-rose-400
                 "
               >
                 <span className="flex items-center gap-3">
@@ -886,7 +903,7 @@ export default function Navbar() {
                 </span>
 
                 {favoritesCount > 0 && (
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-500 px-1 font-mono text-[10px] font-bold text-white">
                     {favoritesCount}
                   </span>
                 )}
@@ -901,12 +918,13 @@ export default function Navbar() {
                   justify-between
                   rounded-xl
                   px-4
-                  py-3.5
-                  text-sm
-                  font-semibold
+                  py-3
+                  font-mono
+                  text-xs
+                  font-bold
                   text-slate-300
                   transition
-                  hover:bg-cyan-500/10
+                  hover:bg-slate-900
                   hover:text-cyan-400
                 "
               >
@@ -916,7 +934,7 @@ export default function Navbar() {
                 </span>
 
                 {cartCount > 0 && (
-                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-500 px-1 text-[10px] font-bold text-slate-950">
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-500 px-1 font-mono text-[10px] font-bold text-slate-950">
                     {cartCount}
                   </span>
                 )}
@@ -930,12 +948,13 @@ export default function Navbar() {
                   items-center
                   rounded-xl
                   px-4
-                  py-3.5
-                  text-sm
-                  font-semibold
+                  py-3
+                  font-mono
+                  text-xs
+                  font-bold
                   text-slate-300
                   transition
-                  hover:bg-cyan-500/10
+                  hover:bg-slate-900
                   hover:text-cyan-400
                 "
               >
