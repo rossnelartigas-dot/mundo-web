@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 
 interface ProductItem {
@@ -45,20 +46,30 @@ export default function PedidoPage() {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
-        const email = session.user.email?.toLowerCase();
+        const email = session.user.email?.toLowerCase().trim();
         const uid = session.user.id;
         
         setUserEmail(email || null);
         setUserId(uid);
 
-        const { data, error } = await supabase
-          .from('orders')
-          .select('*')
-          .or(`user_id.eq.${uid},customer_email.eq.${email}`)
-          .order('created_at', { ascending: false });
+        // Filtro robusto: Busca coincidencia por user_id O por customer_email (insensible a mayúsculas)
+        let query = supabase.from('orders').select('*');
 
-        if (!error && data) {
+        if (email) {
+          query = query.or(`user_id.eq.${uid},customer_email.ilike.${email}`);
+        } else {
+          query = query.eq('user_id', uid);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error al obtener pedidos:', error);
+        } else if (data) {
           setOrders(data);
+          if (data.length > 0) {
+            setExpandedOrderId(data[0].id); // Expande automáticamente el pedido más reciente
+          }
         }
       }
 
@@ -83,12 +94,11 @@ export default function PedidoPage() {
 
     setSearching(true);
 
-    // Primero busca por ID numérico y luego por Correo
     const { data, error } = await supabase
       .from('orders')
       .select('*')
       .eq('id', orderIdNum)
-      .eq('customer_email', emailQuery);
+      .ilike('customer_email', emailQuery);
 
     setSearching(false);
 
@@ -346,9 +356,12 @@ export default function PedidoPage() {
                                 <div key={idx} className="p-3.5 flex justify-between items-center text-sm hover:bg-slate-800/20 transition">
                                   <div className="flex items-center space-x-3">
                                     {prod.image ? (
-                                      <img 
+                                      <Image 
                                         src={prod.image} 
-                                        alt={prod.name} 
+                                        alt={prod.name || 'Producto'} 
+                                        width={44}
+                                        height={44}
+                                        unoptimized
                                         className="w-11 h-11 object-cover rounded-lg border border-slate-800 bg-slate-950" 
                                       />
                                     ) : (

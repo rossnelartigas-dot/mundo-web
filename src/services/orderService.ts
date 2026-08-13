@@ -9,6 +9,7 @@ export interface OrderProduct {
 }
 
 export interface OrderData {
+  user_id?: string | null; // <-- Agrega esta línea (opcional o permitiendo null)
   customer_name: string;
   customer_phone: string;
   customer_email: string;

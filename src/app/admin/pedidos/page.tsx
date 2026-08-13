@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   Search,
-  Filter,
+  
   CheckCircle2,
   XCircle,
   Clock,
@@ -14,9 +14,9 @@ import {
   Mail,
   MapPin,
   CreditCard,
-  Hash,
+  
   ShoppingBag,
-  ExternalLink,
+  
   ChevronDown,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -384,7 +384,7 @@ export default function AdminOrdersDashboard() {
   );
 }
 
-{/* COMPONENTE: BADGE DE ESTADO */}
+// COMPONENTE: BADGE DE ESTADO
 function StatusBadge({ status }: { status: string }) {
   switch (status) {
     case "verificado":
@@ -414,7 +414,7 @@ function StatusBadge({ status }: { status: string }) {
   }
 }
 
-{/* COMPONENTE: MODAL DE DETALLE */}
+// COMPONENTE: MODAL DE DETALLE
 function OrderDetailModal({
   order,
   onClose,

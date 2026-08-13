@@ -11,7 +11,6 @@ import { supabase } from "@/lib/supabase";
 
 export default function CheckoutPage() {
   const router = useRouter();
-
   const { cart, total, clearCart } = useCart();
 
   const [form, setForm] = useState({
@@ -26,7 +25,6 @@ export default function CheckoutPage() {
   // Métodos y referencias de pago
   const [paymentMethod, setPaymentMethod] = useState("pago_movil");
   const [paymentReference, setPaymentReference] = useState("");
-
   const [loading, setLoading] = useState(false);
 
   // Cargar usuario autenticado si existe
@@ -88,7 +86,9 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
+      // Envío de la orden pasando user_id si está autenticado
       const order = await createOrder({
+        user_id: userId,
         customer_name: cleanName,
         customer_phone: cleanPhone,
         customer_email: cleanEmail,
