@@ -21,7 +21,7 @@ interface Order {
   total?: number;
   created_at: string;
   user_id?: string | null;
-  products?: ProductItem[] | string; // Puede venir como array o como string JSON
+  products?: ProductItem[] | string;
 }
 
 export default function PedidoPage() {
@@ -31,13 +31,12 @@ export default function PedidoPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [expandedOrderId, setExpandedOrderId] = useState<string | number | null>(null);
 
-  // Estados para búsqueda de invitados
+  // Búsqueda de invitados
   const [searchEmail, setSearchEmail] = useState('');
   const [searchOrderNumber, setSearchOrderNumber] = useState('');
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
 
-  // 1. Cargar pedidos al montar el componente
   useEffect(() => {
     async function fetchOrders() {
       setLoading(true);
@@ -51,7 +50,6 @@ export default function PedidoPage() {
         setUserEmail(email || null);
         setUserId(uid);
 
-        // Busca por user_id O por customer_email para traer tanto viejos como nuevos
         const { data, error } = await supabase
           .from('orders')
           .select('*')
@@ -69,7 +67,6 @@ export default function PedidoPage() {
     fetchOrders();
   }, []);
 
-  // 2. Búsqueda manual como invitado
   const handleGuestSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setSearchError(null);
@@ -87,7 +84,7 @@ export default function PedidoPage() {
     setSearching(false);
 
     if (error || !data || data.length === 0) {
-      setSearchError('No se encontró ningún pedido con esos datos.');
+      setSearchError('SISTEMA: No se encontraron registros de este pedido.');
       setOrders([]);
     } else {
       setOrders(data);
@@ -95,12 +92,10 @@ export default function PedidoPage() {
     }
   };
 
-  // Alternar acordeón desplegable
   const toggleOrder = (id: string | number) => {
     setExpandedOrderId((prev) => (prev === id ? null : id));
   };
 
-  // Parsear productos en formato JSON si vienen como String
   const parseProducts = (productsRaw: ProductItem[] | string | undefined): ProductItem[] => {
     if (!productsRaw) return [];
     if (Array.isArray(productsRaw)) return productsRaw;
@@ -111,95 +106,139 @@ export default function PedidoPage() {
     }
   };
 
-  // Badge de estado dinámico
+  // Badges Neón
   const getStatusBadge = (status?: string) => {
     const s = (status || 'pending').toLowerCase();
     if (s === 'paid' || s === 'completado' || s === 'delivered') {
-      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+      return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.15)]';
     }
     if (s === 'pending' || s === 'pendiente') {
-      return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+      return 'bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.15)]';
     }
     if (s === 'cancelled' || s === 'cancelado') {
-      return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+      return 'bg-rose-500/10 text-rose-400 border-rose-500/30 shadow-[0_0_12px_rgba(244,63,94,0.15)]';
     }
-    return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20';
+    return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30 shadow-[0_0_12px_rgba(6,182,212,0.15)]';
   };
 
   if (loading) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center">
-        <div className="flex items-center space-x-3 text-slate-400">
-          <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
-          <span>Cargando tus pedidos...</span>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <div className="relative flex items-center justify-center">
+          <div className="w-12 h-12 border-2 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin"></div>
+          <div className="absolute w-6 h-6 border-2 border-cyan-300/20 border-b-cyan-300 rounded-full animate-spin-reverse"></div>
         </div>
+        <p className="text-xs tracking-widest text-cyan-400/80 uppercase font-mono animate-pulse">
+          Sincronizando con el sistema...
+        </p>
       </div>
     );
   }
 
   return (
     <div className="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
-      {/* Encabezado */}
-      <div className="border-b border-slate-800 pb-4">
-        <h1 className="text-3xl font-extrabold text-white tracking-tight">
-          {userEmail ? 'Mis Pedidos' : 'Consulta de Pedidos'}
+      {/* Glow ambiental superior */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 -z-10 w-full max-w-2xl h-64 bg-cyan-500/5 blur-[120px] pointer-events-none rounded-full" />
+
+      {/* Hero Header */}
+      <div className="relative border-b border-slate-800/80 pb-6">
+        <div className="flex items-center space-x-2 text-xs font-mono text-cyan-400 uppercase tracking-widest mb-1">
+          <span className="inline-block w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+          <span>Terminal de Rastreo // V2.0</span>
+        </div>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+          {userEmail ? (
+            <>Historial de <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Pedidos</span></>
+          ) : (
+            <>Consulta de <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">Órdenes</span></>
+          )}
         </h1>
         <p className="text-slate-400 text-sm mt-1">
           {userEmail
-            ? `Mostrando historial de compras de ${userEmail}`
-            : 'Ingresa los datos de tu compra para consultar el estado actual.'}
+            ? `Sesión activa: ${userEmail}`
+            : 'Módulo de consulta pública para seguimiento de envíos.'}
         </p>
       </div>
 
-      {/* Formulario Invitados */}
+      {/* Formulario Estilo Cyberpunk para Invitados */}
       {!userId && (
-        <form onSubmit={handleGuestSearch} className="bg-slate-900/90 backdrop-blur-md p-6 rounded-2xl border border-slate-800 space-y-4 shadow-xl">
-          <h2 className="text-base font-semibold text-slate-200">Consultar como invitado</h2>
+        <form 
+          onSubmit={handleGuestSearch} 
+          className="relative group bg-slate-900/60 backdrop-blur-xl p-6 rounded-2xl border border-slate-800/80 hover:border-slate-700/80 transition-all shadow-2xl space-y-4 overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+          <div className="flex items-center justify-between border-b border-slate-800/60 pb-3">
+            <h2 className="text-sm font-semibold text-slate-200 tracking-wide uppercase font-mono">
+              [ Consultar como invitado ]
+            </h2>
+            <span className="text-[10px] text-slate-500 font-mono">GUEST_ACCESS</span>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1.5">Correo Electrónico</label>
+              <label className="block text-xs font-mono text-slate-400 uppercase mb-1.5">
+                Correo Registrado
+              </label>
               <input
                 type="email"
                 required
                 value={searchEmail}
                 onChange={(e) => setSearchEmail(e.target.value)}
-                placeholder="ejemplo@correo.com"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-cyan-500 transition"
+                placeholder="usuario@dominio.com"
+                className="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-500/80 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none transition focus:ring-1 focus:ring-cyan-500/30"
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1.5">ID / Número de Pedido</label>
+              <label className="block text-xs font-mono text-slate-400 uppercase mb-1.5">
+                ID de Orden
+              </label>
               <input
                 type="text"
                 required
                 value={searchOrderNumber}
                 onChange={(e) => setSearchOrderNumber(e.target.value)}
                 placeholder="Ej: 19"
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none focus:border-cyan-500 transition"
+                className="w-full bg-slate-950/80 border border-slate-800 focus:border-cyan-500/80 rounded-xl p-3 text-sm text-white placeholder:text-slate-600 outline-none transition focus:ring-1 focus:ring-cyan-500/30"
               />
             </div>
           </div>
+
           <button
             type="submit"
             disabled={searching}
-            className="w-full md:w-auto bg-cyan-500 text-slate-950 font-bold px-6 py-3 rounded-xl text-sm hover:bg-cyan-400 disabled:opacity-50 transition shadow-lg shadow-cyan-500/10"
+            className="w-full md:w-auto relative group/btn bg-gradient-to-r from-cyan-500 to-blue-600 text-slate-950 font-bold px-6 py-3 rounded-xl text-sm hover:brightness-110 active:scale-[0.98] disabled:opacity-50 transition shadow-lg shadow-cyan-500/20 overflow-hidden"
           >
-            {searching ? 'Buscando...' : 'Buscar Pedido'}
+            <span className="relative z-10 flex items-center justify-center space-x-2">
+              {searching ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                  <span>Buscando Registro...</span>
+                </>
+              ) : (
+                <span>Rastrear Pedido →</span>
+              )}
+            </span>
           </button>
 
-          {searchError && <p className="text-rose-400 text-xs mt-2">{searchError}</p>}
+          {searchError && (
+            <p className="text-rose-400 text-xs font-mono bg-rose-500/10 border border-rose-500/20 p-2.5 rounded-lg mt-2">
+              {searchError}
+            </p>
+          )}
         </form>
       )}
 
-      {/* Lista de Pedidos */}
+      {/* Lista de Pedidos con Tarjetas Tech */}
       <div className="space-y-4">
         {orders.length === 0 ? (
-          <div className="text-center py-12 bg-slate-900/40 rounded-2xl border border-slate-800 p-6">
-            <p className="text-slate-400 text-sm">
+          <div className="text-center py-16 bg-slate-900/30 backdrop-blur-md rounded-2xl border border-slate-800/60 p-6 space-y-2">
+            <p className="text-slate-400 text-sm font-medium">
               {userEmail
-                ? 'No se encontraron pedidos asociados a tu cuenta.'
-                : 'Ingresa tus datos arriba para consultar tu pedido.'}
+                ? 'No se registraron compras en el historial.'
+                : 'Ingresa los datos arriba para ejecutar la búsqueda.'}
             </p>
+            <p className="text-xs text-slate-600 font-mono">STATUS: NO_DATA_RETURNED</p>
           </div>
         ) : (
           orders.map((order) => {
@@ -210,86 +249,103 @@ export default function PedidoPage() {
             return (
               <div
                 key={order.id}
-                className="bg-slate-900/90 border border-slate-800 hover:border-slate-700/80 rounded-2xl overflow-hidden transition shadow-lg"
+                className={`group bg-slate-900/70 backdrop-blur-md border transition-all duration-300 rounded-2xl overflow-hidden shadow-xl ${
+                  isExpanded ? 'border-cyan-500/50 ring-1 ring-cyan-500/20' : 'border-slate-800/80 hover:border-slate-700'
+                }`}
               >
-                {/* Cabecera del pedido */}
+                {/* Cabecera Interactiva */}
                 <button
                   onClick={() => toggleOrder(order.id)}
-                  className="w-full p-5 text-left flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer select-none"
+                  className="w-full p-5 text-left flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer select-none bg-gradient-to-r from-transparent via-transparent to-slate-800/20"
                 >
                   <div className="space-y-1">
                     <div className="flex items-center space-x-3">
-                      <span className="font-bold text-white text-base">
-                        Pedido #{order.id}
+                      <span className="font-mono text-xs text-slate-500">ID:</span>
+                      <span className="font-bold font-mono text-white text-base tracking-wide">
+                        #{order.id}
                       </span>
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full border font-semibold capitalize ${getStatusBadge(order.status)}`}>
+                      <span className={`text-[10px] uppercase font-mono px-2.5 py-0.5 rounded-full border ${getStatusBadge(order.status)}`}>
                         {order.status || 'pending'}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400" suppressHydrationWarning>
-                      Fecha: {new Date(order.created_at).toLocaleDateString()}
+                    <p className="text-xs text-slate-400 font-mono" suppressHydrationWarning>
+                      REGISTRO: {new Date(order.created_at).toLocaleDateString()}
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between md:justify-end space-x-6 w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-slate-800/60">
+                  <div className="flex items-center justify-between md:justify-end space-x-6 w-full md:w-auto pt-3 md:pt-0 border-t md:border-t-0 border-slate-800/80">
                     <div className="text-left md:text-right">
-                      <span className="block text-[10px] text-slate-500 uppercase font-semibold">Total</span>
-                      <span className="font-extrabold text-cyan-400 text-lg">
+                      <span className="block text-[10px] text-slate-500 uppercase font-mono tracking-wider">Monto Total</span>
+                      <span className="font-extrabold text-cyan-400 text-xl font-mono">
                         ${totalAmount.toLocaleString()}
                       </span>
                     </div>
 
-                    <div className={`p-2 rounded-xl bg-slate-800/50 text-slate-400 transition-transform duration-200 ${isExpanded ? 'rotate-180 bg-slate-800 text-white' : ''}`}>
-                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <div className={`p-2 rounded-xl bg-slate-800/60 border border-slate-700/50 text-slate-400 transition-transform duration-300 ${isExpanded ? 'rotate-180 bg-cyan-500/10 text-cyan-400 border-cyan-500/30' : ''}`}>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
                   </div>
                 </button>
 
-                {/* Desplegable con los detalles */}
+                {/* Área Expandible */}
                 {isExpanded && (
-                  <div className="border-t border-slate-800 bg-slate-950/60 p-5 space-y-4">
-                    {/* Datos del Cliente */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-300 bg-slate-900/60 p-4 rounded-xl border border-slate-800/80">
+                  <div className="border-t border-slate-800/80 bg-slate-950/80 p-5 space-y-5 animate-fadeIn">
+                    {/* Tarjeta de Información de Envío */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs bg-slate-900/80 p-4 rounded-xl border border-slate-800/80">
                       <div>
-                        <span className="text-slate-500 block mb-0.5">Cliente:</span>
-                        <span className="font-medium text-white">{order.customer_name || 'N/A'}</span>
+                        <span className="text-slate-500 font-mono block mb-1">DESTINATARIO:</span>
+                        <span className="font-medium text-white text-sm">{order.customer_name || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 block mb-0.5">Correo:</span>
-                        <span className="font-medium text-white">{order.customer_email || 'N/A'}</span>
+                        <span className="text-slate-500 font-mono block mb-1">CORREO CONTACTO:</span>
+                        <span className="font-medium text-cyan-400">{order.customer_email || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 block mb-0.5">Teléfono:</span>
-                        <span className="text-slate-300">{order.customer_phone || 'N/A'}</span>
+                        <span className="text-slate-500 font-mono block mb-1">TELÉFONO:</span>
+                        <span className="text-slate-300 font-mono">{order.customer_phone || 'N/A'}</span>
                       </div>
                       <div>
-                        <span className="text-slate-500 block mb-0.5">Dirección de Entrega:</span>
-                        <span className="text-slate-300 whitespace-pre-line">{order.customer_address || 'N/A'}</span>
+                        <span className="text-slate-500 font-mono block mb-1">DIRECCIÓN DE ENTREGA:</span>
+                        <span className="text-slate-300 whitespace-pre-line leading-relaxed">{order.customer_address || 'N/A'}</span>
                       </div>
                     </div>
 
-                    {/* Desglose de Productos comprados */}
+                    {/* Desglose de Productos */}
                     {productList.length > 0 && (
-                      <div>
-                        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Artículos comprados</h4>
-                        <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl overflow-hidden bg-slate-900/40">
+                      <div className="space-y-2">
+                        <h4 className="text-xs font-mono uppercase tracking-widest text-slate-400 flex items-center space-x-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+                          <span>Items procesados ({productList.length})</span>
+                        </h4>
+                        
+                        <div className="divide-y divide-slate-800/60 border border-slate-800/80 rounded-xl overflow-hidden bg-slate-900/40">
                           {productList.map((prod, idx) => {
                             const qty = prod.quantity || 1;
                             const price = prod.price || 0;
                             return (
-                              <div key={idx} className="p-3 flex justify-between items-center text-sm">
+                              <div key={idx} className="p-3.5 flex justify-between items-center text-sm hover:bg-slate-800/20 transition">
                                 <div className="flex items-center space-x-3">
-                                  {prod.image && (
-                                    <img src={prod.image} alt={prod.name} className="w-10 h-10 object-cover rounded-lg border border-slate-800" />
+                                  {prod.image ? (
+                                    <img 
+                                      src={prod.image} 
+                                      alt={prod.name} 
+                                      className="w-11 h-11 object-cover rounded-lg border border-slate-800 bg-slate-950" 
+                                    />
+                                  ) : (
+                                    <div className="w-11 h-11 rounded-lg border border-slate-800 bg-slate-950 flex items-center justify-center text-slate-600 font-mono text-xs">
+                                      IMG
+                                    </div>
                                   )}
                                   <div>
-                                    <p className="font-medium text-white">{prod.name || 'Producto'}</p>
-                                    <p className="text-xs text-slate-500">Cantidad: {qty} x ${price}</p>
+                                    <p className="font-semibold text-white">{prod.name || 'Producto Tech'}</p>
+                                    <p className="text-xs text-slate-500 font-mono mt-0.5">
+                                      Cant: {qty} × <span className="text-slate-400">${price}</span>
+                                    </p>
                                   </div>
                                 </div>
-                                <span className="font-semibold text-slate-200">${(price * qty).toLocaleString()}</span>
+                                <span className="font-bold font-mono text-slate-200">${(price * qty).toLocaleString()}</span>
                               </div>
                             );
                           })}
