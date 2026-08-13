@@ -133,7 +133,7 @@ export default function CustomersPage() {
         case "lastPurchase":
           return (
             new Date(b.lastPurchase || 0).getTime() -
-            new Date(a.lastPurchase || 0).getTime()
+            new Date(b.lastPurchase || 0).getTime()
           );
 
         case "averageOrder":
@@ -182,178 +182,182 @@ export default function CustomersPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 text-slate-100">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">
+        <h1 className="text-3xl font-extrabold text-white tracking-tight">
           Clientes
         </h1>
 
-        <p className="mt-2 text-slate-500">
+        <p className="mt-1 text-xs text-slate-400 font-mono">
           Analiza tus clientes y su historial de compras.
         </p>
       </div>
 
+      {/* Tarjetas Neón Métricas */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl bg-white p-6 shadow">
-          <p className="text-sm font-medium text-slate-500">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-6 shadow-xl">
+          <p className="text-xs font-mono uppercase tracking-wider text-slate-400">
             Clientes
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-slate-900">
+          <p className="mt-2 text-3xl font-extrabold font-mono text-cyan-400">
             {totalCustomers}
           </p>
         </div>
 
-        <div className="rounded-xl bg-white p-6 shadow">
-          <p className="text-sm font-medium text-slate-500">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-6 shadow-xl">
+          <p className="text-xs font-mono uppercase tracking-wider text-slate-400">
             Pedidos
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-slate-900">
+          <p className="mt-2 text-3xl font-extrabold font-mono text-cyan-400">
             {totalOrders}
           </p>
         </div>
 
-        <div className="rounded-xl bg-white p-6 shadow">
-          <p className="text-sm font-medium text-slate-500">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-6 shadow-xl">
+          <p className="text-xs font-mono uppercase tracking-wider text-slate-400">
             Ventas
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-slate-900">
+          <p className="mt-2 text-3xl font-extrabold font-mono text-cyan-400">
             ${totalSales.toFixed(2)}
           </p>
         </div>
 
-        <div className="rounded-xl bg-white p-6 shadow">
-          <p className="text-sm font-medium text-slate-500">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-6 shadow-xl">
+          <p className="text-xs font-mono uppercase tracking-wider text-slate-400">
             Promedio por cliente
           </p>
 
-          <p className="mt-2 text-3xl font-bold text-slate-900">
+          <p className="mt-2 text-3xl font-extrabold font-mono text-cyan-400">
             ${averageCustomerPurchase.toFixed(2)}
           </p>
         </div>
       </div>
 
-      <div className="rounded-xl bg-white p-6 shadow">
+      {/* Bloque Principal de la Tabla */}
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-6 shadow-2xl">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="text-xl font-bold text-white font-mono tracking-wide">
               Lista de clientes
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-xs text-slate-400">
               Clientes agrupados por correo electrónico.
             </p>
           </div>
 
+          {/* Buscador y Filtro estilizados */}
           <div className="flex flex-col gap-3 md:flex-row">
             <input
               type="text"
               placeholder="Buscar cliente..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm outline-none focus:border-cyan-500 md:w-64"
+              className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 md:w-64 transition-all"
             />
 
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm outline-none focus:border-cyan-500"
+              className="rounded-xl border border-slate-800 bg-slate-950 px-4 py-2 text-sm text-slate-100 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all cursor-pointer"
             >
-              <option value="totalSpent">
+              <option value="totalSpent" className="bg-slate-900 text-slate-100">
                 Mayor gasto
               </option>
 
-              <option value="orders">
+              <option value="orders" className="bg-slate-900 text-slate-100">
                 Más pedidos
               </option>
 
-              <option value="lastPurchase">
+              <option value="lastPurchase" className="bg-slate-900 text-slate-100">
                 Compra más reciente
               </option>
 
-              <option value="averageOrder">
+              <option value="averageOrder" className="bg-slate-900 text-slate-100">
                 Mayor promedio
               </option>
 
-              <option value="name">
+              <option value="name" className="bg-slate-900 text-slate-100">
                 Nombre
               </option>
             </select>
           </div>
         </div>
 
+        {/* Tabla Cibernética de Clientes */}
         <div className="mt-6 overflow-x-auto">
           {loading ? (
-            <div className="py-10 text-center text-slate-500">
-              Cargando clientes...
+            <div className="py-12 text-center text-xs font-mono text-cyan-400 animate-pulse">
+              [ Cargando información de clientes... ]
             </div>
           ) : (
-            <table className="w-full min-w-[900px] text-left text-sm">
-              <thead className="bg-slate-100 text-xs uppercase tracking-wider text-slate-600">
+            <table className="w-full min-w-[900px] text-left text-sm text-slate-300">
+              <thead className="bg-slate-950/80 text-cyan-400 font-mono text-xs uppercase tracking-wider border-b border-slate-800">
                 <tr>
-                  <th className="px-4 py-3">
+                  <th className="px-4 py-3.5">
                     Cliente
                   </th>
 
-                  <th className="px-4 py-3">
+                  <th className="px-4 py-3.5">
                     Contacto
                   </th>
 
-                  <th className="px-4 py-3 text-center">
+                  <th className="px-4 py-3.5 text-center">
                     Pedidos
                   </th>
 
-                  <th className="px-4 py-3">
+                  <th className="px-4 py-3.5">
                     Total comprado
                   </th>
 
-                  <th className="px-4 py-3">
+                  <th className="px-4 py-3.5">
                     Promedio
                   </th>
 
-                  <th className="px-4 py-3">
+                  <th className="px-4 py-3.5">
                     Última compra
                   </th>
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody className="divide-y divide-slate-800/60">
                 {filteredCustomers.map((customer) => (
                   <tr
                     key={`${customer.email}-${customer.phone}`}
-                    className="border-t border-slate-200 hover:bg-slate-50"
+                    className="hover:bg-slate-800/40 transition-colors"
                   >
                     <td className="px-4 py-4">
-                      <div className="font-semibold text-slate-900">
+                      <div className="font-semibold text-slate-100">
                         {customer.name}
                       </div>
                     </td>
 
                     <td className="px-4 py-4">
-                      <div className="text-slate-700">
+                      <div className="text-slate-300 font-mono text-xs">
                         {customer.email}
                       </div>
 
-                      <div className="mt-1 text-xs text-slate-500">
+                      <div className="mt-1 text-xs text-slate-500 font-mono">
                         {customer.phone}
                       </div>
                     </td>
 
-                    <td className="px-4 py-4 text-center font-semibold">
+                    <td className="px-4 py-4 text-center font-mono font-bold text-cyan-400">
                       {customer.orders}
                     </td>
 
-                    <td className="px-4 py-4 font-semibold text-emerald-600">
+                    <td className="px-4 py-4 font-mono font-semibold text-emerald-400">
                       ${customer.totalSpent.toFixed(2)}
                     </td>
 
-                    <td className="px-4 py-4">
+                    <td className="px-4 py-4 font-mono text-slate-300">
                       ${customer.averageOrder.toFixed(2)}
                     </td>
 
-                    <td className="px-4 py-4 text-slate-600">
+                    <td className="px-4 py-4 font-mono text-xs text-slate-400">
                       {formatDate(customer.lastPurchase)}
                     </td>
                   </tr>
@@ -363,10 +367,10 @@ export default function CustomersPage() {
                   <tr>
                     <td
                       colSpan={6}
-                      className="px-4 py-10 text-center text-slate-500"
+                      className="px-4 py-10 text-center font-mono text-xs text-slate-500"
                     >
                       {search
-                        ? "No se encontraron clientes."
+                        ? "No se encontraron clientes para la búsqueda."
                         : "Todavía no hay clientes registrados."}
                     </td>
                   </tr>
