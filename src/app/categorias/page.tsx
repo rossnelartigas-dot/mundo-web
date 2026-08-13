@@ -2,7 +2,10 @@ import Link from "next/link";
 import { getProducts } from "@/services/productService";
 
 export default async function CategoriasPage() {
-  let products = [];
+  // Obtenemos el tipo directamente del retorno de la función
+  type ProductType = Awaited<ReturnType<typeof getProducts>>[number];
+  
+  let products: ProductType[] = [];
 
   try {
     products = await getProducts();
