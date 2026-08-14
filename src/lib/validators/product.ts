@@ -1,62 +1,33 @@
 import { z } from "zod";
 
-
 export const ProductSchema = z.object({
+  name: z.string().min(1, "El nombre es obligatorio"),
 
-  name: z.string()
-    .min(3, "Nombre obligatorio"),
+  description: z.string().optional().or(z.literal("")),
 
+  // Permite números con decimales y valores por defecto
+  price: z.coerce.number().min(0, "El precio no puede ser negativo").optional(),
 
-  description: z.string()
-    .min(5, "Descripción obligatoria"),
+  category: z.string().optional().or(z.literal("")),
 
+  brand: z.string().optional().or(z.literal("")),
 
-  price: z.number()
-    .min(0),
+  image: z.string().optional().or(z.literal("")),
 
+  stock: z.coerce.number().min(0, "El stock no puede ser negativo").optional(),
 
-  category: z.string()
-    .min(2, "Categoría obligatoria"),
+  // 🔴 SKU y SLUG AHORA SON OPCIONALES
+  slug: z.string().optional().nullable().or(z.literal("")),
 
+  sku: z.string().optional().nullable().or(z.literal("")),
 
-  brand: z.string()
-    .min(2, "Marca obligatoria"),
+  featured: z.boolean().default(false),
 
+  active: z.boolean().default(true),
 
-  image: z.string()
-    .optional(),
+  discount: z.coerce.number().min(0).optional(),
 
-
-  stock: z.number()
-    .min(0),
-
-
-  slug: z.string()
-    .min(2, "Slug obligatorio"),
-
-
-  sku: z.string()
-    .min(2, "SKU obligatorio"),
-
-
-  featured: z.boolean(),
-
-
-  active: z.boolean(),
-
-
-  discount: z.number()
-    .min(0),
-
-
-  weight: z.number()
-    .min(0),
-
-
+  weight: z.coerce.number().min(0).optional(),
 });
 
-
-
-export type ProductFormData = z.infer<
-  typeof ProductSchema
->;
+export type ProductFormData = z.infer<typeof ProductSchema>;

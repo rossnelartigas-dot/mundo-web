@@ -10,7 +10,8 @@ import {
     ShoppingCart,
     Users,
     Settings,
-    ArrowLeft
+    ArrowLeft,
+    Calculator // Se añade para el módulo de Precios y Descuentos
 } from "lucide-react";
 
 const links = [
@@ -23,6 +24,11 @@ const links = [
         href: "/admin/products",
         label: "Productos",
         icon: Package,
+    },
+    {
+        href: "/admin/precios",
+        label: "Precios y Descuentos",
+        icon: Calculator,
     },
     {
         href: "/admin/inventario",

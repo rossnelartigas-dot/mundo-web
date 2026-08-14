@@ -23,30 +23,18 @@ import { Product } from "@/types/product";
 
 import ImageUploader from "./ImageUploader";
 
-
 interface Props {
   product?: Product;
 }
 
-
-export default function ProductForm({
-  product
-}: Props) {
-
-
+export default function ProductForm({ product }: Props) {
   const router = useRouter();
-
-
   const [imageFile, setImageFile] = useState<File | null>(null);
-
-
   const [loading, setLoading] = useState(false);
-
-
 
   const {
     register,
-    setValue: _setValue,
+    setValue,
     handleSubmit,
     formState: { errors },
   } = useForm<ProductFormData>({
@@ -54,20 +42,19 @@ export default function ProductForm({
     defaultValues: {
       name: product?.name || "",
       description: product?.description || "",
-      price: product?.price || 0,
+      price: product?.price ?? 0,
       category: product?.category || "",
       brand: product?.brand || "",
       image: product?.image || "",
-      stock: product?.stock || 0,
+      stock: product?.stock ?? 0,
       slug: product?.slug || "",
       sku: product?.sku || "",
       featured: product?.featured ?? false,
       active: product?.active ?? true,
-      discount: product?.discount || 0,
-      weight: product?.weight || 0,
+      discount: product?.discount ?? 0,
+      weight: product?.weight ?? 0,
     },
   });
-
 
   function generateSlug(value: string): string {
     return value
@@ -80,7 +67,7 @@ export default function ProductForm({
   function handleNameChange(e: React.ChangeEvent<HTMLInputElement>): void {
     const value = e.target.value;
     if (!product) {
-      _setValue("slug", generateSlug(value));
+      setValue("slug", generateSlug(value));
     }
   }
 
@@ -91,10 +78,24 @@ export default function ProductForm({
       if (imageFile) {
         imageUrl = await uploadProductImage(imageFile);
       }
+
+      // Aseguramos compatibilidad estricta con Omit<Product, "id" | "created_at">
       const productData = {
-        ...data,
+        name: data.name,
+        description: data.description || "",
+        price: data.price ?? 0,
+        category: data.category || "",
+        brand: data.brand || "",
+        stock: data.stock ?? 0,
+        discount: data.discount ?? 0,
+        weight: data.weight ?? 0,
+        featured: Boolean(data.featured),
+        active: Boolean(data.active),
+        sku: data.sku?.trim() ? data.sku.trim() : "",
+        slug: data.slug?.trim() ? data.slug.trim() : generateSlug(data.name),
         image: imageUrl,
       };
+
       if (product) {
         await updateProduct(product.id, productData);
         alert("Producto actualizado correctamente");
@@ -125,8 +126,9 @@ export default function ProductForm({
           onChange={handleNameChange}
           className="border p-3 w-full rounded-lg"
         />
-        <p className="text-red-500">{errors.name?.message}</p>
+        <p className="text-red-500 text-sm mt-1">{errors.name?.message}</p>
       </div>
+
       <div>
         <label className="block mb-2 font-medium">Descripción</label>
         <textarea
@@ -135,6 +137,7 @@ export default function ProductForm({
           className="border p-3 w-full rounded-lg"
         />
       </div>
+
       <div className="grid grid-cols-2 gap-4">
         <input
           {...register("brand")}
@@ -147,39 +150,66 @@ export default function ProductForm({
           className="border p-3 rounded-lg"
         />
       </div>
+
       <div className="grid grid-cols-2 gap-4">
-        <input
-          type="number"
-          {...register("price", {
-            valueAsNumber: true,
-          })}
-          placeholder="Precio"
-          className="border p-3 rounded-lg"
-        />
-        <input
-          type="number"
-          {...register("stock", {
-            valueAsNumber: true,
-          })}
-          placeholder="Stock"
-          className="border p-3 rounded-lg"
-        />
+        <div>
+          <input
+            type="number"
+            step="0.01"
+            {...register("price", {
+              valueAsNumber: true,
+            })}
+            placeholder="Precio ($)"
+            className="border p-3 rounded-lg w-full"
+          />
+          {errors.price && (
+            <p className="text-red-500 text-sm mt-1">{errors.price.message}</p>
+          )}
+        </div>
+
+        <div>
+          <input
+            type="number"
+            {...register("stock", {
+              valueAsNumber: true,
+            })}
+            placeholder="Stock"
+            className="border p-3 rounded-lg w-full"
+          />
+          {errors.stock && (
+            <p className="text-red-500 text-sm mt-1">{errors.stock.message}</p>
+          )}
+        </div>
       </div>
+
       <div className="grid grid-cols-2 gap-4">
-        <input
-          {...register("sku")}
-          placeholder="SKU"
-          className="border p-3 rounded-lg"
-        />
-        <input
-          {...register("slug")}
-          placeholder="Slug"
-          className="border p-3 rounded-lg"
-        />
+        <div>
+          <input
+            {...register("sku")}
+            placeholder="SKU (Opcional)"
+            className="border p-3 rounded-lg w-full"
+          />
+          {errors.sku && (
+            <p className="text-red-500 text-sm mt-1">{errors.sku.message}</p>
+          )}
+        </div>
+
+        <div>
+          <input
+            {...register("slug")}
+            placeholder="Slug (Opcional)"
+            className="border p-3 rounded-lg w-full"
+          />
+          {errors.slug && (
+            <p className="text-red-500 text-sm mt-1">{errors.slug.message}</p>
+          )}
+        </div>
       </div>
+
       <div className="grid grid-cols-2 gap-4">
         <input
           type="number"
+          step="0.01"
           {...register("discount", {
             valueAsNumber: true,
           })}
@@ -188,6 +218,7 @@ export default function ProductForm({
         />
         <input
           type="number"
+          step="0.01"
           {...register("weight", {
             valueAsNumber: true,
           })}
@@ -195,10 +226,12 @@ export default function ProductForm({
           className="border p-3 rounded-lg"
         />
       </div>
+
       <ImageUploader
         imageUrl={product?.image}
         onImageChange={handleFileChange}
       />
+
       <div>
         <label className="block mb-2 font-medium">URL de imagen</label>
         <input
@@ -207,31 +240,33 @@ export default function ProductForm({
           className="border p-3 w-full rounded-lg"
         />
       </div>
+
       <label className="flex gap-2 items-center">
-        <input
-          type="checkbox"
-          {...register("featured")}
-        />
+        <input type="checkbox" {...register("featured")} />
         Producto destacado
       </label>
+
       <label className="flex gap-2 items-center">
-        <input
-          type="checkbox"
-          {...register("active")}
-        />
+        <input type="checkbox" {...register("active")} />
         Producto activo
       </label>
+
       <div className="flex gap-4">
         <button
+          type="submit"
           disabled={loading}
-          className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg"
+          className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg font-medium transition disabled:opacity-50"
         >
-          {loading ? "Guardando..." : product ? "Guardar cambios" : "Crear producto"}
+          {loading
+            ? "Guardando..."
+            : product
+            ? "Guardar cambios"
+            : "Crear producto"}
         </button>
         <button
           type="button"
           onClick={() => router.push("/admin/products")}
-          className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg"
+          className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition"
         >
           Cancelar
         </button>

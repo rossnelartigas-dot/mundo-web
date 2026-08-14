@@ -1,17 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import {
-  useForm,
-  SubmitHandler,
-} from "react-hook-form";
-
+import { useForm, SubmitHandler } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
 import { Product } from "@/types/product";
-
 import { updateProduct } from "@/services/productService";
-
 import { uploadProductImage } from "@/services/storageService";
 
 import ImageUploader from "./ImageUploader";
@@ -32,17 +26,10 @@ interface ProductEditFormData {
   active: boolean;
 }
 
-export default function ProductEditForm({
-  product,
-}: Props) {
-
+export default function ProductEditForm({ product }: Props) {
   const router = useRouter();
-
-  const [imageFile, setImageFile] =
-    useState<File | null>(null);
-
-  const [loading, setLoading] =
-    useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const { register, handleSubmit } = useForm<ProductEditFormData>({
     defaultValues: {
@@ -58,72 +45,41 @@ export default function ProductEditForm({
     },
   });
 
-  const onSubmit: SubmitHandler<ProductEditFormData> =
-    async (data) => {
-      try {
-        setLoading(true);
+  const onSubmit: SubmitHandler<ProductEditFormData> = async (data) => {
+    try {
+      setLoading(true);
 
-        let imageUrl =
-          data.image || "";
+      let imageUrl = data.image || "";
 
-        if (imageFile) {
-          imageUrl =
-            await uploadProductImage(
-              imageFile
-            );
-        }
-
-        await updateProduct(
-          product.id,
-          {
-            ...data,
-            image: imageUrl,
-          }
-        );
-
-        alert(
-          "Producto actualizado correctamente"
-        );
-
-        router.push(
-          "/admin/products"
-        );
-
-        router.refresh();
-
-      } catch (error) {
-        console.error(
-          "Error actualizando producto:",
-          error
-        );
-
-        alert(
-          "Error actualizando producto"
-        );
-
-      } finally {
-        setLoading(false);
+      if (imageFile) {
+        imageUrl = await uploadProductImage(imageFile);
       }
-    };
+
+      await updateProduct(product.id, {
+        ...data,
+        price: data.price ? Number(data.price) : 0,
+        image: imageUrl,
+      });
+
+      alert("Producto actualizado correctamente");
+      router.push("/admin/products");
+      router.refresh();
+    } catch (error) {
+      console.error("Error actualizando producto:", error);
+      alert("Error actualizando producto");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleFileChange = (file: File | null) => {
     setImageFile(file);
   };
 
   return (
-
-    <form
-      onSubmit={
-        handleSubmit(onSubmit)
-      }
-      className="space-y-6"
-    >
-
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
-        <label className="block mb-2 font-medium">
-          Nombre
-        </label>
-
+        <label className="block mb-2 font-medium">Nombre</label>
         <input
           {...register("name")}
           className="border rounded-lg p-3 w-full"
@@ -131,10 +87,7 @@ export default function ProductEditForm({
       </div>
 
       <div>
-        <label className="block mb-2 font-medium">
-          Descripción
-        </label>
-
+        <label className="block mb-2 font-medium">Descripción</label>
         <textarea
           {...register("description")}
           rows={4}
@@ -149,7 +102,6 @@ export default function ProductEditForm({
           className="border rounded-lg p-3"
         />
 
-
         <input
           {...register("category")}
           placeholder="Categoría"
@@ -160,13 +112,13 @@ export default function ProductEditForm({
       <div className="grid grid-cols-2 gap-5">
         <input
           type="number"
+          step="0.01"
           {...register("price", {
             valueAsNumber: true,
           })}
           placeholder="Precio"
           className="border rounded-lg p-3"
         />
-
 
         <input
           type="number"
@@ -186,10 +138,7 @@ export default function ProductEditForm({
       </div>
 
       <div>
-        <label className="block mb-2 font-medium">
-          URL de imagen
-        </label>
-
+        <label className="block mb-2 font-medium">URL de imagen</label>
         <input
           {...register("image")}
           className="border rounded-lg p-3 w-full"
@@ -198,55 +147,32 @@ export default function ProductEditForm({
       </div>
 
       <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          {...register("featured")}
-        />
-
-
-        <label>
-          Producto destacado
-        </label>
+        <input type="checkbox" {...register("featured")} />
+        <label>Producto destacado</label>
       </div>
 
       <div className="flex items-center gap-3">
-        <input
-          type="checkbox"
-          {...register("active")}
-        />
-
-
-        <label>
-          Producto activo
-        </label>
+        <input type="checkbox" {...register("active")} />
+        <label>Producto activo</label>
       </div>
 
       <div className="flex gap-4">
         <button
           type="submit"
           disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition"
         >
-          {loading
-            ? "Guardando..."
-            : "Guardar cambios"}
+          {loading ? "Guardando..." : "Guardar cambios"}
         </button>
 
         <button
           type="button"
-          onClick={() =>
-            router.push(
-              "/admin/products"
-            )
-          }
-          className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg"
+          onClick={() => router.push("/admin/products")}
+          className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition"
         >
           Cancelar
         </button>
       </div>
-
     </form>
-
   );
-
 }
