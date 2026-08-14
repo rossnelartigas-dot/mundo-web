@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import {
   Building,
@@ -19,11 +19,18 @@ import { useCart } from "@/context/CartContext";
 import { createOrder } from "@/services/orderService";
 import { supabase } from "@/lib/supabase";
 
+interface CustomerForm {
+  customer_name: string;
+  customer_phone: string;
+  customer_email: string;
+  customer_address: string;
+}
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, total, clearCart } = useCart();
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<CustomerForm>({
     customer_name: "",
     customer_phone: "",
     customer_email: "",
@@ -31,51 +38,64 @@ export default function CheckoutPage() {
   });
 
   const [userId, setUserId] = useState<string | null>(null);
-
-  // Métodos y referencias de pago
-  const [paymentMethod, setPaymentMethod] = useState("pago_movil");
+  const [paymentMethod, setPaymentMethod] = useState<"pago_movil" | "transferencia" | "binance">("pago_movil");
   const [paymentReference, setPaymentReference] = useState("");
   const [loading, setLoading] = useState(false);
+  const [bcvRate, setBcvRate] = useState<number | null>(null);
 
-  // Configuración de WhatsApp
   const whatsappNumber = "+584264433849";
   const whatsappMessage = encodeURIComponent(
-    `Hola Mundo Web! Tengo una consulta antes de confirmar mi pedido en el Checkout. El total de mi carrito es $${Number(
-      total
-    ).toFixed(2)}.`
+    `Hola! Tengo una consulta antes de confirmar mi pedido en el Checkout. El total de mi carrito es $${Number(total).toFixed(2)}.`
   );
 
-  // Cargar usuario autenticado si existe
   useEffect(() => {
-    async function checkUser() {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    let isMounted = true;
 
-      if (session?.user) {
-        setUserId(session.user.id);
-        if (session.user.email) {
-          setForm((prev) => ({
-            ...prev,
-            customer_email: session.user.email!.toLowerCase().trim(),
-          }));
+    async function checkUser() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user && isMounted) {
+          setUserId(session.user.id);
+          if (session.user.email) {
+            setForm((prev) => ({
+              ...prev,
+              customer_email: session.user.email!.toLowerCase().trim(),
+            }));
+          }
         }
+      } catch (err) {
+        console.error("Error obteniendo sesión de usuario:", err);
+      }
+    }
+
+    async function fetchBcvRate() {
+      try {
+        const res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
+        if (!res.ok) throw new Error("Error en respuesta de API DolarApi");
+        const data = await res.json();
+        if (data?.promedio && isMounted) {
+          setBcvRate(data.promedio);
+        }
+      } catch (err) {
+        console.error("Error obteniendo tasa BCV:", err);
       }
     }
 
     checkUser();
+    fetchBcvRate();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) {
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-
     setForm((current) => ({
       ...current,
       [name]: value,
     }));
-  }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -116,11 +136,33 @@ export default function CheckoutPage() {
         total: Number(total),
       });
 
-      clearCart();
+      // Notificación vía API Route /order-created
+      try {
+        const notifyRes = await fetch("/api/order-created", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderId: order.id,
+            customerEmail: cleanEmail,
+            customerName: cleanName,
+            customerPhone: cleanPhone,
+            customerAddress: cleanAddress,
+            paymentMethod,
+            paymentReference: cleanRef,
+            total: Number(total),
+            products: cart,
+          }),
+        });
 
-      router.push(
-        `/pedido?id=${order.id}&email=${encodeURIComponent(cleanEmail)}`
-      );
+        if (!notifyRes.ok) {
+          console.warn("No se pudo procesar el webhook/correo de orden creada.");
+        }
+      } catch (notifyErr) {
+        console.error("Error enviando notificación de orden creada:", notifyErr);
+      }
+
+      clearCart();
+      router.push(`/pedido?id=${order.id}&email=${encodeURIComponent(cleanEmail)}`);
     } catch (error) {
       console.error("Error creando pedido:", error);
       alert("No se pudo crear el pedido. Por favor intenta nuevamente.");
@@ -128,7 +170,8 @@ export default function CheckoutPage() {
     }
   }
 
-  // Estado vacío (Dark Mode)
+  const totalBs = bcvRate ? (Number(total) * bcvRate).toFixed(2) : null;
+
   if (cart.length === 0) {
     return (
       <main className="min-h-screen bg-slate-950 py-16 text-slate-100 flex items-center">
@@ -138,9 +181,7 @@ export default function CheckoutPage() {
               <ShoppingBag className="h-10 w-10" />
             </div>
 
-            <h1 className="text-3xl font-bold text-white">
-              Tu carrito está vacío
-            </h1>
+            <h1 className="text-3xl font-bold text-white">Tu carrito está vacío</h1>
 
             <p className="mt-3 text-slate-400">
               Explora nuestro catálogo de tecnología y seguridad antes de proceder al pago.
@@ -173,7 +214,7 @@ export default function CheckoutPage() {
     <main className="min-h-screen bg-slate-950 py-12 text-slate-100">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         
-        {/* BARRA DE NAVEGACIÓN SUPERIOR / REGRESO */}
+        {/* NAVEGACIÓN SUPERIOR */}
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
           <div className="flex items-center gap-3">
             <button
@@ -195,7 +236,6 @@ export default function CheckoutPage() {
             </button>
           </div>
 
-          {/* BOTÓN WHATSAPP CONSULTA */}
           <a
             href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
             target="_blank"
@@ -218,7 +258,7 @@ export default function CheckoutPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="grid gap-8 lg:grid-cols-3">
-          {/* COLUMNA IZQUIERDA: DATOS + PAGO */}
+          {/* COLUMNA IZQUIERDA */}
           <div className="space-y-8 lg:col-span-2">
             
             {/* DATOS DEL CLIENTE */}
@@ -234,12 +274,8 @@ export default function CheckoutPage() {
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">
-                {/* NOMBRE */}
                 <div className="sm:col-span-2">
-                  <label
-                    htmlFor="customer_name"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
-                  >
+                  <label htmlFor="customer_name" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300">
                     Nombre completo
                   </label>
                   <input
@@ -255,12 +291,8 @@ export default function CheckoutPage() {
                   />
                 </div>
 
-                {/* TELÉFONO */}
                 <div>
-                  <label
-                    htmlFor="customer_phone"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
-                  >
+                  <label htmlFor="customer_phone" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300">
                     Teléfono
                   </label>
                   <input
@@ -276,12 +308,8 @@ export default function CheckoutPage() {
                   />
                 </div>
 
-                {/* CORREO */}
                 <div>
-                  <label
-                    htmlFor="customer_email"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
-                  >
+                  <label htmlFor="customer_email" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300">
                     Correo electrónico
                   </label>
                   <input
@@ -297,12 +325,8 @@ export default function CheckoutPage() {
                   />
                 </div>
 
-                {/* DIRECCIÓN */}
                 <div className="sm:col-span-2">
-                  <label
-                    htmlFor="customer_address"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
-                  >
+                  <label htmlFor="customer_address" className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300">
                     Dirección de entrega
                   </label>
                   <textarea
@@ -332,10 +356,10 @@ export default function CheckoutPage() {
                 </p>
               </div>
 
-              {/* Botones de Selección */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
                 <button
                   type="button"
+                  aria-pressed={paymentMethod === "pago_movil"}
                   onClick={() => setPaymentMethod("pago_movil")}
                   className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
                     paymentMethod === "pago_movil"
@@ -349,6 +373,7 @@ export default function CheckoutPage() {
 
                 <button
                   type="button"
+                  aria-pressed={paymentMethod === "transferencia"}
                   onClick={() => setPaymentMethod("transferencia")}
                   className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
                     paymentMethod === "transferencia"
@@ -362,6 +387,7 @@ export default function CheckoutPage() {
 
                 <button
                   type="button"
+                  aria-pressed={paymentMethod === "binance"}
                   onClick={() => setPaymentMethod("binance")}
                   className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
                     paymentMethod === "binance"
@@ -374,7 +400,7 @@ export default function CheckoutPage() {
                 </button>
               </div>
 
-              {/* Detalles e Instrucciones */}
+              {/* DETALLES DE PAGO */}
               <div className="rounded-xl bg-slate-950/60 p-5 border border-slate-800/80 text-sm space-y-4">
                 {paymentMethod === "pago_movil" && (
                   <div className="space-y-1.5 text-slate-300">
@@ -384,6 +410,11 @@ export default function CheckoutPage() {
                     <p>Banco: <span className="text-white font-medium">Mercantil (0105)</span></p>
                     <p>Teléfono: <span className="text-white font-medium">0414-5852935</span></p>
                     <p>RIF: <span className="text-white font-medium">V-29569063</span></p>
+                    {totalBs && (
+                      <p className="mt-2 text-xs font-semibold text-cyan-300 bg-cyan-950/50 p-2 rounded-lg border border-cyan-500/20">
+                        Monto a transferir (Tasa BCV): Bs. {totalBs}
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -409,25 +440,15 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {/* Campo obligatorio de referencia */}
                 <div className="pt-4 border-t border-slate-800">
-                  <label
-                    htmlFor="payment_reference"
-                    className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2"
-                  >
-                    {paymentMethod === "binance"
-                      ? "Order ID / Reference Binance (Obligatorio)"
-                      : "Número de Referencia (Obligatorio)"}
+                  <label htmlFor="payment_reference" className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+                    {paymentMethod === "binance" ? "Order ID / Reference Binance (Obligatorio)" : "Número de Referencia (Obligatorio)"}
                   </label>
                   <input
                     id="payment_reference"
                     type="text"
                     required
-                    placeholder={
-                      paymentMethod === "binance"
-                        ? "Ej: 21983019283"
-                        : "Ej: 00123456"
-                    }
+                    placeholder={paymentMethod === "binance" ? "Ej: 21983019283" : "Ej: 00123456"}
                     value={paymentReference}
                     onChange={(e) => setPaymentReference(e.target.value)}
                     disabled={loading}
@@ -438,7 +459,7 @@ export default function CheckoutPage() {
             </div>
           </div>
 
-          {/* RESUMEN DE COMPRA (COLUMNA DERECHA) */}
+          {/* RESUMEN DE COMPRA */}
           <div className="lg:col-span-1">
             <div className="sticky top-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl backdrop-blur-md">
               <h2 className="text-xl font-bold text-white border-b border-slate-800/80 pb-3">
@@ -449,7 +470,6 @@ export default function CheckoutPage() {
                 {cart.length} {cart.length === 1 ? "producto" : "productos"} en total
               </p>
 
-              {/* PRODUCTOS */}
               <div className="mt-5 space-y-4 max-h-[280px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800">
                 {cart.map((product) => (
                   <div key={product.id} className="flex gap-4 items-center border-b border-slate-800/40 pb-3 last:border-0">
@@ -486,7 +506,6 @@ export default function CheckoutPage() {
 
               <div className="my-5 border-t border-slate-800" />
 
-              {/* SUBTOTAL Y ENVÍO */}
               <div className="space-y-2 text-sm text-slate-400">
                 <div className="flex items-center justify-between">
                   <span>Subtotal</span>
@@ -498,17 +517,22 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* TOTAL */}
               <div className="mt-5 border-t border-slate-800 pt-4">
                 <div className="flex items-baseline justify-between">
                   <span className="text-lg font-bold text-white">Total</span>
-                  <span className="text-3xl font-extrabold text-cyan-400">
-                    ${Number(total).toFixed(2)}
-                  </span>
+                  <div className="text-right">
+                    <span className="text-3xl font-extrabold text-cyan-400">
+                      ${Number(total).toFixed(2)}
+                    </span>
+                    {totalBs && (
+                      <p className="text-xs text-slate-400 mt-1">
+                        ≈ Bs. {totalBs} (BCV)
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* BOTÓN SUBMIT */}
               <button
                 type="submit"
                 disabled={loading}
@@ -517,7 +541,6 @@ export default function CheckoutPage() {
                 {loading ? "Procesando pedido..." : "Confirmar pedido"}
               </button>
 
-              {/* OPCIÓN SECUNDARIA DE WHATSAPP BAJO EL BOTÓN DE PAGO */}
               <a
                 href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
                 target="_blank"
