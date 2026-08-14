@@ -13,6 +13,10 @@ const nextConfig: NextConfig = {
         hostname: "ytbdvbnkiysvlzgatqfu.supabase.co",
         pathname: "/storage/v1/object/public/products/**",
       },
+      {
+        protocol: 'https',
+        hostname: 'i.imgur.com',
+      },
     ],
   },
 };

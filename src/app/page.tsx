@@ -9,7 +9,7 @@ import WhatsAppButton from "@/components/WhatsAppButton";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-slate-100">
+    <main className="min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
       <Hero />
       <HomeSections />

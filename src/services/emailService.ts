@@ -1,6 +1,13 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Configuración del transporte con Gmail
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 interface OrderStatusEmailData {
   customerEmail: string;
@@ -23,12 +30,11 @@ export async function sendOrderStatusEmail({
   orderId,
   status,
 }: OrderStatusEmailData) {
-  const statusLabel =
-    statusLabels[status] ?? status;
+  const statusLabel = statusLabels[status] ?? status;
 
-  const { data, error } = await resend.emails.send({
-    from: "Mundo Web <onboarding@resend.dev>",
-    to: customerEmail,
+  const mailOptions = {
+    from: `"Mundo Web" <${process.env.GMAIL_USER}>`,
+    to: customerEmail.trim().toLowerCase(),
     subject: `Actualización de tu pedido #${orderId}`,
     html: `
       <div style="font-family: Arial, sans-serif; background:#f8fafc; padding:40px 20px;">
@@ -91,16 +97,13 @@ export async function sendOrderStatusEmail({
 
       </div>
     `,
-  });
+  };
 
-  if (error) {
-    console.error(
-      "Error enviando correo:",
-      error
-    );
-
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    return info;
+  } catch (error) {
+    console.error("❌ Error enviando correo con Nodemailer:", error);
     throw error;
   }
-
-  return data;
 }
