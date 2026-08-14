@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { 
   Calculator, 
@@ -49,10 +49,9 @@ export default function AdminPricingPage() {
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
 
   // ---------------------------------------------------------------------------
-  // 1. CARGAR PRODUCTOS
+  // 1. CARGAR PRODUCTOS (Optimizado para evitar setState en Render/Effect)
   // ---------------------------------------------------------------------------
-  const fetchProducts = async () => {
-    setLoading(true);
+  const fetchProducts = useCallback(async () => {
     const { data, error } = await supabase
       .from("products")
       .select("id, name, category, subcategory, brand, sku, cost_price, profit_margin, price, discount, stock, active")
@@ -72,11 +71,22 @@ export default function AdminPricingPage() {
       setProducts(formatted);
     }
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    let isSubscribed = true;
+
+    async function loadInitialData() {
+      if (!isSubscribed) return;
+      await fetchProducts();
+    }
+
+    loadInitialData();
+
+    return () => {
+      isSubscribed = false;
+    };
+  }, [fetchProducts]);
 
   // ---------------------------------------------------------------------------
   // 2. APLICAR MARGEN MASIVO
@@ -173,7 +183,6 @@ export default function AdminPricingPage() {
     setNotification(null);
 
     try {
-      // Preparamos solo los campos que se van a actualizar en lote
       const payload = products.map((p) => ({
         id: p.id,
         cost_price: p.cost_price,
@@ -182,7 +191,6 @@ export default function AdminPricingPage() {
         discount: p.discount,
       }));
 
-      // Una sola llamada HTTP bulk update/upsert
       const { error } = await supabase
         .from("products")
         .upsert(payload, { onConflict: "id" });
