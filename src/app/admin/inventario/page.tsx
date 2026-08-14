@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
 import { 
@@ -27,6 +27,14 @@ interface InventoryProduct {
   ordered_units: number; // Suma de unidades en pedidos
 }
 
+interface OrderItemResponse {
+  product_id: number | string;
+  quantity: number;
+  orders: {
+    status: string;
+  } | null;
+}
+
 export default function InventoryPage() {
   const [products, setProducts] = useState<InventoryProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -36,7 +44,7 @@ export default function InventoryPage() {
   // ---------------------------------------------------------------------------
   // 1. CARGAR PRODUCTOS Y CÁLCULO DE PEDIDOS DESDE SUPABASE
   // ---------------------------------------------------------------------------
-  const fetchInventory = async () => {
+  const fetchInventory = useCallback(async () => {
     setLoading(true);
 
     // Consulta de productos
@@ -64,7 +72,7 @@ export default function InventoryPage() {
     // Mapeo de unidades pedidas por producto
     const orderedMap: Record<string | number, number> = {};
     if (orderItemsData) {
-      orderItemsData.forEach((item: any) => {
+      (orderItemsData as unknown as OrderItemResponse[]).forEach((item) => {
         const pId = item.product_id;
         const qty = Number(item.quantity) || 0;
         orderedMap[pId] = (orderedMap[pId] || 0) + qty;
@@ -83,11 +91,11 @@ export default function InventoryPage() {
 
     setProducts(formatted);
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     fetchInventory();
-  }, []);
+  }, [fetchInventory]);
 
   // ---------------------------------------------------------------------------
   // 2. MANEJAR CAMBIOS LOCALES EN EL STOCK
@@ -140,7 +148,7 @@ export default function InventoryPage() {
         <button
           onClick={fetchInventory}
           disabled={loading}
-          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-mono text-xs px-4 py-2 rounded-xl transition"
+          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 font-mono text-xs px-4 py-2 rounded-xl transition cursor-pointer"
         >
           <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-cyan-400" : ""}`} />
           Recargar Datos
@@ -198,6 +206,7 @@ export default function InventoryPage() {
                             src={item.image || "/no-image.png"}
                             alt={item.name}
                             fill
+                            unoptimized
                             sizes="40px"
                             className="object-cover"
                           />
@@ -234,7 +243,7 @@ export default function InventoryPage() {
                             onClick={() => saveStockToSupabase(item.id, item.stock)}
                             disabled={isSaving}
                             title="Guardar nuevo stock"
-                            className="p-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition border border-cyan-400/30 disabled:bg-slate-800"
+                            className="p-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg transition border border-cyan-400/30 disabled:bg-slate-800 cursor-pointer"
                           >
                             {isSaving ? (
                               <Loader2 className="w-4 h-4 animate-spin" />

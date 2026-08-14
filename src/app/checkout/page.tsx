@@ -38,7 +38,7 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
 
   // Configuración de WhatsApp
-  const whatsappNumber = "+584264433849"; // Reemplazar con tu número real
+  const whatsappNumber = "+584264433849";
   const whatsappMessage = encodeURIComponent(
     `Hola Mundo Web! Tengo una consulta antes de confirmar mi pedido en el Checkout. El total de mi carrito es $${Number(
       total
@@ -392,10 +392,10 @@ export default function CheckoutPage() {
                     <p className="text-cyan-400 font-semibold mb-2 flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4" /> Datos Bancarios:
                     </p>
-                    <p>Banco: <span className="text-white font-medium">""</span></p>
-                    <p>Cuenta Corriente: <span className="text-white font-medium">""</span></p>
-                    <p>Titular: <span className="text-white font-medium">""</span></p>
-                    <p>RIF: <span className="text-white font-medium">""</span></p>
+                    <p>Banco: <span className="text-white font-medium">Por definir</span></p>
+                    <p>Cuenta Corriente: <span className="text-white font-medium">Por definir</span></p>
+                    <p>Titular: <span className="text-white font-medium">Por definir</span></p>
+                    <p>RIF: <span className="text-white font-medium">Por definir</span></p>
                   </div>
                 )}
 
@@ -404,8 +404,8 @@ export default function CheckoutPage() {
                     <p className="text-amber-400 font-semibold mb-2 flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4" /> Datos para Binance Pay:
                     </p>
-                    <p>Binance ID (Pay ID): <span className="text-white font-medium">""</span></p>
-                    <p>Correo Binance: <span className="text-white font-medium">""</span></p>
+                    <p>Binance ID (Pay ID): <span className="text-white font-medium">Por definir</span></p>
+                    <p>Correo Binance: <span className="text-white font-medium">Por definir</span></p>
                   </div>
                 )}
 

@@ -15,12 +15,10 @@ import {
   Trash2
 } from "lucide-react";
 
-// Configuración del cliente de Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// Tipado mapeado 1:1 con tu tabla 'products' en Supabase
 interface Product {
   id: number;
   name: string;
@@ -28,15 +26,15 @@ interface Product {
   subcategory?: string;
   brand?: string;
   sku?: string;
-  cost_price: number;     // Costo de adquisición
-  profit_margin: number;  // % de Ganancia deseado
-  price: number;          // Precio de Venta
-  discount: number;       // % Descuento Promocional
+  cost_price: number;
+  profit_margin: number;
+  price: number;
+  discount: number;
   stock: number;
   active: boolean;
 }
 
-const IVA_RATE = 0.16; // 16% IVA (Venezuela)
+const IVA_RATE = 0.16; // 16% IVA
 
 export default function AdminPricingPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -47,12 +45,11 @@ export default function AdminPricingPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todas");
 
-  // Estados para ajustes masivos
   const [globalMargin, setGlobalMargin] = useState<number>(30);
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
 
   // ---------------------------------------------------------------------------
-  // 1. CARGAR PRODUCTOS DESDE SUPABASE
+  // 1. CARGAR PRODUCTOS
   // ---------------------------------------------------------------------------
   const fetchProducts = async () => {
     setLoading(true);
@@ -107,12 +104,12 @@ export default function AdminPricingPage() {
       })
     );
 
-    setNotification(`¡Se aplicó un ${globalMargin}% de ganancia a ${selectedCategory === "Todas" ? "todos los productos" : `la categoría ${selectedCategory}`}! Recuerda hacer clic en "Guardar en Supabase".`);
+    setNotification(`¡Se aplicó un ${globalMargin}% de ganancia! Recuerda guardar los cambios.`);
     setTimeout(() => setNotification(null), 5000);
   };
 
   // ---------------------------------------------------------------------------
-  // 3. APLICAR O ELIMINAR DESCUENTOS MASIVOS
+  // 3. APLICAR / ELIMINAR DESCUENTOS MASIVOS
   // ---------------------------------------------------------------------------
   const handleApplyGlobalDiscount = (discountValue: number) => {
     setProducts((prev) =>
@@ -130,16 +127,16 @@ export default function AdminPricingPage() {
       })
     );
 
-    if (discountValue === 0) {
-      setNotification(`¡Se han ELIMINADO todos los descuentos de ${selectedCategory === "Todas" ? "todos los productos" : `la categoría ${selectedCategory}`}!`);
-    } else {
-      setNotification(`¡Se aplicó un descuento del ${discountValue}% a ${selectedCategory === "Todas" ? "todos los productos" : `la categoría ${selectedCategory}`}!`);
-    }
+    setNotification(
+      discountValue === 0 
+        ? "¡Se han eliminado todos los descuentos!" 
+        : `¡Se aplicó un descuento del ${discountValue}%!`
+    );
     setTimeout(() => setNotification(null), 5000);
   };
 
   // ---------------------------------------------------------------------------
-  // 4. FÓRMULAS REACTIVAS INDIVIDUALES EN TIEMPO REAL
+  // 4. CAMBIOS INDIVIDUALES EN TIEMPO REAL
   // ---------------------------------------------------------------------------
   const handleValueChange = (
     id: number,
@@ -156,8 +153,7 @@ export default function AdminPricingPage() {
         if (field === "cost_price" || field === "profit_margin") {
           const newPrice = updated.cost_price * (1 + updated.profit_margin / 100);
           updated.price = Number(newPrice.toFixed(2));
-        } 
-        else if (field === "price") {
+        } else if (field === "price") {
           if (updated.cost_price > 0) {
             const calculatedMargin = ((updated.price - updated.cost_price) / updated.cost_price) * 100;
             updated.profit_margin = Number(calculatedMargin.toFixed(2));
@@ -170,31 +166,30 @@ export default function AdminPricingPage() {
   };
 
   // ---------------------------------------------------------------------------
-  // 5. GUARDAR CAMBIOS CON .UPDATE()
+  // 5. GUARDAR CAMBIOS MASIVOS (OPTIMIZADO CON .UPSERT)
   // ---------------------------------------------------------------------------
   const saveToSupabase = async () => {
     setSaving(true);
     setNotification(null);
 
     try {
-      const updatePromises = products.map((p) =>
-        supabase
-          .from("products")
-          .update({
-            cost_price: p.cost_price,
-            profit_margin: p.profit_margin,
-            price: p.price,
-            discount: p.discount,
-          })
-          .eq("id", p.id)
-      );
+      // Preparamos solo los campos que se van a actualizar en lote
+      const payload = products.map((p) => ({
+        id: p.id,
+        cost_price: p.cost_price,
+        profit_margin: p.profit_margin,
+        price: p.price,
+        discount: p.discount,
+      }));
 
-      const results = await Promise.all(updatePromises);
-      const firstError = results.find((res) => res.error)?.error;
+      // Una sola llamada HTTP bulk update/upsert
+      const { error } = await supabase
+        .from("products")
+        .upsert(payload, { onConflict: "id" });
 
-      if (firstError) {
-        console.error("Error al actualizar Supabase:", firstError);
-        alert(`Error al guardar en la base de datos: ${firstError.message}`);
+      if (error) {
+        console.error("Error al actualizar en Supabase:", error);
+        alert(`Error al guardar en la base de datos: ${error.message}`);
       } else {
         setNotification("¡Precios, costos y márgenes guardados exitosamente en Supabase!");
         setTimeout(() => setNotification(null), 4000);
@@ -208,7 +203,7 @@ export default function AdminPricingPage() {
   };
 
   // ---------------------------------------------------------------------------
-  // 6. MÉTRICAS Y EVALUACIÓN DE GANANCIAS GLOBALES
+  // 6. MÉTRICAS FINANCIERAS
   // ---------------------------------------------------------------------------
   const metrics = useMemo(() => {
     let totalCost = 0;
@@ -231,18 +226,19 @@ export default function AdminPricingPage() {
     return { totalCost, totalRevenue, totalNetProfit, averageMargin };
   }, [products]);
 
-  // Filtrado por categoría y búsqueda rápida
   const categories = useMemo(
     () => Array.from(new Set(products.map((p) => p.category).filter(Boolean))),
     [products]
   );
 
-  const filteredProducts = products.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesCat = selectedCategory === "Todas" || p.category === selectedCategory;
-    return matchesSearch && matchesCat;
-  });
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesCat = selectedCategory === "Todas" || p.category === selectedCategory;
+      return matchesSearch && matchesCat;
+    });
+  }, [products, searchTerm, selectedCategory]);
 
   return (
     <div className="p-6 bg-slate-950 text-slate-100 min-h-screen space-y-6 font-sans">
@@ -255,7 +251,7 @@ export default function AdminPricingPage() {
             Panel de Ajuste de Precios y Rentabilidad
           </h1>
           <p className="text-slate-400 text-sm mt-1">
-            Sincronizado directamente con Supabase (<code className="text-cyan-300 bg-slate-900 px-1.5 py-0.5 rounded">cost_price</code>, <code className="text-cyan-300 bg-slate-900 px-1.5 py-0.5 rounded">profit_margin</code>, <code className="text-cyan-300 bg-slate-900 px-1.5 py-0.5 rounded">price</code>, <code className="text-cyan-300 bg-slate-900 px-1.5 py-0.5 rounded">discount</code>).
+            Sincronización optimizada con Supabase (<code className="text-cyan-300 bg-slate-900 px-1.5 py-0.5 rounded">cost_price</code>, <code className="text-cyan-300 bg-slate-900 px-1.5 py-0.5 rounded">profit_margin</code>, <code className="text-cyan-300 bg-slate-900 px-1.5 py-0.5 rounded">price</code>, <code className="text-cyan-300 bg-slate-900 px-1.5 py-0.5 rounded">discount</code>).
           </p>
         </div>
 
@@ -269,7 +265,7 @@ export default function AdminPricingPage() {
         </button>
       </div>
 
-      {/* MENSAJE DE ÉXITO / NOTIFICACIÓN */}
+      {/* NOTIFICACIÓN */}
       {notification && (
         <div className="bg-emerald-950/80 border border-emerald-500/50 text-emerald-200 px-4 py-3 rounded-xl flex items-center gap-3">
           <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
@@ -277,7 +273,7 @@ export default function AdminPricingPage() {
         </div>
       )}
 
-      {/* RESUMEN FINANCIERO / KPIS */}
+      {/* KPIS */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
           <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">Inversión en Inventario</span>
@@ -304,10 +300,8 @@ export default function AdminPricingPage() {
         </div>
       </div>
 
-      {/* HERRAMIENTAS DE EDICIÓN MASIVA Y BÚSQUEDA */}
+      {/* FILTROS Y CONTROLES MASIVOS */}
       <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl space-y-4">
-        
-        {/* FILA 1: BÚSQUEDA Y SELECCIÓN DE CATEGORÍA */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-4">
           <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
             <span>Filtrar productos a modificar:</span>
@@ -338,9 +332,7 @@ export default function AdminPricingPage() {
           </div>
         </div>
 
-        {/* FILA 2: CONTROLES MASIVOS (MARGEN Y DESCUENTOS) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
-          
           {/* MARGEN MASIVO */}
           <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-950/50 p-3 rounded-lg border border-indigo-500/20">
             <div className="flex items-center gap-2">
@@ -370,7 +362,7 @@ export default function AdminPricingPage() {
             </div>
           </div>
 
-          {/* DESCUENTO MASIVO + ELIMINAR DESCUENTOS */}
+          {/* DESCUENTO MASIVO */}
           <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-950/50 p-3 rounded-lg border border-amber-500/20">
             <div className="flex items-center gap-2">
               <Tag className="w-4 h-4 text-amber-400" />
@@ -397,7 +389,6 @@ export default function AdminPricingPage() {
                 Aplicar % Desc
               </button>
 
-              {/* BOTÓN ELIMINAR DESCUENTOS */}
               <button
                 onClick={() => handleApplyGlobalDiscount(0)}
                 disabled={loading}
@@ -409,9 +400,7 @@ export default function AdminPricingPage() {
               </button>
             </div>
           </div>
-
         </div>
-
       </div>
 
       {/* TABLA PRINCIPAL DE PRECIOS */}
@@ -443,7 +432,6 @@ export default function AdminPricingPage() {
 
                 return (
                   <tr key={product.id} className="hover:bg-slate-800/40 transition-colors">
-                    {/* Información del Producto */}
                     <td className="p-3 font-medium text-slate-200 max-w-xs">
                       <div className="truncate">{product.name}</div>
                       <span className="text-[10px] text-slate-500 block">
@@ -451,7 +439,6 @@ export default function AdminPricingPage() {
                       </span>
                     </td>
 
-                    {/* 1. Costo (cost_price) */}
                     <td className="p-3 text-center">
                       <input 
                         type="number" 
@@ -462,7 +449,6 @@ export default function AdminPricingPage() {
                       />
                     </td>
 
-                    {/* 2. Porcentaje de Ganancia (profit_margin) */}
                     <td className="p-3 text-center">
                       <div className="relative inline-block">
                         <input 
@@ -476,7 +462,6 @@ export default function AdminPricingPage() {
                       </div>
                     </td>
 
-                    {/* 3. Precio Base (price) */}
                     <td className="p-3 text-center">
                       <input 
                         type="number" 
@@ -487,7 +472,6 @@ export default function AdminPricingPage() {
                       />
                     </td>
 
-                    {/* 4. Descuento Promocional (discount) */}
                     <td className="p-3 text-center">
                       <div className="relative inline-block">
                         <input 
@@ -508,12 +492,10 @@ export default function AdminPricingPage() {
                       </div>
                     </td>
 
-                    {/* Precio Final con Descuento */}
                     <td className="p-3 text-center font-mono font-bold text-emerald-300">
                       ${finalPrice.toFixed(2)}
                     </td>
 
-                    {/* Ganancia Neta Real (Sin el 16% IVA) */}
                     <td className={`p-3 text-center font-mono font-bold ${isNegative ? "text-rose-500" : "text-cyan-400"}`}>
                       <div className="flex items-center justify-center gap-1">
                         {isNegative && <AlertCircle className="w-3.5 h-3.5" />}
