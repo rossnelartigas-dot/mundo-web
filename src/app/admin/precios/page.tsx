@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase"; 
 import { 
   Calculator, 
   Save, 
@@ -14,10 +14,6 @@ import {
   Tag,
   Trash2
 } from "lucide-react";
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 interface Product {
   id: number;
@@ -49,45 +45,47 @@ export default function AdminPricingPage() {
   const [globalDiscount, setGlobalDiscount] = useState<number>(0);
 
   // ---------------------------------------------------------------------------
-  // 1. CARGAR PRODUCTOS (Optimizado para evitar setState en Render/Effect)
-  // ---------------------------------------------------------------------------
-  const fetchProducts = useCallback(async () => {
-    const { data, error } = await supabase
-      .from("products")
-      .select("id, name, category, subcategory, brand, sku, cost_price, profit_margin, price, discount, stock, active")
-      .order("name", { ascending: true });
+  // 1. CARGAR PRODUCTOS DESDE SUPABASE
+  const fetchProducts = useCallback(async (isMounted: boolean) => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, category, subcategory, brand, sku, cost_price, profit_margin, price, discount, stock, active")
+        .order("name", { ascending: true });
 
-    if (error) {
-      console.error("Error al cargar productos de Supabase:", error);
-    } else if (data) {
-      const formatted = data.map((p) => ({
-        ...p,
-        cost_price: Number(p.cost_price) || 0,
-        profit_margin: Number(p.profit_margin) || 30,
-        price: Number(p.price) || 0,
-        discount: Number(p.discount) || 0,
-        stock: Number(p.stock) || 0,
-      }));
-      setProducts(formatted);
+      if (error) {
+        console.error("Error al cargar productos de Supabase:", error);
+      } else if (data && isMounted) {
+        const formatted = data.map((p) => ({
+          ...p,
+          cost_price: Number(p.cost_price) || 0,
+          profit_margin: Number(p.profit_margin) || 30,
+          price: Number(p.price) || 0,
+          discount: Number(p.discount) || 0,
+          stock: Number(p.stock) || 0,
+        }));
+        setProducts(formatted);
+      }
+    } catch (err) {
+      console.error("Error inesperado en fetchProducts:", err);
+    } finally {
+      if (isMounted) setLoading(false);
     }
-    setLoading(false);
   }, []);
 
   useEffect(() => {
-    let isSubscribed = true;
+    let isMounted = true;
 
-    async function loadInitialData() {
-      if (!isSubscribed) return;
-      await fetchProducts();
+    async function loadData() {
+      await fetchProducts(isMounted);
     }
 
-    loadInitialData();
+    loadData();
 
     return () => {
-      isSubscribed = false;
+      isMounted = false;
     };
   }, [fetchProducts]);
-
   // ---------------------------------------------------------------------------
   // 2. APLICAR MARGEN MASIVO
   // ---------------------------------------------------------------------------
@@ -157,7 +155,7 @@ export default function AdminPricingPage() {
       prev.map((p) => {
         if (p.id !== id) return p;
 
-        const val = Math.max(0, value);
+        const val = isNaN(value) ? 0 : Math.max(0, value);
         const updated = { ...p, [field]: val };
 
         if (field === "cost_price" || field === "profit_margin") {
@@ -176,7 +174,7 @@ export default function AdminPricingPage() {
   };
 
   // ---------------------------------------------------------------------------
-  // 5. GUARDAR CAMBIOS MASIVOS (OPTIMIZADO CON .UPSERT)
+  // 5. GUARDAR CAMBIOS MASIVOS EN SUPABASE (.UPSERT)
   // ---------------------------------------------------------------------------
   const saveToSupabase = async () => {
     setSaving(true);
@@ -185,6 +183,8 @@ export default function AdminPricingPage() {
     try {
       const payload = products.map((p) => ({
         id: p.id,
+        name: p.name,
+        category: p.category,
         cost_price: p.cost_price,
         profit_margin: p.profit_margin,
         price: p.price,
@@ -211,7 +211,7 @@ export default function AdminPricingPage() {
   };
 
   // ---------------------------------------------------------------------------
-  // 6. MÉTRICAS FINANCIERAS
+  // 6. MÉTRICAS FINANCIERAS Y FILTROS
   // ---------------------------------------------------------------------------
   const metrics = useMemo(() => {
     let totalCost = 0;
@@ -266,7 +266,7 @@ export default function AdminPricingPage() {
         <button 
           onClick={saveToSupabase}
           disabled={saving || loading}
-          className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 text-white font-semibold px-5 py-2.5 rounded-lg transition border border-cyan-400/30 shadow-lg shadow-cyan-950"
+          className="flex items-center gap-2 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 text-white font-semibold px-5 py-2.5 rounded-lg transition border border-cyan-400/30 shadow-lg shadow-cyan-950 cursor-pointer disabled:cursor-not-allowed"
         >
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           {saving ? "Guardando..." : "Guardar en Supabase"}
@@ -363,7 +363,7 @@ export default function AdminPricingPage() {
               <button
                 onClick={handleApplyGlobalMargin}
                 disabled={loading}
-                className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition border border-indigo-400/30"
+                className="bg-indigo-600 hover:bg-indigo-500 disabled:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition border border-indigo-400/30 cursor-pointer disabled:cursor-not-allowed"
               >
                 Aplicar % Margen
               </button>
@@ -392,7 +392,7 @@ export default function AdminPricingPage() {
               <button
                 onClick={() => handleApplyGlobalDiscount(globalDiscount)}
                 disabled={loading}
-                className="bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition border border-amber-400/30"
+                className="bg-amber-600 hover:bg-amber-500 disabled:bg-slate-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition border border-amber-400/30 cursor-pointer disabled:cursor-not-allowed"
               >
                 Aplicar % Desc
               </button>
@@ -401,7 +401,7 @@ export default function AdminPricingPage() {
                 onClick={() => handleApplyGlobalDiscount(0)}
                 disabled={loading}
                 title="Quitar todos los descuentos (0%)"
-                className="bg-rose-950/80 hover:bg-rose-900 border border-rose-500/40 text-rose-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition flex items-center gap-1"
+                className="bg-rose-950/80 hover:bg-rose-900 border border-rose-500/40 text-rose-300 text-xs font-semibold px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer disabled:cursor-not-allowed"
               >
                 <Trash2 className="w-3.5 h-3.5 text-rose-400" />
                 <span>Quitar Desc.</span>
@@ -451,8 +451,9 @@ export default function AdminPricingPage() {
                       <input 
                         type="number" 
                         step="0.01"
-                        value={product.cost_price || ""}
-                        onChange={(e) => handleValueChange(product.id, "cost_price", parseFloat(e.target.value) || 0)}
+                        value={product.cost_price === 0 ? "" : product.cost_price}
+                        placeholder="0.00"
+                        onChange={(e) => handleValueChange(product.id, "cost_price", parseFloat(e.target.value))}
                         className="w-24 bg-slate-950 border border-slate-700 rounded p-1.5 text-slate-100 text-center font-mono focus:border-cyan-500 focus:outline-none"
                       />
                     </td>
@@ -462,8 +463,9 @@ export default function AdminPricingPage() {
                         <input 
                           type="number" 
                           step="0.1"
-                          value={product.profit_margin || ""}
-                          onChange={(e) => handleValueChange(product.id, "profit_margin", parseFloat(e.target.value) || 0)}
+                          value={product.profit_margin === 0 ? "" : product.profit_margin}
+                          placeholder="0"
+                          onChange={(e) => handleValueChange(product.id, "profit_margin", parseFloat(e.target.value))}
                           className="w-20 bg-slate-950 border border-indigo-500/50 rounded p-1.5 text-indigo-300 text-center font-mono font-semibold focus:border-indigo-400 focus:outline-none"
                         />
                         <span className="text-xs text-indigo-400 ml-1">%</span>
@@ -474,8 +476,9 @@ export default function AdminPricingPage() {
                       <input 
                         type="number" 
                         step="0.01"
-                        value={product.price || ""}
-                        onChange={(e) => handleValueChange(product.id, "price", parseFloat(e.target.value) || 0)}
+                        value={product.price === 0 ? "" : product.price}
+                        placeholder="0.00"
+                        onChange={(e) => handleValueChange(product.id, "price", parseFloat(e.target.value))}
                         className="w-24 bg-slate-950 border border-emerald-500/50 rounded p-1.5 text-emerald-400 text-center font-mono font-bold focus:border-emerald-400 focus:outline-none"
                       />
                     </td>
@@ -485,7 +488,7 @@ export default function AdminPricingPage() {
                         <input 
                           type="number" 
                           value={product.discount || 0}
-                          onChange={(e) => handleValueChange(product.id, "discount", parseFloat(e.target.value) || 0)}
+                          onChange={(e) => handleValueChange(product.id, "discount", parseFloat(e.target.value))}
                           className={`w-16 bg-slate-950 border rounded p-1.5 text-center font-mono focus:outline-none ${
                             product.discount > 0 
                               ? "border-amber-500/80 text-amber-400 font-bold" 

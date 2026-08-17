@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
 import { 
@@ -10,7 +10,8 @@ import {
   Loader2, 
   CheckCircle2, 
   AlertCircle,
-  RefreshCw 
+  RefreshCw,
+  Search
 } from "lucide-react";
 
 // Configuración del cliente de Supabase
@@ -21,6 +22,8 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 interface InventoryProduct {
   id: number | string;
   name: string;
+  category: string;
+  sku?: string;
   image: string | null;
   price: number;
   stock: number;
@@ -41,6 +44,10 @@ export default function InventoryPage() {
   const [savingId, setSavingId] = useState<number | string | null>(null);
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
+  // Estados para Filtros
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("Todas");
+
   const showNotification = useCallback((message: string, type: 'success' | 'error' = 'success') => {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 4000);
@@ -55,10 +62,10 @@ export default function InventoryPage() {
     }
 
     try {
-      // Consulta de productos
+      // Consulta de productos (incluye category y sku)
       const { data: productsData, error: prodError } = await supabase
         .from("products")
-        .select("id, name, image, price, stock")
+        .select("id, name, category, sku, image, price, stock")
         .order("name", { ascending: true });
 
       if (prodError) throw prodError;
@@ -94,6 +101,8 @@ export default function InventoryPage() {
       const formatted: InventoryProduct[] = (productsData || []).map((p) => ({
         id: p.id,
         name: p.name || "Sin nombre",
+        category: p.category || "General",
+        sku: p.sku || "",
         image: p.image || null,
         price: Number(p.price) || 0,
         stock: Math.max(0, Number(p.stock) || 0),
@@ -160,6 +169,23 @@ export default function InventoryPage() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // 4. LÓGICA DE FILTRADO Y CATEGORÍAS
+  // ---------------------------------------------------------------------------
+  const categories = useMemo(
+    () => Array.from(new Set(products.map((p) => p.category).filter(Boolean))),
+    [products]
+  );
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((p) => {
+      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                            (p.sku && p.sku.toLowerCase().includes(searchTerm.toLowerCase()));
+      const matchesCat = selectedCategory === "Todas" || p.category === selectedCategory;
+      return matchesSearch && matchesCat;
+    });
+  }, [products, searchTerm, selectedCategory]);
+
   return (
     <div className="max-w-7xl mx-auto space-y-6 text-slate-100 p-6">
       
@@ -201,6 +227,39 @@ export default function InventoryPage() {
         </div>
       )}
 
+      {/* BARRA DE FILTROS */}
+      <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-slate-300 font-semibold text-sm">
+            <span>Filtrar inventario:</span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
+              <input 
+                type="text" 
+                placeholder="Buscar por producto o SKU..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-9 pr-4 py-1.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+              />
+            </div>
+
+            <select 
+              value={selectedCategory} 
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="w-full sm:w-auto bg-slate-950 border border-slate-800 text-slate-200 text-sm rounded-lg p-2 focus:outline-none focus:border-cyan-500 font-medium"
+            >
+              <option value="Todas">Todas las categorías</option>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
       {/* TABLA PRINCIPAL DE INVENTARIO */}
       <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md shadow-2xl">
         {loading ? (
@@ -222,14 +281,14 @@ export default function InventoryPage() {
               </thead>
 
               <tbody className="divide-y divide-slate-800/60">
-                {products.length === 0 ? (
+                {filteredProducts.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-12 text-center text-slate-500 font-mono">
-                      No hay productos registrados en la base de datos.
+                      No se encontraron productos que coincidan con la búsqueda.
                     </td>
                   </tr>
                 ) : (
-                  products.map((item) => {
+                  filteredProducts.map((item) => {
                     const stock = item.stock;
                     const isOutOfStock = stock <= 0;
                     const isLowStock = stock > 0 && stock <= 3;
@@ -250,7 +309,12 @@ export default function InventoryPage() {
                               className="object-cover"
                             />
                           </div>
-                          <span className="font-semibold text-white">{item.name}</span>
+                          <div>
+                            <span className="font-semibold text-white block">{item.name}</span>
+                            <span className="text-[10px] text-slate-500 block">
+                              {item.category} {item.sku ? `• SKU: ${item.sku}` : ''}
+                            </span>
+                          </div>
                         </td>
 
                         {/* Precio */}

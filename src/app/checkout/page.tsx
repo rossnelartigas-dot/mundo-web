@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   Home,
   MessageCircle,
+  Loader2,
 } from "lucide-react";
 
 import { useCart } from "@/context/CartContext";
@@ -30,6 +31,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { cart, total, clearCart } = useCart();
 
+  const [mounted, setMounted] = useState(false);
   const [form, setForm] = useState<CustomerForm>({
     customer_name: "",
     customer_phone: "",
@@ -43,15 +45,21 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [bcvRate, setBcvRate] = useState<number | null>(null);
 
+  const numericTotal = Number(total) || 0;
   const whatsappNumber = "+584264433849";
   const whatsappMessage = encodeURIComponent(
-    `Hola! Tengo una consulta antes de confirmar mi pedido en el Checkout. El total de mi carrito es $${Number(total).toFixed(2)}.`
+    `Hola! Tengo una consulta antes de confirmar mi pedido en el Checkout. El total de mi carrito es $${numericTotal.toFixed(2)}.`
   );
 
-  useEffect(() => {
+ useEffect(() => {
     let isMounted = true;
 
-    async function checkUser() {
+    // Actualizamos el estado de manera asíncrona para no bloquear el cuerpo síncrono del efecto
+    Promise.resolve().then(() => {
+      if (isMounted) setMounted(true);
+    });
+
+    async function initializeCheckout() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         if (session?.user && isMounted) {
@@ -59,36 +67,33 @@ export default function CheckoutPage() {
           if (session.user.email) {
             setForm((prev) => ({
               ...prev,
-              customer_email: session.user.email!.toLowerCase().trim(),
+              customer_email: session.user.email?.toLowerCase().trim() || "",
             }));
           }
         }
       } catch (err) {
         console.error("Error obteniendo sesión de usuario:", err);
       }
-    }
 
-    async function fetchBcvRate() {
       try {
         const res = await fetch("https://ve.dolarapi.com/v1/dolares/oficial");
         if (!res.ok) throw new Error("Error en respuesta de API DolarApi");
         const data = await res.json();
         if (data?.promedio && isMounted) {
-          setBcvRate(data.promedio);
+          setBcvRate(Number(data.promedio));
         }
       } catch (err) {
         console.error("Error obteniendo tasa BCV:", err);
       }
     }
 
-    checkUser();
-    fetchBcvRate();
+    initializeCheckout();
 
     return () => {
       isMounted = false;
     };
   }, []);
-
+  
   const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm((current) => ({
@@ -133,12 +138,12 @@ export default function CheckoutPage() {
         payment_method: paymentMethod,
         payment_reference: cleanRef,
         products: cart,
-        total: Number(total),
+        total: numericTotal,
       });
 
       // Notificación vía API Route /order-created
       try {
-        const notifyRes = await fetch("/api/order-created", {
+        await fetch("/api/order-created", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -149,14 +154,10 @@ export default function CheckoutPage() {
             customerAddress: cleanAddress,
             paymentMethod,
             paymentReference: cleanRef,
-            total: Number(total),
+            total: numericTotal,
             products: cart,
           }),
         });
-
-        if (!notifyRes.ok) {
-          console.warn("No se pudo procesar el webhook/correo de orden creada.");
-        }
       } catch (notifyErr) {
         console.error("Error enviando notificación de orden creada:", notifyErr);
       }
@@ -170,7 +171,15 @@ export default function CheckoutPage() {
     }
   }
 
-  const totalBs = bcvRate ? (Number(total) * bcvRate).toFixed(2) : null;
+  const totalBs = bcvRate ? (numericTotal * bcvRate).toFixed(2) : null;
+
+  if (!mounted) {
+    return (
+      <main className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+      </main>
+    );
+  }
 
   if (cart.length === 0) {
     return (
@@ -423,10 +432,10 @@ export default function CheckoutPage() {
                     <p className="text-cyan-400 font-semibold mb-2 flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4" /> Datos Bancarios:
                     </p>
-                    <p>Banco: <span className="text-white font-medium">Por definir</span></p>
-                    <p>Cuenta Corriente: <span className="text-white font-medium">Por definir</span></p>
-                    <p>Titular: <span className="text-white font-medium">Por definir</span></p>
-                    <p>RIF: <span className="text-white font-medium">Por definir</span></p>
+                    <p>Banco: <span className="text-white font-medium">Mercantil</span></p>
+                    <p>Cuenta Corriente: <span className="text-white font-medium">0105-XXXX-XX-XXXXXXXXXX</span></p>
+                    <p>Titular: <span className="text-white font-medium">Tu Empresa / Nombre</span></p>
+                    <p>RIF: <span className="text-white font-medium">V-29569063</span></p>
                   </div>
                 )}
 
@@ -435,8 +444,8 @@ export default function CheckoutPage() {
                     <p className="text-amber-400 font-semibold mb-2 flex items-center gap-2">
                       <CheckCircle2 className="h-4 w-4" /> Datos para Binance Pay:
                     </p>
-                    <p>Binance ID (Pay ID): <span className="text-white font-medium">Por definir</span></p>
-                    <p>Correo Binance: <span className="text-white font-medium">Por definir</span></p>
+                    <p>Binance ID (Pay ID): <span className="text-white font-medium">XXXXXXXXX</span></p>
+                    <p>Correo Binance: <span className="text-white font-medium">tu-correo@ejemplo.com</span></p>
                   </div>
                 )}
 
@@ -509,7 +518,7 @@ export default function CheckoutPage() {
               <div className="space-y-2 text-sm text-slate-400">
                 <div className="flex items-center justify-between">
                   <span>Subtotal</span>
-                  <span className="font-semibold text-slate-200">${Number(total).toFixed(2)}</span>
+                  <span className="font-semibold text-slate-200">${numericTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Envío</span>
@@ -522,7 +531,7 @@ export default function CheckoutPage() {
                   <span className="text-lg font-bold text-white">Total</span>
                   <div className="text-right">
                     <span className="text-3xl font-extrabold text-cyan-400">
-                      ${Number(total).toFixed(2)}
+                      ${numericTotal.toFixed(2)}
                     </span>
                     {totalBs && (
                       <p className="text-xs text-slate-400 mt-1">
@@ -536,9 +545,16 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-6 w-full rounded-xl bg-cyan-500 px-5 py-4 text-base font-bold text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.25)] transition-all hover:bg-cyan-400 hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
+                className="mt-6 w-full rounded-xl bg-cyan-500 px-5 py-4 text-base font-bold text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.25)] transition-all hover:bg-cyan-400 hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
               >
-                {loading ? "Procesando pedido..." : "Confirmar pedido"}
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Procesando pedido...</span>
+                  </>
+                ) : (
+                  "Confirmar pedido"
+                )}
               </button>
 
               <a
