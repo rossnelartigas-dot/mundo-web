@@ -8,6 +8,7 @@ interface Props {
     categoria?: string;
     marca?: string;
     orden?: string;
+    ofertas?: string;
   }>;
 }
 
@@ -22,6 +23,7 @@ export default async function ProductosPage({
   const category = params.categoria?.trim() || "";
   const brand = params.marca?.trim() || "";
   const order = params.orden?.trim() || "recientes";
+  const onlyOffers = params.ofertas === "true";
 
   const categories = Array.from(
     new Set(
@@ -40,17 +42,23 @@ export default async function ProductosPage({
   ).sort();
 
   let filteredProducts = products.filter((product) => {
-    const name =
-      product.name?.toLowerCase() || "";
+    const name = product.name?.toLowerCase() || "";
+    const productBrand = product.brand?.trim() || "";
+    const productCategory = product.category?.toLowerCase() || "";
+    const sku = (product as { sku?: string }).sku?.toLowerCase() || "";
 
-    const productBrand =
-      product.brand?.trim() || "";
-
-    const productCategory =
-      product.category?.toLowerCase() || "";
-
-    const sku =
-      product.sku?.toLowerCase() || "";
+    // Detección de ofertas flexible según los campos comunes de la BD
+    const p = product as { 
+      is_offer?: boolean; 
+      on_sale?: boolean; 
+      discount_price?: number; 
+      original_price?: number; 
+    };
+    const isOffer = 
+      Boolean(p.is_offer) || 
+      Boolean(p.on_sale) || 
+      (p.discount_price ? p.discount_price < product.price : false) ||
+      (p.original_price ? p.original_price > product.price : false);
 
     const matchesSearch =
       !query ||
@@ -67,47 +75,48 @@ export default async function ProductosPage({
       !brand ||
       productBrand === brand;
 
+    const matchesOffers = !onlyOffers || isOffer;
+
     return (
       matchesSearch &&
       matchesCategory &&
-      matchesBrand
+      matchesBrand &&
+      matchesOffers
     );
   });
 
-  filteredProducts = [...filteredProducts].sort(
-    (a, b) => {
-      switch (order) {
-        case "precio-menor":
-          return a.price - b.price;
+  filteredProducts = [...filteredProducts].sort((a, b) => {
+    switch (order) {
+      case "precio-menor":
+        return a.price - b.price;
 
-        case "precio-mayor":
-          return b.price - a.price;
+      case "precio-mayor":
+        return b.price - a.price;
 
-        case "nombre-az":
-          return a.name.localeCompare(b.name);
+      case "nombre-az":
+        return a.name.localeCompare(b.name);
 
-        case "nombre-za":
-          return b.name.localeCompare(a.name);
+      case "nombre-za":
+        return b.name.localeCompare(a.name);
 
-        case "recientes":
-        default:
-          return (
-            new Date(b.created_at).getTime() -
-            new Date(a.created_at).getTime()
-          );
-      }
+      case "recientes":
+      default:
+        return (
+          new Date(b.created_at).getTime() -
+          new Date(a.created_at).getTime()
+        );
     }
-  );
+  });
 
   const hasFilters =
     query ||
     category ||
     brand ||
+    onlyOffers ||
     order !== "recientes";
 
   return (
     <main className="min-h-screen bg-slate-950 py-10 text-slate-100">
-
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
 
         {/* ENLACE DE REGRESO Y TÍTULO */}
@@ -128,8 +137,7 @@ export default async function ProductosPage({
           </p>
         </div>
 
-        {/* FILTROS */}
-
+        {/* FILTROS Y BÚSQUEDA */}
         <form
           method="GET"
           className="
@@ -141,31 +149,50 @@ export default async function ProductosPage({
             p-5
             shadow-xl
             backdrop-blur-md
+            space-y-4
           "
         >
-
-          {query && (
-            <input
-              type="hidden"
-              name="q"
-              value={query}
-            />
-          )}
+          {/* BARRA DE BÚSQUEDA POR NOMBRE / SKU */}
+          <div>
+            <label
+              htmlFor="q"
+              className="mb-2 block text-xs font-mono text-slate-300"
+            >
+              Buscar producto por nombre o modelo
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                id="q"
+                name="q"
+                defaultValue={query}
+                placeholder="Ej. Cámara IP, Mini PC, Monitor..."
+                className="
+                  w-full
+                  rounded-xl
+                  border
+                  border-slate-800
+                  bg-slate-950
+                  px-4
+                  py-2.5
+                  text-sm
+                  text-slate-200
+                  placeholder-slate-500
+                  outline-none
+                  focus:border-cyan-500
+                  focus:ring-1
+                  focus:ring-cyan-500
+                "
+              />
+            </div>
+          </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-
             {/* CATEGORÍA */}
-
             <div>
               <label
                 htmlFor="categoria"
-                className="
-                  mb-2
-                  block
-                  text-xs
-                  font-mono
-                  text-slate-300
-                "
+                className="mb-2 block text-xs font-mono text-slate-300"
               >
                 Categoría
               </label>
@@ -190,15 +217,9 @@ export default async function ProductosPage({
                   focus:ring-cyan-500
                 "
               >
-                <option value="">
-                  Todas las categorías
-                </option>
-
+                <option value="">Todas las categorías</option>
                 {categories.map((item) => (
-                  <option
-                    key={item}
-                    value={item}
-                  >
+                  <option key={item} value={item}>
                     {item}
                   </option>
                 ))}
@@ -206,17 +227,10 @@ export default async function ProductosPage({
             </div>
 
             {/* MARCA */}
-
             <div>
               <label
                 htmlFor="marca"
-                className="
-                  mb-2
-                  block
-                  text-xs
-                  font-mono
-                  text-slate-300
-                "
+                className="mb-2 block text-xs font-mono text-slate-300"
               >
                 Marca
               </label>
@@ -241,15 +255,9 @@ export default async function ProductosPage({
                   focus:ring-cyan-500
                 "
               >
-                <option value="">
-                  Todas las marcas
-                </option>
-
+                <option value="">Todas las marcas</option>
                 {brands.map((item) => (
-                  <option
-                    key={item}
-                    value={item}
-                  >
+                  <option key={item} value={item}>
                     {item}
                   </option>
                 ))}
@@ -257,17 +265,10 @@ export default async function ProductosPage({
             </div>
 
             {/* ORDENAR */}
-
             <div>
               <label
                 htmlFor="orden"
-                className="
-                  mb-2
-                  block
-                  text-xs
-                  font-mono
-                  text-slate-300
-                "
+                className="mb-2 block text-xs font-mono text-slate-300"
               >
                 Ordenar por
               </label>
@@ -292,80 +293,75 @@ export default async function ProductosPage({
                   focus:ring-cyan-500
                 "
               >
-                <option value="recientes">
-                  Más recientes
-                </option>
-
-                <option value="precio-menor">
-                  Precio: menor a mayor
-                </option>
-
-                <option value="precio-mayor">
-                  Precio: mayor a menor
-                </option>
-
-                <option value="nombre-az">
-                  Nombre: A-Z
-                </option>
-
-                <option value="nombre-za">
-                  Nombre: Z-A
-                </option>
+                <option value="recientes">Más recientes</option>
+                <option value="precio-menor">Precio: menor a mayor</option>
+                <option value="precio-mayor">Precio: mayor a menor</option>
+                <option value="nombre-az">Nombre: A-Z</option>
+                <option value="nombre-za">Nombre: Z-A</option>
               </select>
             </div>
-
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-3">
+          {/* OPCIÓN DE OFERTAS Y BOTONES */}
+          <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+            <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-mono text-slate-300 select-none">
+              <input
+                type="checkbox"
+                name="ofertas"
+                value="true"
+                defaultChecked={onlyOffers}
+                className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-cyan-500 focus:ring-cyan-500"
+              />
+              <span className="text-amber-400 font-bold">🔥 Ver solo productos en oferta</span>
+            </label>
 
-            <button
-              type="submit"
-              className="
-                rounded-xl
-                bg-cyan-500
-                px-5
-                py-2.5
-                text-xs
-                font-mono
-                font-bold
-                text-slate-950
-                transition
-                hover:bg-cyan-400
-                shadow-[0_0_15px_rgba(6,182,212,0.3)]
-              "
-            >
-              Aplicar filtros
-            </button>
-
-            {hasFilters && (
-              <Link
-                href="/productos"
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="submit"
                 className="
                   rounded-xl
-                  border
-                  border-slate-800
-                  bg-slate-950
+                  bg-cyan-500
                   px-5
                   py-2.5
                   text-xs
                   font-mono
-                  text-slate-400
+                  font-bold
+                  text-slate-950
                   transition
-                  hover:bg-slate-900
-                  hover:text-white
+                  hover:bg-cyan-400
+                  shadow-[0_0_15px_rgba(6,182,212,0.3)]
                 "
               >
-                Limpiar filtros
-              </Link>
-            )}
+                Buscar / Aplicar
+              </button>
 
+              {hasFilters && (
+                <Link
+                  href="/productos"
+                  className="
+                    rounded-xl
+                    border
+                    border-slate-800
+                    bg-slate-950
+                    px-5
+                    py-2.5
+                    text-xs
+                    font-mono
+                    text-slate-400
+                    transition
+                    hover:bg-slate-900
+                    hover:text-white
+                  "
+                >
+                  Limpiar filtros
+                </Link>
+              )}
+            </div>
           </div>
-
         </form>
 
         {/* INFORMACIÓN DE FILTROS ACTIVOS */}
-
-        {(query || category || brand) && (
+        {(query || category || brand || onlyOffers) && (
           <div className="flex flex-wrap gap-3 text-xs font-mono text-slate-400 pt-2">
             {query && (
               <span className="bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg">
@@ -382,11 +378,15 @@ export default async function ProductosPage({
                 Marca: <strong className="text-cyan-400">{brand}</strong>
               </span>
             )}
+            {onlyOffers && (
+              <span className="bg-slate-900 border border-amber-500/30 px-3 py-1 rounded-lg text-amber-400">
+                🔥 Solo Ofertas
+              </span>
+            )}
           </div>
         )}
 
         {/* RESULTADOS */}
-
         {filteredProducts.length === 0 ? (
           <div
             className="
@@ -431,7 +431,6 @@ export default async function ProductosPage({
           </div>
         ) : (
           <>
-
             <p className="mt-6 text-xs font-mono text-slate-400">
               {filteredProducts.length}{" "}
               {filteredProducts.length === 1
@@ -440,7 +439,6 @@ export default async function ProductosPage({
             </p>
 
             <div className="mt-4 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-
               {filteredProducts.map((product) => {
                 const imageUrl = (product as { image_url?: string; image?: string }).image_url || product.image;
 
@@ -509,18 +507,13 @@ export default async function ProductosPage({
                         </span>
                       </div>
                     </div>
-
                   </Link>
                 );
               })}
-
             </div>
-
           </>
         )}
-
       </div>
-
     </main>
   );
 }
