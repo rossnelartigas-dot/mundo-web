@@ -30,7 +30,7 @@ interface Product {
   active: boolean;
 }
 
-const IVA_RATE = 0.16; // 16% IVA
+const IVA_RATE = 0.00; // 16% IVA
 
 export default function AdminPricingPage() {
   const [products, setProducts] = useState<Product[]>([]);

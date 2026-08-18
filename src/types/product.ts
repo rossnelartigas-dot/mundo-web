@@ -1,33 +1,23 @@
 export interface Product {
-
   id: number;
-
   name: string;
-
-  description: string;
-
+  slug?: string | null;
+  sku?: string | null;
+  description?: string | null;
+  brand?: string | null;
+  category?: string | null;
+  subcategory?: string | null;
+  condition?: string | null;
   price: number;
-
-  category: string;
-
-  brand: string;
-
-  image?: string;
-
+  discount?: number | null;
+  cost_price?: number | null;
+  profit_margin?: number | null;
   stock: number;
-
-  created_at: string;
-
-  slug: string;
-
-  sku: string;
-
-  featured: boolean;
-
+  image_url?: string | null;
+  image?: string[] | null;
   active: boolean;
-
-  discount: number;
-
-  weight: number;
-
+  featured: boolean;
+  weight?: number | null;
+  warranty_months?: number | null;
+  created_at?: string | null;
 }

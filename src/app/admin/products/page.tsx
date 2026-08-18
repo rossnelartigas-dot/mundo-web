@@ -123,19 +123,22 @@ export default function ProductsPage() {
                 <tr key={product.id} className="hover:bg-slate-800/40 transition-colors">
                   {/* Imagen */}
                   <td className="p-4">
-                    {product.image ? (
+                    <div className="relative w-12 h-12 min-w-[48px] rounded-lg overflow-hidden bg-slate-950 border border-slate-800 flex items-center justify-center">
                       <Image
-                        src={product.image}
-                        alt={product.name}
-                        width={64}
-                        height={64}
-                        className="object-cover rounded-xl border border-slate-700/80 bg-slate-950 w-16 h-16"
+                        src={
+                          (Array.isArray(product.image)
+                            ? product.image[0]
+                            : typeof product.image === "string"
+                            ? product.image
+                            : product.image_url) || "/no-image.png"
+                        }
+                        alt=""
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                        unoptimized
                       />
-                    ) : (
-                      <div className="w-16 h-16 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-center text-[10px] font-mono text-slate-500">
-                        Sin imagen
-                      </div>
-                    )}
+                    </div>
                   </td>
 
                   {/* Nombre y Marca */}

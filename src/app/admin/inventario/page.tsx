@@ -28,6 +28,7 @@ interface InventoryProduct {
   price: number;
   stock: number;
   ordered_units: number;
+
 }
 
 interface OrderItemResponse {
@@ -300,14 +301,17 @@ export default function InventoryPage() {
                         {/* Producto (Imagen y Nombre) */}
                         <td className="px-6 py-4 flex items-center gap-3">
                           <div className="h-10 w-10 relative overflow-hidden rounded-lg border border-slate-800 bg-slate-950 shrink-0">
-                            <Image
-                              src={item.image && item.image.trim() !== "" ? item.image : "/no-image.png"}
-                              alt={item.name}
-                              fill
-                              unoptimized
-                              sizes="40px"
-                              className="object-cover"
-                            />
+                        <Image
+  src={
+    typeof item.image === "string" && item.image.trim() !== ""
+      ? item.image
+      : Array.isArray(item.image) && item.image.length > 0 && item.image[0]
+      ? item.image[0]
+      : "/images/placeholder.png"}
+  alt={item.name}
+  fill
+  unoptimized
+/>
                           </div>
                           <div>
                             <span className="font-semibold text-white block">{item.name}</span>
