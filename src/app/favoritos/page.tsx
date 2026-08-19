@@ -77,9 +77,17 @@ export default function FavoritosPage() {
           /* GRILLA DE FAVORITOS */
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {favorites.map((product) => {
-              const finalPrice = product.discount > 0
-                ? (product.price - (product.price * product.discount) / 100).toFixed(2)
-                : product.price.toFixed(2);
+              // Product.discount es opcional.
+              // Si no existe, el producto simplemente no tiene descuento.
+              const discount = product.discount ?? 0;
+
+              const finalPrice =
+                discount > 0
+                  ? (
+                      product.price -
+                      (product.price * discount) / 100
+                    ).toFixed(2)
+                  : product.price.toFixed(2);
 
               return (
                 <div
@@ -107,7 +115,10 @@ export default function FavoritosPage() {
                 >
                   <div>
                     {/* IMAGEN DEL PRODUCTO */}
-                    <Link href={`/productos/${product.slug}`} className="block relative">
+                    <Link
+                      href={`/productos/${product.slug}`}
+                      className="block relative"
+                    >
                       <div className="relative h-48 w-full overflow-hidden rounded-xl bg-slate-950 border border-slate-800/80">
                         {product.image ? (
                           <Image
@@ -129,9 +140,9 @@ export default function FavoritosPage() {
                         )}
                       </div>
 
-                      {product.discount > 0 && (
+                      {discount > 0 && (
                         <span className="absolute top-3 left-3 z-10 rounded-lg bg-rose-500 px-2 py-0.5 text-[10px] font-mono font-bold text-white shadow-lg">
-                          -{product.discount}%
+                          -{discount}%
                         </span>
                       )}
                     </Link>
@@ -170,11 +181,12 @@ export default function FavoritosPage() {
 
                       {/* PRECIOS */}
                       <div className="pt-2">
-                        {product.discount > 0 && (
+                        {discount > 0 && (
                           <p className="text-xs font-mono text-slate-500 line-through">
                             ${product.price.toFixed(2)}
                           </p>
                         )}
+
                         <p className="text-xl font-extrabold text-cyan-400 font-mono">
                           ${finalPrice}
                         </p>
@@ -191,7 +203,6 @@ export default function FavoritosPage() {
             })}
           </div>
         )}
-
       </div>
     </main>
   );

@@ -22,16 +22,19 @@ export default async function CategoriasPage({ searchParams }: Props) {
     products = [];
   }
 
-  // Filtrar categorías únicas y limpiar valores nulos o vacíos
-  const allCategories = Array.from(
+  // Obtener categorías válidas y únicas.
+  const allCategories: string[] = Array.from(
     new Set(
       products
         .map((product) => product.category)
-        .filter((cat): cat is string => Boolean(cat) && cat.trim() !== "")
+        .filter(
+          (category): category is string =>
+            typeof category === "string" && category.trim() !== ""
+        )
     )
-  ).sort();
+  ).sort((a, b) => a.localeCompare(b));
 
-  // Filtrar categorías según el término de búsqueda introducido
+  // Filtrar categorías según el término de búsqueda.
   const filteredCategories = allCategories.filter((category) =>
     category.toLowerCase().includes(query)
   );
@@ -39,7 +42,7 @@ export default async function CategoriasPage({ searchParams }: Props) {
   return (
     <main className="min-h-screen bg-slate-950 py-12 text-slate-100">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-8">
-        
+
         {/* ENLACE DE REGRESO Y ENCABEZADO */}
         <div className="space-y-4">
           <Link
@@ -54,6 +57,7 @@ export default async function CategoriasPage({ searchParams }: Props) {
               <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
                 Explorar Categorías
               </h1>
+
               <p className="mt-1 text-xs text-slate-400 font-mono">
                 Filtra el catálogo e inventario global por sectores tecnológicos.
               </p>
@@ -61,8 +65,11 @@ export default async function CategoriasPage({ searchParams }: Props) {
 
             <div className="inline-flex items-center gap-2 bg-slate-900/90 border border-slate-800 px-3.5 py-1.5 rounded-full text-xs font-mono text-cyan-400 w-fit">
               <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
+
               {filteredCategories.length}{" "}
-              {filteredCategories.length === 1 ? "categoría encontrada" : "categorías encontradas"}
+              {filteredCategories.length === 1
+                ? "categoría encontrada"
+                : "categorías encontradas"}
             </div>
           </div>
         </div>
@@ -110,6 +117,7 @@ export default async function CategoriasPage({ searchParams }: Props) {
               const categoryProducts = products.filter(
                 (product) => product.category === category
               );
+
               const totalItems = categoryProducts.length;
 
               return (
@@ -130,10 +138,14 @@ export default async function CategoriasPage({ searchParams }: Props) {
 
                   <p className="mt-3 text-xs font-mono text-slate-400 flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+
                     <span className="text-emerald-400 font-semibold">
                       {totalItems}
                     </span>{" "}
-                    {totalItems === 1 ? "producto registrado" : "productos registrados"}
+
+                    {totalItems === 1
+                      ? "producto registrado"
+                      : "productos registrados"}
                   </p>
 
                   <div className="mt-6 flex items-center justify-between border-t border-slate-800/80 pt-4">
@@ -155,11 +167,13 @@ export default async function CategoriasPage({ searchParams }: Props) {
             <p className="font-mono text-sm font-semibold text-rose-400">
               [!] No se encontraron categorías
             </p>
+
             <p className="text-xs text-slate-400 max-w-md mx-auto">
               {query
                 ? `No hay categorías que coincidan con la búsqueda "${query}".`
                 : "Aún no hay productos categorizados en el sistema o la base de datos se encuentra vacía."}
             </p>
+
             {query && (
               <Link
                 href="/categorias"
@@ -170,7 +184,6 @@ export default async function CategoriasPage({ searchParams }: Props) {
             )}
           </div>
         )}
-
       </div>
     </main>
   );

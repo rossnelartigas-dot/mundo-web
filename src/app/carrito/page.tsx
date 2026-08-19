@@ -133,13 +133,14 @@ export default function CartPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center gap-5">
                     {/* IMAGEN DEL PRODUCTO */}
                     <div className="relative h-28 w-full sm:h-28 sm:w-28 shrink-0 overflow-hidden rounded-xl bg-slate-950 border border-slate-800/80 flex items-center justify-center p-2">
-                      <Image
-                        src={item.image || "/placeholder.png"}
-                        alt={item.name || "Producto"}
-                        fill
-                        sizes="112px"
-                        className="object-contain p-1 transition-transform duration-300 group-hover:scale-105"
-                      />
+                     <Image
+  src={
+    Array.isArray(item.image)
+      ? item.image[0] || "/no-image.png"
+      : item.image || item.image_url || "/no-image.png"
+  }
+  alt={item.name}
+/>
                     </div>
 
                     {/* DETALLES Y ACCIONES */}

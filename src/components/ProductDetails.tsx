@@ -22,9 +22,12 @@ export default function ProductDetails({ product }: Props) {
 
   const favorite = isFavorite(product.id);
 
+  // Si el producto no tiene descuento, se considera 0%
+  const discount = product.discount ?? 0;
+
   const finalPrice =
-    product.discount > 0
-      ? product.price - (product.price * product.discount) / 100
+    discount > 0
+      ? product.price - (product.price * discount) / 100
       : product.price;
 
   const whatsappNumber = settings.whatsapp?.replace(/\D/g, "") || "";
@@ -73,9 +76,9 @@ export default function ProductDetails({ product }: Props) {
                   priority
                 />
 
-                {product.discount > 0 && (
+                {discount > 0 && (
                   <span className="absolute left-4 top-4 rounded-xl border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 font-mono text-xs font-bold text-emerald-400 backdrop-blur-md shadow-[0_0_12px_rgba(16,185,129,0.2)]">
-                    -{product.discount}% OFF
+                    -{discount}% OFF
                   </span>
                 )}
               </div>
@@ -138,7 +141,7 @@ export default function ProductDetails({ product }: Props) {
                     ${finalPrice.toFixed(2)}
                   </p>
 
-                  {product.discount > 0 && (
+                  {discount > 0 && (
                     <p className="font-mono text-lg text-slate-500 line-through">
                       ${product.price.toFixed(2)}
                     </p>
@@ -160,19 +163,31 @@ export default function ProductDetails({ product }: Props) {
                 <div className="mt-6 space-y-2 rounded-xl border border-slate-800/80 bg-slate-950/60 p-4 font-mono text-xs">
                   <div className="flex justify-between border-b border-slate-800/50 pb-2 text-slate-400">
                     <span>Stock disponible:</span>
-                    <strong className={product.stock > 0 ? "text-emerald-400" : "text-rose-400"}>
-                      {product.stock > 0 ? `${product.stock} unidades` : "Agotado"}
+                    <strong
+                      className={
+                        product.stock > 0
+                          ? "text-emerald-400"
+                          : "text-rose-400"
+                      }
+                    >
+                      {product.stock > 0
+                        ? `${product.stock} unidades`
+                        : "Agotado"}
                     </strong>
                   </div>
 
                   <div className="flex justify-between border-b border-slate-800/50 py-2 text-slate-400">
                     <span>SKU:</span>
-                    <strong className="text-slate-200">{product.sku}</strong>
+                    <strong className="text-slate-200">
+                      {product.sku}
+                    </strong>
                   </div>
 
                   <div className="flex justify-between pt-2 text-slate-400">
                     <span>Peso:</span>
-                    <strong className="text-slate-200">{product.weight} Kg</strong>
+                    <strong className="text-slate-200">
+                      {product.weight} Kg
+                    </strong>
                   </div>
                 </div>
               </div>

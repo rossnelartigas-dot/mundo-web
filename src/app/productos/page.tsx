@@ -48,17 +48,22 @@ export default async function ProductosPage({
     const sku = (product as { sku?: string }).sku?.toLowerCase() || "";
 
     // Detección de ofertas flexible según los campos comunes de la BD
-    const p = product as { 
-      is_offer?: boolean; 
-      on_sale?: boolean; 
-      discount_price?: number; 
-      original_price?: number; 
+    const p = product as {
+      is_offer?: boolean;
+      on_sale?: boolean;
+      discount_price?: number;
+      original_price?: number;
     };
-    const isOffer = 
-      Boolean(p.is_offer) || 
-      Boolean(p.on_sale) || 
-      (p.discount_price ? p.discount_price < product.price : false) ||
-      (p.original_price ? p.original_price > product.price : false);
+
+    const isOffer =
+      Boolean(p.is_offer) ||
+      Boolean(p.on_sale) ||
+      (p.discount_price
+        ? p.discount_price < product.price
+        : false) ||
+      (p.original_price
+        ? p.original_price > product.price
+        : false);
 
     const matchesSearch =
       !query ||
@@ -75,7 +80,8 @@ export default async function ProductosPage({
       !brand ||
       productBrand === brand;
 
-    const matchesOffers = !onlyOffers || isOffer;
+    const matchesOffers =
+      !onlyOffers || isOffer;
 
     return (
       matchesSearch &&
@@ -102,8 +108,8 @@ export default async function ProductosPage({
       case "recientes":
       default:
         return (
-          new Date(b.created_at).getTime() -
-          new Date(a.created_at).getTime()
+          new Date(b.created_at ?? 0).getTime() -
+          new Date(a.created_at ?? 0).getTime()
         );
     }
   });
@@ -160,6 +166,7 @@ export default async function ProductosPage({
             >
               Buscar producto por nombre o modelo
             </label>
+
             <div className="relative">
               <input
                 type="text"
@@ -188,6 +195,7 @@ export default async function ProductosPage({
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
+
             {/* CATEGORÍA */}
             <div>
               <label
@@ -218,6 +226,7 @@ export default async function ProductosPage({
                 "
               >
                 <option value="">Todas las categorías</option>
+
                 {categories.map((item) => (
                   <option key={item} value={item}>
                     {item}
@@ -256,6 +265,7 @@ export default async function ProductosPage({
                 "
               >
                 <option value="">Todas las marcas</option>
+
                 {brands.map((item) => (
                   <option key={item} value={item}>
                     {item}
@@ -294,16 +304,25 @@ export default async function ProductosPage({
                 "
               >
                 <option value="recientes">Más recientes</option>
-                <option value="precio-menor">Precio: menor a mayor</option>
-                <option value="precio-mayor">Precio: mayor a menor</option>
-                <option value="nombre-az">Nombre: A-Z</option>
-                <option value="nombre-za">Nombre: Z-A</option>
+                <option value="precio-menor">
+                  Precio: menor a mayor
+                </option>
+                <option value="precio-mayor">
+                  Precio: mayor a menor
+                </option>
+                <option value="nombre-az">
+                  Nombre: A-Z
+                </option>
+                <option value="nombre-za">
+                  Nombre: Z-A
+                </option>
               </select>
             </div>
           </div>
 
           {/* OPCIÓN DE OFERTAS Y BOTONES */}
           <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
+
             <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-mono text-slate-300 select-none">
               <input
                 type="checkbox"
@@ -312,10 +331,14 @@ export default async function ProductosPage({
                 defaultChecked={onlyOffers}
                 className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-cyan-500 focus:ring-cyan-500"
               />
-              <span className="text-amber-400 font-bold">🔥 Ver solo productos en oferta</span>
+
+              <span className="text-amber-400 font-bold">
+                🔥 Ver solo productos en oferta
+              </span>
             </label>
 
             <div className="flex flex-wrap gap-3">
+
               <button
                 type="submit"
                 className="
@@ -363,21 +386,34 @@ export default async function ProductosPage({
         {/* INFORMACIÓN DE FILTROS ACTIVOS */}
         {(query || category || brand || onlyOffers) && (
           <div className="flex flex-wrap gap-3 text-xs font-mono text-slate-400 pt-2">
+
             {query && (
               <span className="bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg">
-                Búsqueda: <strong className="text-cyan-400">&quot;{query}&quot;</strong>
+                Búsqueda:{" "}
+                <strong className="text-cyan-400">
+                  &quot;{query}&quot;
+                </strong>
               </span>
             )}
+
             {category && (
               <span className="bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg">
-                Categoría: <strong className="text-cyan-400">{category}</strong>
+                Categoría:{" "}
+                <strong className="text-cyan-400">
+                  {category}
+                </strong>
               </span>
             )}
+
             {brand && (
               <span className="bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg">
-                Marca: <strong className="text-cyan-400">{brand}</strong>
+                Marca:{" "}
+                <strong className="text-cyan-400">
+                  {brand}
+                </strong>
               </span>
             )}
+
             {onlyOffers && (
               <span className="bg-slate-900 border border-amber-500/30 px-3 py-1 rounded-lg text-amber-400">
                 🔥 Solo Ofertas
@@ -440,7 +476,12 @@ export default async function ProductosPage({
 
             <div className="mt-4 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {filteredProducts.map((product) => {
-                const imageUrl = (product as { image_url?: string; image?: string }).image_url || product.image;
+                const imageUrl =
+                  (product as {
+                    image_url?: string;
+                    image?: string;
+                  }).image_url ||
+                  product.image;
 
                 return (
                   <Link
@@ -483,6 +524,7 @@ export default async function ProductosPage({
                     </div>
 
                     <div className="flex flex-1 flex-col justify-between space-y-3">
+
                       <div>
                         <h2 className="text-base font-bold text-white transition group-hover:text-cyan-400">
                           {product.name}
