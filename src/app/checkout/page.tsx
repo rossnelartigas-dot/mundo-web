@@ -103,17 +103,14 @@ export default function CheckoutPage() {
           }
         }
       } catch (err) {
-        console.error(
-          "Error obteniendo sesión de usuario:",
-          err
-        );
+        console.error("Error obteniendo sesión de usuario:", err);
       }
 
       /* ========================================================
          TASA BCV
 
-         Usamos el servicio centralizado.
-         No consultamos directamente la API desde Checkout.
+         Usamos el servicio centralizado utilizado
+         también por ProductDetails.
       ======================================================== */
 
       try {
@@ -121,20 +118,23 @@ export default function CheckoutPage() {
 
         const exchangeData = await getBcvRate();
 
+        /*
+         * getBcvRate() puede devolver null si la consulta
+         * no pudo obtener una tasa válida.
+         *
+         * Esta comprobación evita el error de TypeScript:
+         * "exchangeData is possibly null".
+         */
+        if (!exchangeData) {
+          throw new Error("No se pudo obtener la tasa BCV");
+        }
+
         if (isMounted) {
           setBcvRate(exchangeData.rate);
-
-          setBcvUpdatedAt(
-            exchangeData.updatedAt
-              ? String(exchangeData.updatedAt)
-              : null
-          );
+          setBcvUpdatedAt(exchangeData.updatedAt ?? null);
         }
       } catch (err) {
-        console.error(
-          "Error obteniendo tasa BCV:",
-          err
-        );
+        console.error("Error obteniendo tasa BCV:", err);
 
         if (isMounted) {
           setBcvRate(null);
@@ -160,9 +160,7 @@ export default function CheckoutPage() {
 
   const handleChange = useCallback(
     (
-      e: React.ChangeEvent<
-        HTMLInputElement | HTMLTextAreaElement
-      >
+      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
     ) => {
       const { name, value } = e.target;
 
@@ -179,9 +177,7 @@ export default function CheckoutPage() {
   ============================================================ */
 
   const totalBs =
-    bcvRate !== null
-      ? numericTotal * bcvRate
-      : null;
+    bcvRate !== null ? numericTotal * bcvRate : null;
 
   const formatBs = (value: number) =>
     value.toLocaleString("es-VE", {
@@ -242,9 +238,10 @@ export default function CheckoutPage() {
     try {
       /*
        * El pedido continúa guardándose en USD.
-       * La conversión a Bs. es informativa para el cliente.
+       *
+       * La conversión a Bs. solamente se utiliza
+       * como información para el cliente.
        */
-
       const order = await createOrder({
         user_id: userId,
         customer_name: cleanName,
@@ -279,8 +276,8 @@ export default function CheckoutPage() {
             products: cart,
 
             /*
-             * Enviamos la tasa utilizada y el equivalente
-             * en bolívares a la notificación.
+             * Enviamos también la tasa utilizada
+             * y el total convertido a Bs.
              */
             bcvRate,
             totalBs,
@@ -301,10 +298,7 @@ export default function CheckoutPage() {
         )}`
       );
     } catch (error) {
-      console.error(
-        "Error creando pedido:",
-        error
-      );
+      console.error("Error creando pedido:", error);
 
       alert(
         "No se pudo crear el pedido. Por favor intenta nuevamente."
@@ -344,8 +338,7 @@ export default function CheckoutPage() {
             </h1>
 
             <p className="mt-3 text-slate-400">
-              Explora nuestro catálogo de tecnología y seguridad
-              antes de proceder al pago.
+              Explora nuestro catálogo de tecnología y seguridad antes de proceder al pago.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
@@ -421,9 +414,7 @@ export default function CheckoutPage() {
               size={18}
               className="text-emerald-400"
             />
-            <span>
-              ¿Dudas? Hablar por WhatsApp
-            </span>
+            <span>¿Dudas? Hablar por WhatsApp</span>
           </a>
         </div>
 
@@ -437,8 +428,7 @@ export default function CheckoutPage() {
           </h1>
 
           <p className="mt-2 text-slate-400">
-            Completa tus datos y selecciona tu método de pago
-            para procesar la orden.
+            Completa tus datos y selecciona tu método de pago para procesar la orden.
           </p>
         </div>
 
@@ -463,13 +453,11 @@ export default function CheckoutPage() {
                   <span className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/10 text-sm text-cyan-400">
                     1
                   </span>
-
                   Datos del cliente
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-400">
-                  Ingresa tus datos para la entrega y confirmación
-                  del pedido.
+                  Ingresa tus datos para la entrega y confirmación del pedido.
                 </p>
               </div>
 
@@ -558,7 +546,6 @@ export default function CheckoutPage() {
                     className="w-full resize-none rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
                   />
                 </div>
-
               </div>
             </div>
 
@@ -573,13 +560,11 @@ export default function CheckoutPage() {
                   <span className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/10 text-sm text-cyan-400">
                     2
                   </span>
-
                   Método de pago
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-400">
-                  Selecciona la opción de tu preferencia e ingresa
-                  el número de referencia.
+                  Selecciona la opción de tu preferencia e ingresa el número de referencia.
                 </p>
               </div>
 
@@ -589,12 +574,8 @@ export default function CheckoutPage() {
 
                 <button
                   type="button"
-                  aria-pressed={
-                    paymentMethod === "pago_movil"
-                  }
-                  onClick={() =>
-                    setPaymentMethod("pago_movil")
-                  }
+                  aria-pressed={paymentMethod === "pago_movil"}
+                  onClick={() => setPaymentMethod("pago_movil")}
                   className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
                     paymentMethod === "pago_movil"
                       ? "border-cyan-500 bg-cyan-950/40 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
@@ -617,9 +598,7 @@ export default function CheckoutPage() {
 
                 <button
                   type="button"
-                  aria-pressed={
-                    paymentMethod === "transferencia"
-                  }
+                  aria-pressed={paymentMethod === "transferencia"}
                   onClick={() =>
                     setPaymentMethod("transferencia")
                   }
@@ -645,12 +624,8 @@ export default function CheckoutPage() {
 
                 <button
                   type="button"
-                  aria-pressed={
-                    paymentMethod === "binance"
-                  }
-                  onClick={() =>
-                    setPaymentMethod("binance")
-                  }
+                  aria-pressed={paymentMethod === "binance"}
+                  onClick={() => setPaymentMethod("binance")}
                   className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
                     paymentMethod === "binance"
                       ? "border-cyan-500 bg-cyan-950/40 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
@@ -668,7 +643,6 @@ export default function CheckoutPage() {
 
                   <span>Binance Pay</span>
                 </button>
-
               </div>
 
               {/* ==================================================
@@ -708,15 +682,7 @@ export default function CheckoutPage() {
 
                     {/* MONTO BCV */}
 
-                    {loadingRate ? (
-                      <div className="mt-4 flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-400">
-                        <Loader2
-                          size={15}
-                          className="animate-spin text-cyan-400"
-                        />
-                        Consultando tasa BCV...
-                      </div>
-                    ) : totalBs !== null ? (
+                    {totalBs !== null && (
                       <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-950/50 p-3">
 
                         <p className="text-[10px] uppercase tracking-wider text-slate-400">
@@ -732,11 +698,22 @@ export default function CheckoutPage() {
                         </p>
 
                       </div>
-                    ) : (
-                      <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-950/20 p-3 text-xs text-amber-400">
-                        La tasa BCV no está disponible
-                        temporalmente.
+                    )}
+
+                    {loadingRate && (
+                      <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
+                        <Loader2
+                          size={14}
+                          className="animate-spin"
+                        />
+                        Consultando tasa BCV...
                       </div>
+                    )}
+
+                    {!loadingRate && bcvRate === null && (
+                      <p className="mt-4 text-xs text-amber-400">
+                        Tasa BCV no disponible temporalmente.
+                      </p>
                     )}
 
                   </div>
@@ -835,7 +812,6 @@ export default function CheckoutPage() {
                   />
 
                 </div>
-
               </div>
             </div>
           </div>
@@ -854,10 +830,7 @@ export default function CheckoutPage() {
 
               <p className="mt-3 text-xs font-medium uppercase tracking-wider text-slate-400">
                 {cart.length}{" "}
-                {cart.length === 1
-                  ? "producto"
-                  : "productos"}{" "}
-                en total
+                {cart.length === 1 ? "producto" : "productos"} en total
               </p>
 
               {/* ==================================================
@@ -925,8 +898,7 @@ export default function CheckoutPage() {
 
                         {productTotalBs !== null && (
                           <p className="mt-0.5 font-mono text-[11px] font-semibold text-emerald-400">
-                            ≈ Bs.{" "}
-                            {formatBs(productTotalBs)}
+                            ≈ Bs. {formatBs(productTotalBs)}
                           </p>
                         )}
 
@@ -934,7 +906,6 @@ export default function CheckoutPage() {
                     </div>
                   );
                 })}
-
               </div>
 
               <div className="my-5 border-t border-slate-800" />
@@ -995,7 +966,6 @@ export default function CheckoutPage() {
               <div className="mt-5 space-y-3 text-sm text-slate-400">
 
                 <div className="flex items-center justify-between">
-
                   <span>Subtotal</span>
 
                   <div className="text-right">
@@ -1014,15 +984,12 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="flex items-center justify-between">
-
                   <span>Envío</span>
 
                   <span className="font-medium text-slate-400">
                     Por confirmar
                   </span>
-
                 </div>
-
               </div>
 
               {/* ==================================================
@@ -1050,9 +1017,7 @@ export default function CheckoutPage() {
                     )}
 
                   </div>
-
                 </div>
-
               </div>
 
               {/* ==================================================
@@ -1067,10 +1032,7 @@ export default function CheckoutPage() {
                 {loading ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
-
-                    <span>
-                      Procesando pedido...
-                    </span>
+                    <span>Procesando pedido...</span>
                   </>
                 ) : (
                   "Confirmar pedido"
