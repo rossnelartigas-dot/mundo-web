@@ -19,6 +19,7 @@ import {
 import { useCart } from "@/context/CartContext";
 import { createOrder } from "@/services/orderService";
 import { supabase } from "@/lib/supabase";
+import { getBcvRate } from "@/services/exchangeRateService";
 
 interface CustomerForm {
   customer_name: string;
@@ -55,12 +56,11 @@ export default function CheckoutPage() {
 
   const [bcvRate, setBcvRate] = useState<number | null>(null);
   const [loadingRate, setLoadingRate] = useState(true);
-
   const [bcvUpdatedAt, setBcvUpdatedAt] = useState<string | null>(null);
 
   const numericTotal = Number(total) || 0;
 
-  const whatsappNumber = "+584264433849";
+  const whatsappNumber = "584264433849";
 
   const whatsappMessage = encodeURIComponent(
     `Hola! Tengo una consulta antes de confirmar mi pedido en el Checkout. El total de mi carrito es $${numericTotal.toFixed(
@@ -112,60 +112,23 @@ export default function CheckoutPage() {
       /* ========================================================
          TASA BCV
 
-         IMPORTANTE:
-         Usamos exactamente la misma API que ProductDetails.
+         Usamos el servicio centralizado.
+         No consultamos directamente la API desde Checkout.
       ======================================================== */
 
       try {
         setLoadingRate(true);
 
-        const response = await fetch(
-          "https://rates.dolarvzla.com/bcv/current.json",
-          {
-            cache: "no-store",
-          }
-        );
+        const exchangeData = await getBcvRate();
 
-        if (!response.ok) {
-          throw new Error(
-            "No se pudo obtener la tasa BCV"
+        if (isMounted) {
+          setBcvRate(exchangeData.rate);
+
+          setBcvUpdatedAt(
+            exchangeData.updatedAt
+              ? String(exchangeData.updatedAt)
+              : null
           );
-        }
-
-        const data = await response.json();
-
-        /*
-         * El servicio puede devolver diferentes estructuras.
-         * Intentamos las estructuras conocidas.
-         */
-        const rate = Number(
-          data?.usd?.rate ??
-            data?.usd ??
-            data?.rate ??
-            data?.tasa ??
-            data?.USD?.rate
-        );
-
-        if (
-          Number.isFinite(rate) &&
-          rate > 0 &&
-          isMounted
-        ) {
-          setBcvRate(rate);
-        }
-
-        /*
-         * Guardamos la fecha si la API la proporciona.
-         */
-        const updatedAt =
-          data?.fechaActualizacion ??
-          data?.fecha ??
-          data?.updated_at ??
-          data?.updatedAt ??
-          null;
-
-        if (updatedAt && isMounted) {
-          setBcvUpdatedAt(String(updatedAt));
         }
       } catch (err) {
         console.error(
@@ -281,6 +244,7 @@ export default function CheckoutPage() {
        * El pedido continúa guardándose en USD.
        * La conversión a Bs. es informativa para el cliente.
        */
+
       const order = await createOrder({
         user_id: userId,
         customer_name: cleanName,
@@ -315,9 +279,8 @@ export default function CheckoutPage() {
             products: cart,
 
             /*
-             * También enviamos la tasa utilizada a la
-             * notificación, sin modificar la estructura
-             * actual de la orden.
+             * Enviamos la tasa utilizada y el equivalente
+             * en bolívares a la notificación.
              */
             bcvRate,
             totalBs,
@@ -357,7 +320,7 @@ export default function CheckoutPage() {
 
   if (!mounted) {
     return (
-      <main className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-400">
         <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
       </main>
     );
@@ -369,10 +332,10 @@ export default function CheckoutPage() {
 
   if (cart.length === 0) {
     return (
-      <main className="min-h-screen bg-slate-950 py-16 text-slate-100 flex items-center">
-        <div className="mx-auto max-w-2xl px-4 w-full">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center backdrop-blur-xl shadow-2xl">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 mb-6">
+      <main className="flex min-h-screen items-center bg-slate-950 py-16 text-slate-100">
+        <div className="mx-auto w-full max-w-2xl px-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center shadow-2xl backdrop-blur-xl">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-400">
               <ShoppingBag className="h-10 w-10" />
             </div>
 
@@ -381,14 +344,15 @@ export default function CheckoutPage() {
             </h1>
 
             <p className="mt-3 text-slate-400">
-              Explora nuestro catálogo de tecnología y seguridad antes de proceder al pago.
+              Explora nuestro catálogo de tecnología y seguridad
+              antes de proceder al pago.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <button
                 type="button"
                 onClick={() => router.push("/")}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-6 py-3 font-medium text-slate-200 transition hover:bg-slate-700 hover:text-white cursor-pointer"
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-6 py-3 font-medium text-slate-200 transition hover:bg-slate-700 hover:text-white"
               >
                 <Home size={18} />
                 Ir al inicio
@@ -396,10 +360,8 @@ export default function CheckoutPage() {
 
               <button
                 type="button"
-                onClick={() =>
-                  router.push("/productos")
-                }
-                className="inline-flex items-center justify-center rounded-xl bg-cyan-500 px-8 py-3 font-semibold text-slate-950 transition-all hover:bg-cyan-400 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] cursor-pointer"
+                onClick={() => router.push("/productos")}
+                className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-cyan-500 px-8 py-3 font-semibold text-slate-950 transition-all hover:bg-cyan-400 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]"
               >
                 Ver productos
               </button>
@@ -426,10 +388,8 @@ export default function CheckoutPage() {
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() =>
-                router.push("/carrito")
-              }
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-slate-700 hover:bg-slate-800 hover:text-white cursor-pointer"
+              onClick={() => router.push("/carrito")}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-slate-700 hover:bg-slate-800 hover:text-white"
             >
               <ArrowLeft
                 size={18}
@@ -440,10 +400,8 @@ export default function CheckoutPage() {
 
             <button
               type="button"
-              onClick={() =>
-                router.push("/")
-              }
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-slate-700 hover:bg-slate-800 hover:text-white cursor-pointer"
+              onClick={() => router.push("/")}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-slate-700 hover:bg-slate-800 hover:text-white"
             >
               <Home
                 size={18}
@@ -457,7 +415,7 @@ export default function CheckoutPage() {
             href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-4 py-2.5 text-sm font-semibold text-emerald-400 transition-all hover:bg-emerald-500/20 hover:border-emerald-500/50 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+            className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-400 transition-all hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]"
           >
             <MessageCircle
               size={18}
@@ -474,12 +432,13 @@ export default function CheckoutPage() {
         ====================================================== */}
 
         <div className="mb-10">
-          <h1 className="text-3xl font-extrabold text-white sm:text-4xl tracking-tight">
+          <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Finalizar compra
           </h1>
 
           <p className="mt-2 text-slate-400">
-            Completa tus datos y selecciona tu método de pago para procesar la orden.
+            Completa tus datos y selecciona tu método de pago
+            para procesar la orden.
           </p>
         </div>
 
@@ -500,8 +459,8 @@ export default function CheckoutPage() {
 
             <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl backdrop-blur-md sm:p-8">
               <div className="mb-6 border-b border-slate-800/80 pb-4">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 text-sm border border-cyan-500/20">
+                <h2 className="flex items-center gap-2 text-xl font-bold text-white">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/10 text-sm text-cyan-400">
                     1
                   </span>
 
@@ -509,7 +468,8 @@ export default function CheckoutPage() {
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-400">
-                  Ingresa tus datos para la entrega y confirmación del pedido.
+                  Ingresa tus datos para la entrega y confirmación
+                  del pedido.
                 </p>
               </div>
 
@@ -609,8 +569,8 @@ export default function CheckoutPage() {
             <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl backdrop-blur-md sm:p-8">
 
               <div className="mb-6 border-b border-slate-800/80 pb-4">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 text-sm border border-cyan-500/20">
+                <h2 className="flex items-center gap-2 text-xl font-bold text-white">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/10 text-sm text-cyan-400">
                     2
                   </span>
 
@@ -618,11 +578,12 @@ export default function CheckoutPage() {
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-400">
-                  Selecciona la opción de tu preferencia e ingresa el número de referencia.
+                  Selecciona la opción de tu preferencia e ingresa
+                  el número de referencia.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+              <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
 
                 {/* PAGO MÓVIL */}
 
@@ -634,26 +595,22 @@ export default function CheckoutPage() {
                   onClick={() =>
                     setPaymentMethod("pago_movil")
                   }
-                  className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
-                    paymentMethod ===
-                    "pago_movil"
-                      ? "bg-cyan-950/40 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+                  className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
+                    paymentMethod === "pago_movil"
+                      ? "border-cyan-500 bg-cyan-950/40 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
                       : "border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
                   }`}
                 >
                   <Smartphone
                     size={22}
                     className={
-                      paymentMethod ===
-                      "pago_movil"
+                      paymentMethod === "pago_movil"
                         ? "text-cyan-400"
                         : "text-slate-500"
                     }
                   />
 
-                  <span>
-                    Pago Móvil
-                  </span>
+                  <span>Pago Móvil</span>
                 </button>
 
                 {/* TRANSFERENCIA */}
@@ -661,34 +618,27 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   aria-pressed={
-                    paymentMethod ===
-                    "transferencia"
+                    paymentMethod === "transferencia"
                   }
                   onClick={() =>
-                    setPaymentMethod(
-                      "transferencia"
-                    )
+                    setPaymentMethod("transferencia")
                   }
-                  className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
-                    paymentMethod ===
-                    "transferencia"
-                      ? "bg-cyan-950/40 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+                  className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
+                    paymentMethod === "transferencia"
+                      ? "border-cyan-500 bg-cyan-950/40 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
                       : "border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
                   }`}
                 >
                   <Building
                     size={22}
                     className={
-                      paymentMethod ===
-                      "transferencia"
+                      paymentMethod === "transferencia"
                         ? "text-cyan-400"
                         : "text-slate-500"
                     }
                   />
 
-                  <span>
-                    Transferencia
-                  </span>
+                  <span>Transferencia</span>
                 </button>
 
                 {/* BINANCE */}
@@ -701,26 +651,22 @@ export default function CheckoutPage() {
                   onClick={() =>
                     setPaymentMethod("binance")
                   }
-                  className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
-                    paymentMethod ===
-                    "binance"
-                      ? "bg-cyan-950/40 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+                  className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
+                    paymentMethod === "binance"
+                      ? "border-cyan-500 bg-cyan-950/40 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
                       : "border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
                   }`}
                 >
                   <Wallet
                     size={22}
                     className={
-                      paymentMethod ===
-                      "binance"
+                      paymentMethod === "binance"
                         ? "text-amber-400"
                         : "text-slate-500"
                     }
                   />
 
-                  <span>
-                    Binance Pay
-                  </span>
+                  <span>Binance Pay</span>
                 </button>
 
               </div>
@@ -729,41 +675,48 @@ export default function CheckoutPage() {
                   DETALLES DE PAGO
               ================================================== */}
 
-              <div className="rounded-xl bg-slate-950/60 p-5 border border-slate-800/80 text-sm space-y-4">
+              <div className="space-y-4 rounded-xl border border-slate-800/80 bg-slate-950/60 p-5 text-sm">
 
-                {paymentMethod ===
-                  "pago_movil" && (
+                {paymentMethod === "pago_movil" && (
                   <div className="space-y-1.5 text-slate-300">
 
-                    <p className="text-cyan-400 font-semibold mb-2 flex items-center gap-2">
+                    <p className="mb-2 flex items-center gap-2 font-semibold text-cyan-400">
                       <CheckCircle2 className="h-4 w-4" />
                       Datos para Pago Móvil:
                     </p>
 
                     <p>
                       Banco:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         Mercantil (0105)
                       </span>
                     </p>
 
                     <p>
                       Teléfono:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         0414-5852935
                       </span>
                     </p>
 
                     <p>
                       RIF:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         V-29569063
                       </span>
                     </p>
 
                     {/* MONTO BCV */}
 
-                    {totalBs !== null && (
+                    {loadingRate ? (
+                      <div className="mt-4 flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/60 p-3 text-xs text-slate-400">
+                        <Loader2
+                          size={15}
+                          className="animate-spin text-cyan-400"
+                        />
+                        Consultando tasa BCV...
+                      </div>
+                    ) : totalBs !== null ? (
                       <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-950/50 p-3">
 
                         <p className="text-[10px] uppercase tracking-wider text-slate-400">
@@ -775,48 +728,52 @@ export default function CheckoutPage() {
                         </p>
 
                         <p className="mt-1 text-[10px] text-slate-500">
-                          Calculado según la tasa BCV mostrada abajo.
+                          Calculado según la tasa BCV actual.
                         </p>
 
+                      </div>
+                    ) : (
+                      <div className="mt-4 rounded-xl border border-amber-500/20 bg-amber-950/20 p-3 text-xs text-amber-400">
+                        La tasa BCV no está disponible
+                        temporalmente.
                       </div>
                     )}
 
                   </div>
                 )}
 
-                {paymentMethod ===
-                  "transferencia" && (
+                {paymentMethod === "transferencia" && (
                   <div className="space-y-1.5 text-slate-300">
 
-                    <p className="text-cyan-400 font-semibold mb-2 flex items-center gap-2">
+                    <p className="mb-2 flex items-center gap-2 font-semibold text-cyan-400">
                       <CheckCircle2 className="h-4 w-4" />
                       Datos Bancarios:
                     </p>
 
                     <p>
                       Banco:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         Mercantil
                       </span>
                     </p>
 
                     <p>
                       Cuenta Corriente:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         0105-XXXX-XX-XXXXXXXXXX
                       </span>
                     </p>
 
                     <p>
                       Titular:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         Tu Empresa / Nombre
                       </span>
                     </p>
 
                     <p>
                       RIF:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         V-29569063
                       </span>
                     </p>
@@ -824,25 +781,24 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                {paymentMethod ===
-                  "binance" && (
+                {paymentMethod === "binance" && (
                   <div className="space-y-1.5 text-slate-300">
 
-                    <p className="text-amber-400 font-semibold mb-2 flex items-center gap-2">
+                    <p className="mb-2 flex items-center gap-2 font-semibold text-amber-400">
                       <CheckCircle2 className="h-4 w-4" />
                       Datos para Binance Pay:
                     </p>
 
                     <p>
                       Binance ID (Pay ID):{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         XXXXXXXXX
                       </span>
                     </p>
 
                     <p>
                       Correo Binance:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         tu-correo@ejemplo.com
                       </span>
                     </p>
@@ -850,14 +806,13 @@ export default function CheckoutPage() {
                   </div>
                 )}
 
-                <div className="pt-4 border-t border-slate-800">
+                <div className="border-t border-slate-800 pt-4">
 
                   <label
                     htmlFor="payment_reference"
-                    className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2"
+                    className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
                   >
-                    {paymentMethod ===
-                    "binance"
+                    {paymentMethod === "binance"
                       ? "Order ID / Reference Binance (Obligatorio)"
                       : "Número de Referencia (Obligatorio)"}
                   </label>
@@ -867,21 +822,16 @@ export default function CheckoutPage() {
                     type="text"
                     required
                     placeholder={
-                      paymentMethod ===
-                      "binance"
+                      paymentMethod === "binance"
                         ? "Ej: 21983019283"
                         : "Ej: 00123456"
                     }
-                    value={
-                      paymentReference
-                    }
+                    value={paymentReference}
                     onChange={(e) =>
-                      setPaymentReference(
-                        e.target.value
-                      )
+                      setPaymentReference(e.target.value)
                     }
                     disabled={loading}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm placeholder:text-slate-600 disabled:opacity-50"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
                   />
 
                 </div>
@@ -898,11 +848,11 @@ export default function CheckoutPage() {
 
             <div className="sticky top-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl backdrop-blur-md">
 
-              <h2 className="text-xl font-bold text-white border-b border-slate-800/80 pb-3">
+              <h2 className="border-b border-slate-800/80 pb-3 text-xl font-bold text-white">
                 Resumen de compra
               </h2>
 
-              <p className="mt-3 text-xs text-slate-400 font-medium uppercase tracking-wider">
+              <p className="mt-3 text-xs font-medium uppercase tracking-wider text-slate-400">
                 {cart.length}{" "}
                 {cart.length === 1
                   ? "producto"
@@ -914,7 +864,7 @@ export default function CheckoutPage() {
                   PRODUCTOS
               ================================================== */}
 
-              <div className="mt-5 space-y-4 max-h-[320px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800">
+              <div className="mt-5 max-h-[320px] space-y-4 overflow-y-auto pr-1">
 
                 {cart.map((product) => {
                   const productPrice =
@@ -928,19 +878,18 @@ export default function CheckoutPage() {
 
                   const productTotalBs =
                     bcvRate !== null
-                      ? productTotal *
-                        bcvRate
+                      ? productTotal * bcvRate
                       : null;
 
                   return (
                     <div
                       key={product.id}
-                      className="flex gap-4 items-center border-b border-slate-800/40 pb-3 last:border-0"
+                      className="flex items-center gap-4 border-b border-slate-800/40 pb-3 last:border-0"
                     >
 
                       {/* IMAGEN */}
 
-                      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-slate-950 border border-slate-800">
+                      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
 
                         {product.image ? (
                           <Image
@@ -962,7 +911,7 @@ export default function CheckoutPage() {
 
                       <div className="min-w-0 flex-1">
 
-                        <p className="text-sm font-semibold text-slate-200 truncate">
+                        <p className="truncate text-sm font-semibold text-slate-200">
                           {product.name}
                         </p>
 
@@ -971,19 +920,13 @@ export default function CheckoutPage() {
                         </p>
 
                         <p className="mt-1 text-sm font-bold text-cyan-400">
-                          $
-                          {productTotal.toFixed(
-                            2
-                          )}
+                          ${productTotal.toFixed(2)}
                         </p>
 
-                        {productTotalBs !==
-                          null && (
-                          <p className="mt-0.5 text-[11px] font-mono font-semibold text-emerald-400">
+                        {productTotalBs !== null && (
+                          <p className="mt-0.5 font-mono text-[11px] font-semibold text-emerald-400">
                             ≈ Bs.{" "}
-                            {formatBs(
-                              productTotalBs
-                            )}
+                            {formatBs(productTotalBs)}
                           </p>
                         )}
 
@@ -1005,7 +948,7 @@ export default function CheckoutPage() {
                 <div className="flex items-center justify-between gap-3">
 
                   <div>
-                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                       Tasa de cambio
                     </p>
 
@@ -1021,10 +964,7 @@ export default function CheckoutPage() {
                     />
                   ) : bcvRate !== null ? (
                     <p className="font-mono text-sm font-bold text-cyan-400">
-                      Bs.{" "}
-                      {formatBs(
-                        bcvRate
-                      )}
+                      Bs. {formatBs(bcvRate)}
                     </p>
                   ) : (
                     <span className="text-[10px] text-amber-400">
@@ -1036,20 +976,15 @@ export default function CheckoutPage() {
 
                 {bcvUpdatedAt && (
                   <p className="mt-2 text-[10px] text-slate-600">
-                    Actualización:{" "}
-                    {bcvUpdatedAt}
+                    Actualización: {bcvUpdatedAt}
                   </p>
                 )}
 
-                {!loadingRate &&
-                  bcvRate !== null && (
-                    <p className="mt-2 text-[10px] text-slate-500">
-                      1 USD = Bs.{" "}
-                      {formatBs(
-                        bcvRate
-                      )}
-                    </p>
-                  )}
+                {!loadingRate && bcvRate !== null && (
+                  <p className="mt-2 text-[10px] text-slate-500">
+                    1 USD = Bs. {formatBs(bcvRate)}
+                  </p>
+                )}
 
               </div>
 
@@ -1057,40 +992,35 @@ export default function CheckoutPage() {
                   SUBTOTAL / ENVÍO
               ================================================== */}
 
-              <div className="space-y-3 text-sm text-slate-400 mt-5">
+              <div className="mt-5 space-y-3 text-sm text-slate-400">
 
                 <div className="flex items-center justify-between">
-                  <span>
-                    Subtotal
-                  </span>
+
+                  <span>Subtotal</span>
 
                   <div className="text-right">
+
                     <p className="font-semibold text-slate-200">
-                      $
-                      {numericTotal.toFixed(
-                        2
-                      )}
+                      ${numericTotal.toFixed(2)}
                     </p>
 
                     {totalBs !== null && (
-                      <p className="mt-0.5 text-[11px] font-mono text-emerald-400">
-                        Bs.{" "}
-                        {formatBs(
-                          totalBs
-                        )}
+                      <p className="mt-0.5 font-mono text-[11px] text-emerald-400">
+                        Bs. {formatBs(totalBs)}
                       </p>
                     )}
+
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span>
-                    Envío
-                  </span>
+
+                  <span>Envío</span>
 
                   <span className="font-medium text-slate-400">
                     Por confirmar
                   </span>
+
                 </div>
 
               </div>
@@ -1110,18 +1040,12 @@ export default function CheckoutPage() {
                   <div className="text-right">
 
                     <span className="text-3xl font-extrabold text-cyan-400">
-                      $
-                      {numericTotal.toFixed(
-                        2
-                      )}
+                      ${numericTotal.toFixed(2)}
                     </span>
 
                     {totalBs !== null && (
                       <p className="mt-1 font-mono text-base font-bold text-emerald-400">
-                        Bs.{" "}
-                        {formatBs(
-                          totalBs
-                        )}
+                        Bs. {formatBs(totalBs)}
                       </p>
                     )}
 
@@ -1138,11 +1062,12 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-6 w-full rounded-xl bg-cyan-500 px-5 py-4 text-base font-bold text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.25)] transition-all hover:bg-cyan-400 hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                className="mt-6 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-cyan-500 px-5 py-4 text-base font-bold text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.25)] transition-all hover:bg-cyan-400 hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
+
                     <span>
                       Procesando pedido...
                     </span>
@@ -1162,9 +1087,7 @@ export default function CheckoutPage() {
                 rel="noopener noreferrer"
                 className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-950/30 px-4 py-3 text-xs font-medium text-emerald-400 transition hover:bg-emerald-900/40"
               >
-                <MessageCircle
-                  size={16}
-                />
+                <MessageCircle size={16} />
 
                 <span>
                   ¿Prefieres acordar el pago por WhatsApp?
