@@ -34,7 +34,8 @@ export default function ProductForm({ product }: Props) {
   const [loading, setLoading] = useState(false);
 
   // La interfaz Product define image como string.
-  // Usamos image_url como respaldo por compatibilidad con productos existentes.
+  // Usamos image_url como respaldo por compatibilidad
+  // con productos existentes.
   const initialImage = product?.image || product?.image_url || "";
 
   const {
@@ -43,7 +44,10 @@ export default function ProductForm({ product }: Props) {
     handleSubmit,
     formState: { errors },
   } = useForm<ProductFormData>({
-    resolver: zodResolver(ProductSchema) as Resolver<ProductFormData, unknown>,
+    resolver: zodResolver(ProductSchema) as Resolver<
+      ProductFormData,
+      unknown
+    >,
 
     defaultValues: {
       name: product?.name || "",
@@ -82,10 +86,8 @@ export default function ProductForm({ product }: Props) {
   ): void {
     const value = e.target.value;
 
-    // Mantener sincronizado React Hook Form.
     nameRegister.onChange(e);
 
-    // Generar slug solamente al crear un producto.
     if (!product) {
       setValue("slug", generateSlug(value));
     }
@@ -97,8 +99,6 @@ export default function ProductForm({ product }: Props) {
 
       let imageUrl = data.image || "";
 
-      // Si se seleccionó una nueva imagen desde la PC,
-      // primero la subimos y usamos la URL resultante.
       if (imageFile) {
         imageUrl = await uploadProductImage(imageFile);
       }
@@ -122,12 +122,10 @@ export default function ProductForm({ product }: Props) {
         featured: Boolean(data.featured),
         active: Boolean(data.active),
         sku: data.sku?.trim() || "",
-        slug: data.slug?.trim() || generateSlug(data.name),
+        slug:
+          data.slug?.trim() || generateSlug(data.name),
 
-        // Product.image es string, no string[].
         image: normalizedImageUrl,
-
-        // Mantener image_url sincronizado.
         image_url: normalizedImageUrl,
       };
 
@@ -152,8 +150,6 @@ export default function ProductForm({ product }: Props) {
   const handleFileChange = (file: File | null) => {
     setImageFile(file);
 
-    // Si se elimina la imagen desde ImageUploader,
-    // también eliminamos la URL del formulario.
     if (!file) {
       setValue("image", "");
     }
@@ -162,334 +158,790 @@ export default function ProductForm({ product }: Props) {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="space-y-6 max-w-4xl bg-white p-6 rounded-xl border border-gray-100 shadow-sm"
+      className="
+        w-full
+        max-w-5xl
+        space-y-8
+        rounded-2xl
+        border
+        border-slate-800
+        bg-slate-900/80
+        p-5
+        shadow-2xl
+        backdrop-blur-md
+        sm:p-6
+        lg:p-8
+      "
     >
-      {/* Nombre del Producto */}
-      <div>
-        <label className="block mb-1 text-sm font-semibold text-gray-700">
-          Nombre del Producto *
-        </label>
+      {/* CABECERA */}
+      <div className="border-b border-slate-800 pb-5">
+        <div className="flex items-center gap-3">
+          <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_rgba(34,211,238,0.7)]" />
 
-        <input
-          {...nameRegister}
-          onChange={handleNameChange}
-          placeholder="Ej: Laptop Dell XPS 13"
-          className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-        />
+          <div>
+            <h2 className="text-xl font-extrabold tracking-tight text-white">
+              {product ? "Editar producto" : "Nuevo producto"}
+            </h2>
 
-        <p className="text-red-500 text-sm mt-1">
-          {errors.name?.message}
+            <p className="mt-1 text-[11px] font-mono text-slate-500">
+              {product
+                ? "Actualiza la información del producto en el inventario."
+                : "Registra un nuevo producto en el inventario."}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* INFORMACIÓN PRINCIPAL */}
+      <section className="space-y-5">
+        <div>
+          <p className="mb-4 text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
+            Información principal
+          </p>
+
+          {/* NOMBRE */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              Nombre del Producto *
+            </label>
+
+            <input
+              {...nameRegister}
+              onChange={handleNameChange}
+              placeholder="Ej: Laptop Dell XPS 13"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-950
+                px-4
+                py-3
+                text-sm
+                text-slate-100
+                placeholder-slate-600
+                outline-none
+                transition
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            />
+
+            {errors.name && (
+              <p className="mt-1.5 text-xs font-mono text-rose-400">
+                {errors.name.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* DESCRIPCIÓN */}
+        <div>
+          <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+            Descripción
+          </label>
+
+          <textarea
+            {...register("description")}
+            rows={5}
+            placeholder="Detalles sobre las especificaciones del producto..."
+            className="
+              w-full
+              resize-y
+              rounded-xl
+              border
+              border-slate-800
+              bg-slate-950
+              px-4
+              py-3
+              text-sm
+              leading-relaxed
+              text-slate-100
+              placeholder-slate-600
+              outline-none
+              transition
+              focus:border-cyan-500
+              focus:ring-1
+              focus:ring-cyan-500
+            "
+          />
+        </div>
+      </section>
+
+      {/* CLASIFICACIÓN */}
+      <section className="space-y-4">
+        <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
+          Clasificación
         </p>
-      </div>
 
-      {/* Descripción */}
-      <div>
-        <label className="block mb-1 text-sm font-semibold text-gray-700">
-          Descripción
-        </label>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {/* MARCA */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              Marca
+            </label>
 
-        <textarea
-          {...register("description")}
-          rows={4}
-          placeholder="Detalles sobre las especificaciones del producto..."
-          className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-        />
-      </div>
+            <input
+              {...register("brand")}
+              placeholder="Ej: Dell, ASUS"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-950
+                px-3.5
+                py-3
+                text-sm
+                text-slate-100
+                placeholder-slate-600
+                outline-none
+                transition
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            />
+          </div>
 
-      {/* Clasificación */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {/* CATEGORÍA */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              Categoría
+            </label>
+
+            <input
+              {...register("category")}
+              placeholder="Ej: Computación"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-950
+                px-3.5
+                py-3
+                text-sm
+                text-slate-100
+                placeholder-slate-600
+                outline-none
+                transition
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            />
+          </div>
+
+          {/* SUBCATEGORÍA */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              Subcategoría
+            </label>
+
+            <input
+              {...register("subcategory")}
+              placeholder="Ej: Laptops"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-950
+                px-3.5
+                py-3
+                text-sm
+                text-slate-100
+                placeholder-slate-600
+                outline-none
+                transition
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            />
+          </div>
+
+          {/* CONDICIÓN */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              Condición
+            </label>
+
+            <select
+              {...register("condition")}
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-950
+                px-3.5
+                py-3
+                text-sm
+                text-slate-100
+                outline-none
+                transition
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            >
+              <option value="nuevo">Nuevo</option>
+              <option value="usado">Usado</option>
+              <option value="reacondicionado">
+                Reacondicionado
+              </option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      {/* PRECIOS */}
+      <section
+        className="
+          space-y-4
+          rounded-2xl
+          border
+          border-slate-800
+          bg-slate-950/60
+          p-5
+        "
+      >
         <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-700">
-            Marca
-          </label>
+          <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
+            Precios y rentabilidad
+          </p>
 
-          <input
-            {...register("brand")}
-            placeholder="Ej: Dell, ASUS"
-            className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-          />
+          <p className="mt-1 text-[10px] font-mono text-slate-600">
+            Configura costos, margen y precio de venta.
+          </p>
         </div>
 
-        <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-700">
-            Categoría
-          </label>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {/* COSTO */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              Costo ($)
+            </label>
 
-          <input
-            {...register("category")}
-            placeholder="Ej: Computación"
-            className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-          />
+            <input
+              type="number"
+              step="0.01"
+              {...register("cost_price", {
+                valueAsNumber: true,
+              })}
+              placeholder="0.00"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-900
+                px-4
+                py-3
+                text-sm
+                text-slate-100
+                placeholder-slate-600
+                outline-none
+                transition
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            />
+          </div>
+
+          {/* MARGEN */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              Margen Ganancia (%)
+            </label>
+
+            <input
+              type="number"
+              step="0.01"
+              {...register("profit_margin", {
+                valueAsNumber: true,
+              })}
+              placeholder="30"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-900
+                px-4
+                py-3
+                text-sm
+                text-slate-100
+                placeholder-slate-600
+                outline-none
+                transition
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            />
+          </div>
+
+          {/* PRECIO */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              Precio de Venta ($) *
+            </label>
+
+            <input
+              type="number"
+              step="0.01"
+              {...register("price", {
+                valueAsNumber: true,
+              })}
+              placeholder="0.00"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-emerald-500/30
+                bg-slate-900
+                px-4
+                py-3
+                text-sm
+                font-semibold
+                text-emerald-400
+                placeholder-slate-600
+                outline-none
+                transition
+                focus:border-emerald-400
+                focus:ring-1
+                focus:ring-emerald-400
+              "
+            />
+
+            {errors.price && (
+              <p className="mt-1.5 text-xs font-mono text-rose-400">
+                {errors.price.message}
+              </p>
+            )}
+          </div>
         </div>
+      </section>
 
-        <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-700">
-            Subcategoría
-          </label>
+      {/* INVENTARIO */}
+      <section className="space-y-4">
+        <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
+          Inventario y condiciones
+        </p>
 
-          <input
-            {...register("subcategory")}
-            placeholder="Ej: Laptops"
-            className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-          />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* STOCK */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              Stock *
+            </label>
+
+            <input
+              type="number"
+              {...register("stock", {
+                valueAsNumber: true,
+              })}
+              placeholder="0"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-950
+                px-4
+                py-3
+                text-sm
+                text-slate-100
+                placeholder-slate-600
+                outline-none
+                transition
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            />
+
+            {errors.stock && (
+              <p className="mt-1.5 text-xs font-mono text-rose-400">
+                {errors.stock.message}
+              </p>
+            )}
+          </div>
+
+          {/* DESCUENTO */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              Descuento (%)
+            </label>
+
+            <input
+              type="number"
+              step="0.01"
+              {...register("discount", {
+                valueAsNumber: true,
+              })}
+              placeholder="0"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-950
+                px-4
+                py-3
+                text-sm
+                text-slate-100
+                placeholder-slate-600
+                outline-none
+                transition
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            />
+          </div>
+
+          {/* PESO */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              Peso (Kg)
+            </label>
+
+            <input
+              type="number"
+              step="0.01"
+              {...register("weight", {
+                valueAsNumber: true,
+              })}
+              placeholder="0.00"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-950
+                px-4
+                py-3
+                text-sm
+                text-slate-100
+                placeholder-slate-600
+                outline-none
+                transition
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            />
+          </div>
+
+          {/* GARANTÍA */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              Garantía (Meses)
+            </label>
+
+            <input
+              type="number"
+              {...register("warranty_months", {
+                valueAsNumber: true,
+              })}
+              placeholder="0"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-950
+                px-4
+                py-3
+                text-sm
+                text-slate-100
+                placeholder-slate-600
+                outline-none
+                transition
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            />
+          </div>
         </div>
+      </section>
 
-        <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-700">
-            Condición
-          </label>
+      {/* SKU Y SLUG */}
+      <section className="space-y-4">
+        <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
+          Identificación
+        </p>
 
-          <select
-            {...register("condition")}
-            className="border border-gray-300 p-3 rounded-lg w-full bg-white focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-          >
-            <option value="nuevo">Nuevo</option>
-            <option value="usado">Usado</option>
-            <option value="reacondicionado">
-              Reacondicionado
-            </option>
-          </select>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {/* SKU */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              SKU (Código único)
+            </label>
+
+            <input
+              {...register("sku")}
+              placeholder="Ej: LAP-DELL-001"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-950
+                px-4
+                py-3
+                text-sm
+                text-slate-100
+                placeholder-slate-600
+                outline-none
+                transition
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            />
+
+            {errors.sku && (
+              <p className="mt-1.5 text-xs font-mono text-rose-400">
+                {errors.sku.message}
+              </p>
+            )}
+          </div>
+
+          {/* SLUG */}
+          <div>
+            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
+              Slug URL
+            </label>
+
+            <input
+              {...register("slug")}
+              placeholder="ej-laptop-dell-xps-13"
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-950
+                px-4
+                py-3
+                text-sm
+                text-slate-100
+                placeholder-slate-600
+                outline-none
+                transition
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            />
+
+            {errors.slug && (
+              <p className="mt-1.5 text-xs font-mono text-rose-400">
+                {errors.slug.message}
+              </p>
+            )}
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Precios */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+      {/* IMAGEN */}
+      <section
+        className="
+          space-y-4
+          rounded-2xl
+          border
+          border-slate-800
+          bg-slate-950/60
+          p-5
+        "
+      >
         <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-700">
-            Costo ($)
-          </label>
+          <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
+            Imagen del producto
+          </p>
 
-          <input
-            type="number"
-            step="0.01"
-            {...register("cost_price", {
-              valueAsNumber: true,
-            })}
-            placeholder="0.00"
-            className="border border-gray-300 p-3 rounded-lg w-full bg-white focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-          />
+          <p className="mt-1 text-[10px] font-mono text-slate-600">
+            Puedes subir una imagen desde tu PC o utilizar una URL.
+          </p>
         </div>
-
-        <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-700">
-            Margen Ganancia (%)
-          </label>
-
-          <input
-            type="number"
-            step="0.01"
-            {...register("profit_margin", {
-              valueAsNumber: true,
-            })}
-            placeholder="30"
-            className="border border-gray-300 p-3 rounded-lg w-full bg-white focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-700">
-            Precio de Venta ($) *
-          </label>
-
-          <input
-            type="number"
-            step="0.01"
-            {...register("price", {
-              valueAsNumber: true,
-            })}
-            placeholder="0.00"
-            className="border border-gray-300 p-3 rounded-lg w-full bg-white focus:ring-2 focus:ring-cyan-500 focus:outline-none transition font-semibold text-emerald-600"
-          />
-
-          {errors.price && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.price.message}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Inventario */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-700">
-            Stock (Inventario) *
-          </label>
-
-          <input
-            type="number"
-            {...register("stock", {
-              valueAsNumber: true,
-            })}
-            placeholder="0"
-            className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-          />
-
-          {errors.stock && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.stock.message}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-700">
-            Descuento (%)
-          </label>
-
-          <input
-            type="number"
-            step="0.01"
-            {...register("discount", {
-              valueAsNumber: true,
-            })}
-            placeholder="0"
-            className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-700">
-            Peso (Kg)
-          </label>
-
-          <input
-            type="number"
-            step="0.01"
-            {...register("weight", {
-              valueAsNumber: true,
-            })}
-            placeholder="0.00"
-            className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-700">
-            Garantía (Meses)
-          </label>
-
-          <input
-            type="number"
-            {...register("warranty_months", {
-              valueAsNumber: true,
-            })}
-            placeholder="0"
-            className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-          />
-        </div>
-      </div>
-
-      {/* SKU y Slug */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-700">
-            SKU (Código único)
-          </label>
-
-          <input
-            {...register("sku")}
-            placeholder="Ej: LAP-DELL-001"
-            className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-          />
-
-          {errors.sku && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.sku.message}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label className="block mb-1 text-sm font-semibold text-gray-700">
-            Slug URL (Opcional)
-          </label>
-
-          <input
-            {...register("slug")}
-            placeholder="ej-laptop-dell-xps-13"
-            className="border border-gray-300 p-3 rounded-lg w-full focus:ring-2 focus:ring-cyan-500 focus:outline-none transition"
-          />
-
-          {errors.slug && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.slug.message}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Imagen */}
-      <div className="space-y-3 pt-2">
-        <label className="block text-sm font-semibold text-gray-700">
-          Imagen del Producto
-        </label>
 
         <ImageUploader
           imageUrl={initialImage}
           onImageChange={handleFileChange}
         />
 
-        <div>
-          <label className="block mb-1 text-xs font-medium text-gray-500">
-            O ingresa URL de imagen directamente
+        <div className="border-t border-slate-800 pt-4">
+          <label className="mb-2 block text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-400">
+            URL de imagen
           </label>
 
           <input
             {...register("image")}
             placeholder="https://imagen.com/producto.jpg"
-            className="border border-gray-300 p-3 w-full rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none transition text-sm"
+            className="
+              w-full
+              rounded-xl
+              border
+              border-slate-800
+              bg-slate-950
+              px-4
+              py-3
+              text-sm
+              text-slate-100
+              placeholder-slate-600
+              outline-none
+              transition
+              focus:border-cyan-500
+              focus:ring-1
+              focus:ring-cyan-500
+            "
           />
         </div>
-      </div>
+      </section>
 
-      {/* Publicación */}
-      <div className="flex flex-wrap gap-6 pt-2 border-t border-gray-100">
-        <label className="flex gap-2 items-center cursor-pointer select-none">
-          <input
-            type="checkbox"
-            {...register("featured")}
-            className="w-4 h-4 text-cyan-600 rounded focus:ring-cyan-500"
-          />
+      {/* PUBLICACIÓN */}
+      <section className="space-y-4 border-t border-slate-800 pt-5">
+        <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
+          Estado de publicación
+        </p>
 
-          <span className="text-sm font-medium text-gray-700">
-            Producto destacado
-          </span>
-        </label>
+        <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
+          <label
+            className="
+              flex
+              cursor-pointer
+              items-center
+              gap-3
+              rounded-xl
+              border
+              border-slate-800
+              bg-slate-950
+              px-4
+              py-3
+              transition
+              hover:border-cyan-500/40
+            "
+          >
+            <input
+              type="checkbox"
+              {...register("featured")}
+              className="
+                h-4
+                w-4
+                rounded
+                border-slate-700
+                bg-slate-950
+                text-cyan-500
+                focus:ring-cyan-500
+              "
+            />
 
-        <label className="flex gap-2 items-center cursor-pointer select-none">
-          <input
-            type="checkbox"
-            {...register("active")}
-            className="w-4 h-4 text-cyan-600 rounded focus:ring-cyan-500"
-          />
+            <span className="text-xs font-mono font-medium text-slate-300">
+              Producto destacado
+            </span>
+          </label>
 
-          <span className="text-sm font-medium text-gray-700">
-            Producto activo en tienda
-          </span>
-        </label>
-      </div>
+          <label
+            className="
+              flex
+              cursor-pointer
+              items-center
+              gap-3
+              rounded-xl
+              border
+              border-slate-800
+              bg-slate-950
+              px-4
+              py-3
+              transition
+              hover:border-emerald-500/40
+            "
+          >
+            <input
+              type="checkbox"
+              {...register("active")}
+              className="
+                h-4
+                w-4
+                rounded
+                border-slate-700
+                bg-slate-950
+                text-emerald-500
+                focus:ring-emerald-500
+              "
+            />
 
-      {/* Botones */}
-      <div className="flex gap-4 pt-4 border-t border-gray-100">
+            <span className="text-xs font-mono font-medium text-slate-300">
+              Producto activo en tienda
+            </span>
+          </label>
+        </div>
+      </section>
+
+      {/* BOTONES */}
+      <div className="flex flex-col-reverse gap-3 border-t border-slate-800 pt-6 sm:flex-row">
+        <button
+          type="button"
+          onClick={() => router.push("/admin/products")}
+          className="
+            w-full
+            rounded-xl
+            border
+            border-slate-800
+            bg-slate-950
+            px-6
+            py-3
+            font-mono
+            text-xs
+            font-bold
+            text-slate-400
+            transition
+            hover:border-slate-700
+            hover:bg-slate-800
+            hover:text-white
+            sm:w-auto
+          "
+        >
+          Cancelar
+        </button>
+
         <button
           type="submit"
           disabled={loading}
-          className="bg-cyan-600 hover:bg-cyan-700 text-white px-6 py-3 rounded-lg font-medium transition disabled:opacity-50 cursor-pointer shadow-sm"
+          className="
+            w-full
+            rounded-xl
+            border
+            border-cyan-400/30
+            bg-cyan-500
+            px-7
+            py-3
+            font-mono
+            text-xs
+            font-bold
+            text-slate-950
+            shadow-[0_0_20px_rgba(6,182,212,0.2)]
+            transition
+            hover:bg-cyan-400
+            hover:shadow-[0_0_25px_rgba(6,182,212,0.35)]
+            disabled:cursor-not-allowed
+            disabled:opacity-50
+            sm:w-auto
+          "
         >
           {loading
             ? "Guardando..."
             : product
               ? "Guardar cambios"
               : "Crear producto"}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => router.push("/admin/products")}
-          className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium transition cursor-pointer"
-        >
-          Cancelar
         </button>
       </div>
     </form>

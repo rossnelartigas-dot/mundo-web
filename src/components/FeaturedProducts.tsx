@@ -94,8 +94,9 @@ export default function FeaturedProducts() {
               Productos destacados
             </h2>
 
-            <p className="mt-2 text-xs font-mono text-slate-400 max-w-2xl">
-              Descubre productos seleccionados especialmente para ti, con excelentes precios y disponibilidad.
+            <p className="mt-2 max-w-2xl text-xs font-mono text-slate-400">
+              Descubre productos seleccionados especialmente para ti, con
+              excelentes precios y disponibilidad.
             </p>
           </div>
 
@@ -132,7 +133,7 @@ export default function FeaturedProducts() {
         {/* ESTADO VACÍO */}
         {featuredProducts.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-900/80 px-6 py-14 text-center shadow-2xl backdrop-blur-md">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
               <ShoppingBag size={32} />
             </div>
 
@@ -141,7 +142,8 @@ export default function FeaturedProducts() {
             </h3>
 
             <p className="mx-auto mt-2 max-w-md text-xs font-mono text-slate-400">
-              Estamos preparando nuestros nuevos componentes e items destacados.
+              Estamos preparando nuestros nuevos componentes e items
+              destacados.
             </p>
 
             <Link
@@ -175,12 +177,22 @@ export default function FeaturedProducts() {
               const favorite = isFavorite(product.id);
               const hasDiscount = Number(product.discount ?? 0) > 0;
               const discount = Number(product.discount ?? 0);
+
               const finalPrice = hasDiscount
                 ? product.price - (product.price * discount) / 100
                 : product.price;
 
               const stock = Number(product.stock ?? 0);
               const outOfStock = stock <= 0;
+
+              /*
+               * Validamos que image sea realmente un string
+               * y que tenga contenido antes de enviarlo a <Image />.
+               */
+              const imageUrl =
+                typeof product.image === "string"
+                  ? product.image.trim()
+                  : "";
 
               return (
                 <article
@@ -209,11 +221,14 @@ export default function FeaturedProducts() {
                 >
                   <div>
                     {/* IMAGEN DEL PRODUCTO */}
-                    <div className="relative h-60 w-full overflow-hidden rounded-xl bg-slate-950 border border-slate-800/80">
-                      <Link href={`/productos/${product.slug}`} className="block h-full">
-                        {product.image ? (
+                    <div className="relative h-60 w-full overflow-hidden rounded-xl border border-slate-800/80 bg-slate-950">
+                      <Link
+                        href={`/productos/${product.slug}`}
+                        className="block h-full"
+                      >
+                        {imageUrl ? (
                           <Image
-                            src={product.image}
+                            src={imageUrl}
                             alt={product.name ?? "Producto"}
                             fill
                             className="
@@ -233,8 +248,11 @@ export default function FeaturedProducts() {
                       </Link>
 
                       {/* BADGE DESTACADO */}
-                      <div className="absolute left-3 top-3 flex items-center gap-1 rounded-lg bg-slate-900/90 border border-slate-700/80 px-2.5 py-1 text-[10px] font-mono font-bold text-white shadow-lg backdrop-blur-md">
-                        <Zap size={10} className="fill-cyan-400 text-cyan-400" />
+                      <div className="absolute left-3 top-3 flex items-center gap-1 rounded-lg border border-slate-700/80 bg-slate-900/90 px-2.5 py-1 text-[10px] font-mono font-bold text-white shadow-lg backdrop-blur-md">
+                        <Zap
+                          size={10}
+                          className="fill-cyan-400 text-cyan-400"
+                        />
                         <span>Destacado</span>
                       </div>
 
@@ -248,7 +266,11 @@ export default function FeaturedProducts() {
                       {/* BOTÓN FAVORITOS */}
                       <button
                         type="button"
-                        aria-label={favorite ? "Quitar de favoritos" : "Agregar a favoritos"}
+                        aria-label={
+                          favorite
+                            ? "Quitar de favoritos"
+                            : "Agregar a favoritos"
+                        }
                         onClick={() => toggleFavorite(product)}
                         className="
                           absolute
@@ -260,9 +282,9 @@ export default function FeaturedProducts() {
                           items-center
                           justify-center
                           rounded-xl
-                          bg-slate-900/90
                           border
                           border-slate-800
+                          bg-slate-900/90
                           shadow-lg
                           backdrop-blur-md
                           transition-all
@@ -272,7 +294,11 @@ export default function FeaturedProducts() {
                       >
                         <Heart
                           size={18}
-                          className={favorite ? "text-rose-500" : "text-slate-400 hover:text-rose-400"}
+                          className={
+                            favorite
+                              ? "text-rose-500"
+                              : "text-slate-400 hover:text-rose-400"
+                          }
                           fill={favorite ? "currentColor" : "none"}
                         />
                       </button>
@@ -291,17 +317,17 @@ export default function FeaturedProducts() {
                           items-center
                           justify-center
                           rounded-xl
-                          bg-slate-900/90
                           border
                           border-slate-800
+                          bg-slate-900/90
                           text-slate-300
                           opacity-0
                           shadow-lg
                           backdrop-blur-md
                           transition-all
                           duration-300
-                          hover:text-cyan-400
                           hover:border-cyan-500/50
+                          hover:text-cyan-400
                           group-hover:opacity-100
                         "
                       >
@@ -324,15 +350,15 @@ export default function FeaturedProducts() {
                       {/* DISPONIBILIDAD / STOCK */}
                       <div>
                         {outOfStock ? (
-                          <span className="inline-block rounded-md bg-rose-950/60 border border-rose-900/50 px-2 py-0.5 text-[10px] font-mono font-bold text-rose-400">
+                          <span className="inline-block rounded-md border border-rose-900/50 bg-rose-950/60 px-2 py-0.5 text-[10px] font-mono font-bold text-rose-400">
                             Agotado
                           </span>
                         ) : stock <= 5 ? (
-                          <span className="inline-block rounded-md bg-amber-950/60 border border-amber-900/50 px-2 py-0.5 text-[10px] font-mono font-bold text-amber-400">
+                          <span className="inline-block rounded-md border border-amber-900/50 bg-amber-950/60 px-2 py-0.5 text-[10px] font-mono font-bold text-amber-400">
                             Últimas {stock} unidades
                           </span>
                         ) : (
-                          <span className="inline-block rounded-md bg-emerald-950/60 border border-emerald-900/50 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-400">
+                          <span className="inline-block rounded-md border border-emerald-900/50 bg-emerald-950/60 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-400">
                             En stock
                           </span>
                         )}
@@ -345,12 +371,14 @@ export default function FeaturedProducts() {
                             ${Number(product.price).toFixed(2)}
                           </p>
                         )}
+
                         <div className="flex items-center gap-2">
                           <p className="text-xl font-extrabold font-mono text-cyan-400">
                             ${Number(finalPrice).toFixed(2)}
                           </p>
+
                           {hasDiscount && (
-                            <span className="text-[10px] font-mono font-bold text-rose-400 uppercase">
+                            <span className="text-[10px] font-mono font-bold uppercase text-rose-400">
                               Oferta
                             </span>
                           )}
@@ -360,7 +388,7 @@ export default function FeaturedProducts() {
                   </div>
 
                   {/* AGREGAR AL CARRITO */}
-                  <div className="mt-4 pt-3 border-t border-slate-800/80">
+                  <div className="mt-4 border-t border-slate-800/80 pt-3">
                     <AddToCartButton product={product} />
                   </div>
                 </article>
