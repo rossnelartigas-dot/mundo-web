@@ -9,19 +9,27 @@ export interface OrderProduct {
 }
 
 export interface OrderData {
-  user_id?: string | null; // <-- Agrega esta línea (opcional o permitiendo null)
+  user_id?: string | null;
   customer_name: string;
   customer_phone: string;
   customer_email: string;
   customer_address: string;
-  payment_method: string;     // <-- Añadido
-  payment_reference?: string; // <-- Añadido (ej. # de referencia Pago Móvil/Zelle)
+  payment_method: string;
+  payment_reference?: string;
   products: OrderProduct[];
   total: number;
+
+  // Tasa BCV utilizada al momento de crear el pedido
+  bcv_rate?: number | null;
+
+  // Total equivalente en bolívares
+  total_bs?: number | null;
 }
 
 /**
- * Crea un pedido (incluyendo método y referencia de pago) y descuenta automáticamente del inventario.
+ * Crea un pedido (incluyendo método, referencia de pago,
+ * tasa BCV y total en bolívares) y descuenta automáticamente
+ * del inventario.
  */
 export async function createOrder(order: OrderData) {
   // 1. Guardar el pedido en la base de datos
@@ -32,10 +40,15 @@ export async function createOrder(order: OrderData) {
       customer_phone: order.customer_phone,
       customer_email: order.customer_email,
       customer_address: order.customer_address,
-      payment_method: order.payment_method,           // <-- Se guarda el método
-      payment_reference: order.payment_reference || null, // <-- Se guarda la referencia
+      payment_method: order.payment_method,
+      payment_reference: order.payment_reference || null,
       products: order.products,
       total: order.total,
+
+      // Datos de conversión BCV
+      bcv_rate: order.bcv_rate ?? null,
+      total_bs: order.total_bs ?? null,
+
       status: "pending",
     })
     .select()
@@ -56,7 +69,11 @@ export async function createOrder(order: OrderData) {
 
       if (!fetchError && productData) {
         const currentStock = productData.stock ?? 0;
-        const newStock = Math.max(0, currentStock - Number(item.quantity || 1));
+
+        const newStock = Math.max(
+          0,
+          currentStock - Number(item.quantity || 1)
+        );
 
         await supabase
           .from("products")
@@ -103,7 +120,10 @@ export async function getOrder(id: number) {
   - Número del pedido
   - Correo electrónico del cliente
 */
-export async function getOrderByIdAndEmail(id: number, email: string) {
+export async function getOrderByIdAndEmail(
+  id: number,
+  email: string
+) {
   const { data, error } = await supabase
     .from("orders")
     .select("*")
@@ -119,9 +139,13 @@ export async function getOrderByIdAndEmail(id: number, email: string) {
 }
 
 /**
- * Actualiza el estado del pedido y gestiona la devolución/descuento de inventario.
+ * Actualiza el estado del pedido y gestiona la devolución/descuento
+ * de inventario.
  */
-export async function updateOrderStatus(id: number, status: string) {
+export async function updateOrderStatus(
+  id: number,
+  status: string
+) {
   // 1. Buscamos el pedido actual para conocer sus items y estado anterior
   const { data: order, error: getError } = await supabase
     .from("orders")
@@ -145,15 +169,22 @@ export async function updateOrderStatus(id: number, status: string) {
     throw updateError;
   }
 
-  // Identificar si el estado es o era 'cancelled' / 'cancelado'
+  // Identificar si el estado es 'cancelled' / 'cancelado'
   const isCancelled = (st: string) =>
-    st.toLowerCase() === "cancelled" || st.toLowerCase() === "cancelado";
+    st.toLowerCase() === "cancelled" ||
+    st.toLowerCase() === "cancelado";
 
   const isNewStatusCancelled = isCancelled(status);
-  const wasPreviousStatusCancelled = isCancelled(previousStatus);
+  const wasPreviousStatusCancelled =
+    isCancelled(previousStatus);
 
-  // 3. RESTAURAR STOCK: Si pasa de NO cancelado -> CANCELADO
-  if (isNewStatusCancelled && !wasPreviousStatusCancelled && Array.isArray(order.products)) {
+  // 3. RESTAURAR STOCK:
+  // Si pasa de NO cancelado -> CANCELADO
+  if (
+    isNewStatusCancelled &&
+    !wasPreviousStatusCancelled &&
+    Array.isArray(order.products)
+  ) {
     for (const item of order.products) {
       const { data: productData } = await supabase
         .from("products")
@@ -163,7 +194,9 @@ export async function updateOrderStatus(id: number, status: string) {
 
       if (productData) {
         const currentStock = productData.stock ?? 0;
-        const restoredStock = currentStock + Number(item.quantity || 1);
+
+        const restoredStock =
+          currentStock + Number(item.quantity || 1);
 
         await supabase
           .from("products")
@@ -173,8 +206,13 @@ export async function updateOrderStatus(id: number, status: string) {
     }
   }
 
-  // 4. DESCONTAR STOCK DE NUEVO: Si pasa de CANCELADO -> ACTIVO
-  if (!isNewStatusCancelled && wasPreviousStatusCancelled && Array.isArray(order.products)) {
+  // 4. DESCONTAR STOCK DE NUEVO:
+  // Si pasa de CANCELADO -> ACTIVO
+  if (
+    !isNewStatusCancelled &&
+    wasPreviousStatusCancelled &&
+    Array.isArray(order.products)
+  ) {
     for (const item of order.products) {
       const { data: productData } = await supabase
         .from("products")
@@ -184,7 +222,11 @@ export async function updateOrderStatus(id: number, status: string) {
 
       if (productData) {
         const currentStock = productData.stock ?? 0;
-        const newStock = Math.max(0, currentStock - Number(item.quantity || 1));
+
+        const newStock = Math.max(
+          0,
+          currentStock - Number(item.quantity || 1)
+        );
 
         await supabase
           .from("products")
@@ -225,7 +267,10 @@ export async function updateOrderStatus(id: number, status: string) {
 }
 
 export async function deleteOrder(id: number) {
-  const { error } = await supabase.from("orders").delete().eq("id", id);
+  const { error } = await supabase
+    .from("orders")
+    .delete()
+    .eq("id", id);
 
   if (error) {
     throw error;
