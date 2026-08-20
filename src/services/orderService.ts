@@ -9,30 +9,21 @@ export interface OrderProduct {
 }
 
 export interface OrderData {
-  user_id?: string | null;
-
+  user_id?: string | null; // <-- Agrega esta línea (opcional o permitiendo null)
   customer_name: string;
   customer_phone: string;
   customer_email: string;
   customer_address: string;
-
-  payment_method: string;
-  payment_reference?: string;
-
-  // ============================================================
-  // DATOS DEL PAGO
-  // ============================================================
-
-  payment_bank?: string;
-  payment_phone?: string;
-  payment_id_number?: string;
-  payment_date?: string;
-  payment_time?: string;
-  payment_amount?: number;
-
+  payment_method: string;     // <-- Añadido
+  payment_reference?: string; // <-- Añadido (ej. # de referencia Pago Móvil/Zelle)
   products: OrderProduct[];
-
   total: number;
+
+  // Tasa BCV utilizada al momento de crear el pedido
+  bcv_rate?: number | null;
+
+  // Total convertido a bolívares
+  total_bs?: number | null;
 }
 
 /**
@@ -47,55 +38,14 @@ export async function createOrder(order: OrderData) {
   const { data, error } = await supabase
     .from("orders")
     .insert({
-      // ==========================================================
-      // DATOS DEL CLIENTE
-      // ==========================================================
-
-      user_id: order.user_id || null,
-
       customer_name: order.customer_name,
       customer_phone: order.customer_phone,
       customer_email: order.customer_email,
       customer_address: order.customer_address,
-
-      // ==========================================================
-      // MÉTODO DE PAGO
-      // ==========================================================
-
-      payment_method: order.payment_method,
-      payment_reference:
-        order.payment_reference || null,
-
-      // ==========================================================
-      // DATOS DEL PAGO
-      // ==========================================================
-
-      payment_bank:
-        order.payment_bank || null,
-
-      payment_phone:
-        order.payment_phone || null,
-
-      payment_id_number:
-        order.payment_id_number || null,
-
-      payment_date:
-        order.payment_date || null,
-
-      payment_time:
-        order.payment_time || null,
-
-      payment_amount:
-        order.payment_amount ?? null,
-
-      // ==========================================================
-      // PEDIDO
-      // ==========================================================
-
+      payment_method: order.payment_method,           // <-- Se guarda el método
+      payment_reference: order.payment_reference || null, // <-- Se guarda la referencia
       products: order.products,
-
       total: order.total,
-
       status: "pending",
     })
     .select()
@@ -111,24 +61,15 @@ export async function createOrder(order: OrderData) {
 
   if (Array.isArray(order.products)) {
     for (const item of order.products) {
-      const {
-        data: productData,
-        error: fetchError,
-      } = await supabase
+      const { data: productData, error: fetchError } = await supabase
         .from("products")
         .select("stock")
         .eq("id", item.id)
         .single();
 
       if (!fetchError && productData) {
-        const currentStock =
-          productData.stock ?? 0;
-
-        const newStock = Math.max(
-          0,
-          currentStock -
-            Number(item.quantity || 1)
-        );
+        const currentStock = productData.stock ?? 0;
+        const newStock = Math.max(0, currentStock - Number(item.quantity || 1));
 
         await supabase
           .from("products")
@@ -202,22 +143,12 @@ export async function getOrderByIdAndEmail(
   return data;
 }
 
-// ============================================================
-// ACTUALIZAR ESTADO DEL PEDIDO
-// ============================================================
-
-export async function updateOrderStatus(
-  id: number,
-  status: string
-) {
-  // ============================================================
-  // 1. OBTENER PEDIDO ACTUAL
-  // ============================================================
-
-  const {
-    data: order,
-    error: getError,
-  } = await supabase
+/**
+ * Actualiza el estado del pedido y gestiona la devolución/descuento de inventario.
+ */
+export async function updateOrderStatus(id: number, status: string) {
+  // 1. Buscamos el pedido actual para conocer sus items y estado anterior
+  const { data: order, error: getError } = await supabase
     .from("orders")
     .select("*")
     .eq("id", id)
@@ -232,26 +163,17 @@ export async function updateOrderStatus(
 
   const previousStatus = order.status;
 
-  // ============================================================
-  // 2. ACTUALIZAR ESTADO
-  // ============================================================
-
-  const { error: updateError } =
-    await supabase
-      .from("orders")
-      .update({
-        status,
-      })
-      .eq("id", id);
+  // 2. Actualizamos el nuevo estado en la BD
+  const { error: updateError } = await supabase
+    .from("orders")
+    .update({ status })
+    .eq("id", id);
 
   if (updateError) {
     throw updateError;
   }
 
-  // ============================================================
-  // 3. DETECTAR CANCELACIÓN
-  // ============================================================
-
+  // Identificar si el estado es o era 'cancelled' / 'cancelado'
   const isCancelled = (st: string) =>
     st.toLowerCase() === "cancelled" ||
     st.toLowerCase() === "cancelado";
