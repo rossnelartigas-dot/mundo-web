@@ -108,9 +108,6 @@ export default function CheckoutPage() {
 
       /* ========================================================
          TASA BCV
-
-         Usamos el servicio centralizado utilizado
-         también por ProductDetails.
       ======================================================== */
 
       try {
@@ -118,13 +115,6 @@ export default function CheckoutPage() {
 
         const exchangeData = await getBcvRate();
 
-        /*
-         * getBcvRate() puede devolver null si la consulta
-         * no pudo obtener una tasa válida.
-         *
-         * Esta comprobación evita el error de TypeScript:
-         * "exchangeData is possibly null".
-         */
         if (!exchangeData) {
           throw new Error("No se pudo obtener la tasa BCV");
         }
@@ -236,12 +226,10 @@ export default function CheckoutPage() {
     setLoading(true);
 
     try {
-      /*
-       * El pedido continúa guardándose en USD.
-       *
-       * La conversión a Bs. solamente se utiliza
-       * como información para el cliente.
-       */
+      /* ========================================================
+         CREAR PEDIDO
+      ======================================================== */
+
       const order = await createOrder({
         user_id: userId,
         customer_name: cleanName,
@@ -251,7 +239,15 @@ export default function CheckoutPage() {
         payment_method: paymentMethod,
         payment_reference: cleanRef,
         products: cart,
+
+        // Total original en USD
         total: numericTotal,
+
+        // Tasa BCV utilizada al crear el pedido
+        bcv_rate: bcvRate,
+
+        // Total convertido a bolívares
+        total_bs: totalBs,
       });
 
       /* ========================================================
@@ -275,10 +271,7 @@ export default function CheckoutPage() {
             total: numericTotal,
             products: cart,
 
-            /*
-             * Enviamos también la tasa utilizada
-             * y el total convertido a Bs.
-             */
+            // Información BCV
             bcvRate,
             totalBs,
           }),
@@ -680,11 +673,8 @@ export default function CheckoutPage() {
                       </span>
                     </p>
 
-                    {/* MONTO BCV */}
-
                     {totalBs !== null && (
                       <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-950/50 p-3">
-
                         <p className="text-[10px] uppercase tracking-wider text-slate-400">
                           Monto exacto a transferir
                         </p>
@@ -696,7 +686,6 @@ export default function CheckoutPage() {
                         <p className="mt-1 text-[10px] text-slate-500">
                           Calculado según la tasa BCV actual.
                         </p>
-
                       </div>
                     )}
 
@@ -715,7 +704,6 @@ export default function CheckoutPage() {
                         Tasa BCV no disponible temporalmente.
                       </p>
                     )}
-
                   </div>
                 )}
 
@@ -754,7 +742,6 @@ export default function CheckoutPage() {
                         V-29569063
                       </span>
                     </p>
-
                   </div>
                 )}
 
@@ -779,7 +766,6 @@ export default function CheckoutPage() {
                         tu-correo@ejemplo.com
                       </span>
                     </p>
-
                   </div>
                 )}
 
@@ -810,7 +796,6 @@ export default function CheckoutPage() {
                     disabled={loading}
                     className="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
                   />
-
                 </div>
               </div>
             </div>
@@ -860,8 +845,6 @@ export default function CheckoutPage() {
                       className="flex items-center gap-4 border-b border-slate-800/40 pb-3 last:border-0"
                     >
 
-                      {/* IMAGEN */}
-
                       <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
 
                         {product.image ? (
@@ -879,8 +862,6 @@ export default function CheckoutPage() {
                         )}
 
                       </div>
-
-                      {/* INFORMACIÓN */}
 
                       <div className="min-w-0 flex-1">
 
@@ -901,7 +882,6 @@ export default function CheckoutPage() {
                             ≈ Bs. {formatBs(productTotalBs)}
                           </p>
                         )}
-
                       </div>
                     </div>
                   );
@@ -942,7 +922,6 @@ export default function CheckoutPage() {
                       No disponible
                     </span>
                   )}
-
                 </div>
 
                 {bcvUpdatedAt && (
@@ -956,7 +935,6 @@ export default function CheckoutPage() {
                     1 USD = Bs. {formatBs(bcvRate)}
                   </p>
                 )}
-
               </div>
 
               {/* ==================================================
@@ -979,7 +957,6 @@ export default function CheckoutPage() {
                         Bs. {formatBs(totalBs)}
                       </p>
                     )}
-
                   </div>
                 </div>
 
@@ -1015,7 +992,6 @@ export default function CheckoutPage() {
                         Bs. {formatBs(totalBs)}
                       </p>
                     )}
-
                   </div>
                 </div>
               </div>
