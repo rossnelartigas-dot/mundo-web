@@ -10,34 +10,12 @@ export interface OrderProduct {
 
 export interface OrderData {
   user_id?: string | null;
-<<<<<<<<< Temporary merge branch 1
-=========
-
->>>>>>>>> Temporary merge branch 2
   customer_name: string;
   customer_phone: string;
   customer_email: string;
   customer_address: string;
-
   payment_method: string;
   payment_reference?: string;
-
-<<<<<<<<< Temporary merge branch 1
-  products: OrderProduct[];
-
-  // Total original en USD
-=========
-  // ============================================================
-  // DATOS DEL PAGO
-  // ============================================================
-
-  payment_bank?: string;
-  payment_phone?: string;
-  payment_id_number?: string;
-  payment_date?: string;
-  payment_time?: string;
-  payment_amount?: number;
-
   products: OrderProduct[];
   total: number;
 
@@ -60,14 +38,7 @@ export async function createOrder(order: OrderData) {
   const { data, error } = await supabase
     .from("orders")
     .insert({
-<<<<<<<<< Temporary merge branch 1
-=========
-      // ==========================================================
-      // DATOS DEL CLIENTE
-      // ==========================================================
-
->>>>>>>>> Temporary merge branch 2
-      user_id: order.user_id || null,
+      user_id: order.user_id ?? null,
 
       customer_name: order.customer_name,
       customer_phone: order.customer_phone,
@@ -84,46 +55,7 @@ export async function createOrder(order: OrderData) {
       bcv_rate: order.bcv_rate ?? null,
       total_bs: order.total_bs ?? null,
 
-=========
-      // ==========================================================
-      // MÉTODO DE PAGO
-      // ==========================================================
-
-      payment_method: order.payment_method,
-      payment_reference:
-        order.payment_reference || null,
-
-      // ==========================================================
-      // DATOS DEL PAGO
-      // ==========================================================
-
-      payment_bank:
-        order.payment_bank || null,
-
-      payment_phone:
-        order.payment_phone || null,
-
-      payment_id_number:
-        order.payment_id_number || null,
-
-      payment_date:
-        order.payment_date || null,
-
-      payment_time:
-        order.payment_time || null,
-
-      payment_amount:
-        order.payment_amount ?? null,
-
-      // ==========================================================
-      // PEDIDO
-      // ==========================================================
-
-      products: order.products,
-
-      total: order.total,
-
->>>>>>>>> Temporary merge branch 2
+      // Estado inicial
       status: "pending",
     })
     .select()
@@ -140,7 +72,12 @@ export async function createOrder(order: OrderData) {
 
   if (Array.isArray(order.products)) {
     for (const item of order.products) {
-<<<<<<<<< Temporary merge branch 1
+      const quantity = Number(item.quantity || 1);
+
+      if (quantity <= 0) {
+        continue;
+      }
+
       const { data: productData, error: fetchError } =
         await supabase
           .from("products")
@@ -148,8 +85,22 @@ export async function createOrder(order: OrderData) {
           .eq("id", item.id)
           .single();
 
-      if (!fetchError && productData) {
-        const currentStock = productData.stock ?? 0;
+      if (fetchError) {
+        console.error(
+          `No se pudo consultar el stock del producto ${item.id}:`,
+          fetchError
+        );
+        continue;
+      }
+
+      if (!productData) {
+        console.error(
+          `No se encontró el producto ${item.id} al actualizar stock.`
+        );
+        continue;
+      }
+
+      const currentStock = Number(productData.stock ?? 0);
 
       const newStock = Math.max(
         0,
@@ -245,10 +196,18 @@ export async function getOrderByIdAndEmail(
   return data;
 }
 
-// ============================================================
-// ACTUALIZAR ESTADO DEL PEDIDO
-// ============================================================
-
+/**
+ * Actualiza el estado del pedido y gestiona
+ * automáticamente el inventario.
+ *
+ * CANCELADO:
+ *   - Si el pedido pasa de activo -> cancelado,
+ *     devuelve las unidades al inventario.
+ *
+ * REACTIVADO:
+ *   - Si pasa de cancelado -> cualquier estado activo,
+ *     vuelve a descontar las unidades.
+ */
 export async function updateOrderStatus(
   id: number,
   status: string
@@ -257,18 +216,12 @@ export async function updateOrderStatus(
   // 1. OBTENER PEDIDO ACTUAL
   // ============================================================
 
-<<<<<<<<< Temporary merge branch 1
-  const { data: order, error: getError } = await supabase
-=========
-  const {
-    data: order,
-    error: getError,
-  } = await supabase
->>>>>>>>> Temporary merge branch 2
-    .from("orders")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const { data: order, error: getError } =
+    await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", id)
+      .single();
 
   if (getError || !order) {
     throw (
@@ -296,16 +249,19 @@ export async function updateOrderStatus(
   }
 
   // ============================================================
-<<<<<<<<< Temporary merge branch 1
-  // 3. FUNCIONES PARA DETECTAR CANCELACIÓN
-=========
-  // 3. DETECTAR CANCELACIÓN
->>>>>>>>> Temporary merge branch 2
+  // 3. FUNCIONES AUXILIARES DE ESTADO
   // ============================================================
 
-  const isCancelled = (st: string) =>
-    st.toLowerCase() === "cancelled" ||
-    st.toLowerCase() === "cancelado";
+  const isCancelled = (value: string) => {
+    const normalized = value
+      .toLowerCase()
+      .trim();
+
+    return (
+      normalized === "cancelled" ||
+      normalized === "cancelado"
+    );
+  };
 
   const isNewStatusCancelled =
     isCancelled(status);
