@@ -593,7 +593,9 @@ export default function CheckoutPage() {
                   type="button"
                   aria-pressed={paymentMethod === "transferencia"}
                   onClick={() =>
-                    setPaymentMethod("transferencia")
+                    setPaymentMethod(
+                      "transferencia"
+                    )
                   }
                   className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
                     paymentMethod === "transferencia"
@@ -789,9 +791,8 @@ export default function CheckoutPage() {
                         ? "Ej: 21983019283"
                         : "Ej: 00123456"
                     }
-                    value={paymentReference}
-                    onChange={(e) =>
-                      setPaymentReference(e.target.value)
+                    value={
+                      paymentReference
                     }
                     disabled={loading}
                     className="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
