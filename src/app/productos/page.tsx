@@ -1,6 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
+
 import { getProducts } from "@/services/productService";
+import AddToCartButton from "@/components/AddToCartButton";
 
 interface Props {
   searchParams: Promise<{
@@ -44,10 +46,12 @@ export default async function ProductosPage({
   let filteredProducts = products.filter((product) => {
     const name = product.name?.toLowerCase() || "";
     const productBrand = product.brand?.trim() || "";
-    const productCategory = product.category?.toLowerCase() || "";
-    const sku = (product as { sku?: string }).sku?.toLowerCase() || "";
+    const productCategory =
+      product.category?.toLowerCase() || "";
+    const sku =
+      (product as { sku?: string }).sku?.toLowerCase() || "";
 
-    // Detección de ofertas flexible según los campos comunes de la BD
+    // Detección flexible de ofertas
     const p = product as {
       is_offer?: boolean;
       on_sale?: boolean;
@@ -125,16 +129,36 @@ export default async function ProductosPage({
     <main className="min-h-screen bg-slate-950 py-10 text-slate-100">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6">
 
-        {/* ENLACE DE REGRESO Y TÍTULO */}
+        {/* =====================================================
+            ENCABEZADO
+        ===================================================== */}
+
         <div>
           <Link
             href="/"
-            className="inline-flex items-center gap-2 bg-slate-900/80 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 px-4 py-2 rounded-xl text-xs font-mono transition-all backdrop-blur-md w-fit"
+            className="
+              inline-flex
+              items-center
+              gap-2
+              rounded-xl
+              border
+              border-slate-800
+              bg-slate-900/80
+              px-4
+              py-2
+              text-xs
+              font-mono
+              text-slate-400
+              backdrop-blur-md
+              transition-all
+              hover:bg-slate-800
+              hover:text-white
+            "
           >
             ← Volver al inicio
           </Link>
 
-          <h1 className="mt-6 text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-white">
             Productos
           </h1>
 
@@ -143,11 +167,15 @@ export default async function ProductosPage({
           </p>
         </div>
 
-        {/* FILTROS Y BÚSQUEDA */}
+        {/* =====================================================
+            FILTROS
+        ===================================================== */}
+
         <form
           method="GET"
           className="
             mt-8
+            space-y-4
             rounded-2xl
             border
             border-slate-800
@@ -155,10 +183,10 @@ export default async function ProductosPage({
             p-5
             shadow-xl
             backdrop-blur-md
-            space-y-4
           "
         >
-          {/* BARRA DE BÚSQUEDA POR NOMBRE / SKU */}
+          {/* BÚSQUEDA */}
+
           <div>
             <label
               htmlFor="q"
@@ -167,36 +195,37 @@ export default async function ProductosPage({
               Buscar producto por nombre o modelo
             </label>
 
-            <div className="relative">
-              <input
-                type="text"
-                id="q"
-                name="q"
-                defaultValue={query}
-                placeholder="Ej. Cámara IP, Mini PC, Monitor..."
-                className="
-                  w-full
-                  rounded-xl
-                  border
-                  border-slate-800
-                  bg-slate-950
-                  px-4
-                  py-2.5
-                  text-sm
-                  text-slate-200
-                  placeholder-slate-500
-                  outline-none
-                  focus:border-cyan-500
-                  focus:ring-1
-                  focus:ring-cyan-500
-                "
-              />
-            </div>
+            <input
+              type="text"
+              id="q"
+              name="q"
+              defaultValue={query}
+              placeholder="Ej. Cámara IP, Mini PC, Monitor..."
+              className="
+                w-full
+                rounded-xl
+                border
+                border-slate-800
+                bg-slate-950
+                px-4
+                py-2.5
+                text-sm
+                text-slate-200
+                placeholder-slate-500
+                outline-none
+                focus:border-cyan-500
+                focus:ring-1
+                focus:ring-cyan-500
+              "
+            />
           </div>
+
+          {/* FILTROS */}
 
           <div className="grid gap-4 md:grid-cols-3">
 
             {/* CATEGORÍA */}
+
             <div>
               <label
                 htmlFor="categoria"
@@ -225,7 +254,9 @@ export default async function ProductosPage({
                   focus:ring-cyan-500
                 "
               >
-                <option value="">Todas las categorías</option>
+                <option value="">
+                  Todas las categorías
+                </option>
 
                 {categories.map((item) => (
                   <option key={item} value={item}>
@@ -236,6 +267,7 @@ export default async function ProductosPage({
             </div>
 
             {/* MARCA */}
+
             <div>
               <label
                 htmlFor="marca"
@@ -264,7 +296,9 @@ export default async function ProductosPage({
                   focus:ring-cyan-500
                 "
               >
-                <option value="">Todas las marcas</option>
+                <option value="">
+                  Todas las marcas
+                </option>
 
                 {brands.map((item) => (
                   <option key={item} value={item}>
@@ -274,7 +308,8 @@ export default async function ProductosPage({
               </select>
             </div>
 
-            {/* ORDENAR */}
+            {/* ORDEN */}
+
             <div>
               <label
                 htmlFor="orden"
@@ -303,16 +338,22 @@ export default async function ProductosPage({
                   focus:ring-cyan-500
                 "
               >
-                <option value="recientes">Más recientes</option>
+                <option value="recientes">
+                  Más recientes
+                </option>
+
                 <option value="precio-menor">
                   Precio: menor a mayor
                 </option>
+
                 <option value="precio-mayor">
                   Precio: mayor a menor
                 </option>
+
                 <option value="nombre-az">
                   Nombre: A-Z
                 </option>
+
                 <option value="nombre-za">
                   Nombre: Z-A
                 </option>
@@ -320,19 +361,28 @@ export default async function ProductosPage({
             </div>
           </div>
 
-          {/* OPCIÓN DE OFERTAS Y BOTONES */}
+          {/* OFERTAS */}
+
           <div className="flex flex-wrap items-center justify-between gap-4 pt-2">
 
-            <label className="inline-flex items-center gap-2 cursor-pointer text-xs font-mono text-slate-300 select-none">
+            <label className="inline-flex cursor-pointer select-none items-center gap-2 text-xs font-mono text-slate-300">
               <input
                 type="checkbox"
                 name="ofertas"
                 value="true"
                 defaultChecked={onlyOffers}
-                className="w-4 h-4 rounded border-slate-800 bg-slate-950 text-cyan-500 focus:ring-cyan-500"
+                className="
+                  h-4
+                  w-4
+                  rounded
+                  border-slate-800
+                  bg-slate-950
+                  text-cyan-500
+                  focus:ring-cyan-500
+                "
               />
 
-              <span className="text-amber-400 font-bold">
+              <span className="font-bold text-amber-400">
                 🔥 Ver solo productos en oferta
               </span>
             </label>
@@ -350,9 +400,9 @@ export default async function ProductosPage({
                   font-mono
                   font-bold
                   text-slate-950
+                  shadow-[0_0_15px_rgba(6,182,212,0.3)]
                   transition
                   hover:bg-cyan-400
-                  shadow-[0_0_15px_rgba(6,182,212,0.3)]
                 "
               >
                 Buscar / Aplicar
@@ -383,12 +433,15 @@ export default async function ProductosPage({
           </div>
         </form>
 
-        {/* INFORMACIÓN DE FILTROS ACTIVOS */}
+        {/* =====================================================
+            FILTROS ACTIVOS
+        ===================================================== */}
+
         {(query || category || brand || onlyOffers) && (
-          <div className="flex flex-wrap gap-3 text-xs font-mono text-slate-400 pt-2">
+          <div className="flex flex-wrap gap-3 pt-2 text-xs font-mono text-slate-400">
 
             {query && (
-              <span className="bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg">
+              <span className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1">
                 Búsqueda:{" "}
                 <strong className="text-cyan-400">
                   &quot;{query}&quot;
@@ -397,7 +450,7 @@ export default async function ProductosPage({
             )}
 
             {category && (
-              <span className="bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg">
+              <span className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1">
                 Categoría:{" "}
                 <strong className="text-cyan-400">
                   {category}
@@ -406,7 +459,7 @@ export default async function ProductosPage({
             )}
 
             {brand && (
-              <span className="bg-slate-900 border border-slate-800 px-3 py-1 rounded-lg">
+              <span className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-1">
                 Marca:{" "}
                 <strong className="text-cyan-400">
                   {brand}
@@ -415,14 +468,17 @@ export default async function ProductosPage({
             )}
 
             {onlyOffers && (
-              <span className="bg-slate-900 border border-amber-500/30 px-3 py-1 rounded-lg text-amber-400">
+              <span className="rounded-lg border border-amber-500/30 bg-slate-900 px-3 py-1 text-amber-400">
                 🔥 Solo Ofertas
               </span>
             )}
           </div>
         )}
 
-        {/* RESULTADOS */}
+        {/* =====================================================
+            RESULTADOS
+        ===================================================== */}
+
         {filteredProducts.length === 0 ? (
           <div
             className="
@@ -437,7 +493,7 @@ export default async function ProductosPage({
               backdrop-blur-md
             "
           >
-            <h2 className="text-lg font-bold text-rose-400 font-mono">
+            <h2 className="font-mono text-lg font-bold text-rose-400">
               [!] No se encontraron productos
             </h2>
 
@@ -474,8 +530,14 @@ export default async function ProductosPage({
                 : "productos encontrados"}
             </p>
 
+            {/* =================================================
+                GRID DE PRODUCTOS
+            ================================================= */}
+
             <div className="mt-4 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+
               {filteredProducts.map((product) => {
+
                 const imageUrl =
                   (product as {
                     image_url?: string;
@@ -483,10 +545,13 @@ export default async function ProductosPage({
                   }).image_url ||
                   product.image;
 
+                const stock = Number(product.stock) || 0;
+
+                const available = stock > 0;
+
                 return (
-                  <Link
+                  <article
                     key={product.id}
-                    href={`/productos/${product.slug}`}
                     className="
                       group
                       flex
@@ -506,52 +571,224 @@ export default async function ProductosPage({
                       hover:shadow-[0_0_25px_rgba(6,182,212,0.15)]
                     "
                   >
-                    {/* CONTENEDOR DE IMAGEN */}
-                    <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-xl bg-slate-950 border border-slate-800/80">
-                      {imageUrl ? (
-                        <Image
-                          src={imageUrl}
-                          alt={product.name}
-                          fill
-                          className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center font-mono text-[10px] text-slate-600">
-                          [ SIN IMAGEN ]
+
+                    {/* =========================================
+                        IMAGEN
+                    ========================================= */}
+
+                    <Link
+                      href={`/productos/${product.slug}`}
+                      className="block"
+                    >
+                      <div className="relative mb-4 aspect-square w-full overflow-hidden rounded-xl border border-slate-800/80 bg-slate-950">
+
+                        {imageUrl ? (
+                          <Image
+                            src={imageUrl}
+                            alt={product.name}
+                            fill
+                            className="
+                              object-contain
+                              p-4
+                              transition-transform
+                              duration-300
+                              group-hover:scale-105
+                            "
+                            sizes="
+                              (max-width: 768px) 100vw,
+                              (max-width: 1200px) 50vw,
+                              33vw
+                            "
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center font-mono text-[10px] text-slate-600">
+                            [ SIN IMAGEN ]
+                          </div>
+                        )}
+
+                        {/* ESTADO DE STOCK SOBRE LA IMAGEN */}
+
+                        <div className="absolute left-3 top-3">
+
+                          {available ? (
+                            <span
+                              className="
+                                inline-flex
+                                items-center
+                                rounded-lg
+                                border
+                                border-emerald-500/30
+                                bg-emerald-500/10
+                                px-2.5
+                                py-1
+                                font-mono
+                                text-[10px]
+                                font-bold
+                                uppercase
+                                tracking-wider
+                                text-emerald-400
+                                backdrop-blur-md
+                              "
+                            >
+                              Disponible
+                            </span>
+                          ) : (
+                            <span
+                              className="
+                                inline-flex
+                                items-center
+                                rounded-lg
+                                border
+                                border-rose-500/30
+                                bg-rose-500/10
+                                px-2.5
+                                py-1
+                                font-mono
+                                text-[10px]
+                                font-bold
+                                uppercase
+                                tracking-wider
+                                text-rose-400
+                                backdrop-blur-md
+                              "
+                            >
+                              Agotado
+                            </span>
+                          )}
+
                         </div>
-                      )}
-                    </div>
-
-                    <div className="flex flex-1 flex-col justify-between space-y-3">
-
-                      <div>
-                        <h2 className="text-base font-bold text-white transition group-hover:text-cyan-400">
-                          {product.name}
-                        </h2>
-
-                        <p className="mt-1 text-xs font-mono text-slate-400">
-                          {product.brand}
-                        </p>
-
-                        <p className="mt-0.5 text-[11px] font-mono text-slate-500">
-                          {product.category}
-                        </p>
                       </div>
+                    </Link>
 
-                      <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                        <p className="text-lg font-extrabold text-cyan-400 font-mono">
-                          ${product.price}
-                        </p>
+                    {/* =========================================
+                        INFORMACIÓN
+                    ========================================= */}
 
-                        <span className="text-[10px] font-mono text-cyan-500/80 group-hover:translate-x-1 transition-transform">
-                          Ver detalle →
-                        </span>
+                    <div className="flex flex-1 flex-col justify-between">
+
+                      <Link
+                        href={`/productos/${product.slug}`}
+                        className="block"
+                      >
+                        <div>
+
+                          <h2 className="text-base font-bold text-white transition group-hover:text-cyan-400">
+                            {product.name}
+                          </h2>
+
+                          <p className="mt-1 text-xs font-mono text-slate-400">
+                            {product.brand}
+                          </p>
+
+                          <p className="mt-0.5 text-[11px] font-mono text-slate-500">
+                            {product.category}
+                          </p>
+
+                        </div>
+                      </Link>
+
+                      {/* =========================================
+                          PRECIO
+                      ========================================= */}
+
+                      <div className="mt-4 border-t border-slate-800/80 pt-4">
+
+                        <div className="flex items-center justify-between gap-3">
+
+                          <p className="font-mono text-lg font-extrabold text-cyan-400">
+                            $
+                            {Number(product.price).toFixed(2)}
+                          </p>
+
+                          {available && (
+                            <span className="font-mono text-[10px] text-slate-500">
+                              {stock}{" "}
+                              {stock === 1
+                                ? "unidad"
+                                : "unidades"}
+                            </span>
+                          )}
+
+                        </div>
+
+                        {/* =====================================
+                            BOTÓN DE CARRITO / AGOTADO
+                        ===================================== */}
+
+                        <div className="mt-4">
+
+                          {available ? (
+                            <AddToCartButton
+                              product={product}
+                            />
+                          ) : (
+                            <div
+                              className="
+                                flex
+                                w-full
+                                items-center
+                                justify-center
+                                rounded-xl
+                                border
+                                border-rose-500/20
+                                bg-rose-500/5
+                                px-4
+                                py-3
+                                font-mono
+                                text-xs
+                                font-bold
+                                uppercase
+                                tracking-wider
+                                text-rose-400
+                              "
+                            >
+                              Agotado
+                            </div>
+                          )}
+
+                        </div>
+
+                        {/* =====================================
+                            VER DETALLE
+                        ===================================== */}
+
+                        <Link
+                          href={`/productos/${product.slug}`}
+                          className="
+                            mt-3
+                            flex
+                            items-center
+                            justify-center
+                            gap-2
+                            rounded-xl
+                            border
+                            border-slate-800
+                            bg-slate-950
+                            px-4
+                            py-2.5
+                            font-mono
+                            text-[10px]
+                            font-bold
+                            uppercase
+                            tracking-wider
+                            text-slate-400
+                            transition-all
+                            hover:border-cyan-500/40
+                            hover:text-cyan-400
+                          "
+                        >
+                          Ver detalle
+                          <span className="transition-transform group-hover:translate-x-1">
+                            →
+                          </span>
+                        </Link>
+
                       </div>
                     </div>
-                  </Link>
+                  </article>
                 );
               })}
+
             </div>
           </>
         )}

@@ -19,6 +19,7 @@ import {
 import { useCart } from "@/context/CartContext";
 import { createOrder } from "@/services/orderService";
 import { supabase } from "@/lib/supabase";
+import { getBcvRate } from "@/services/exchangeRateService";
 
 interface CustomerForm {
   customer_name: string;
@@ -47,16 +48,6 @@ export default function CheckoutPage() {
   >("pago_movil");
 
   const [paymentReference, setPaymentReference] = useState("");
-
-  // ============================================================
-  // DATOS ADICIONALES DEL PAGO
-  // ============================================================
-
-  const [paymentBank, setPaymentBank] = useState("");
-  const [paymentPhone, setPaymentPhone] = useState("");
-  const [paymentDate, setPaymentDate] = useState("");
-  const [paymentIdNumber, setPaymentIdNumber] = useState("");
-
   const [loading, setLoading] = useState(false);
 
   /* ============================================================
@@ -69,7 +60,7 @@ export default function CheckoutPage() {
 
   const numericTotal = Number(total) || 0;
 
-  const whatsappNumber = "+584264433849";
+  const whatsappNumber = "584264433849";
 
   const whatsappMessage = encodeURIComponent(
     `Hola! Tengo una consulta antes de confirmar mi pedido en el Checkout. El total de mi carrito es $${numericTotal.toFixed(
@@ -122,40 +113,15 @@ export default function CheckoutPage() {
       try {
         setLoadingRate(true);
 
-        const response = await fetch(
-          "https://rates.dolarvzla.com/bcv/current.json",
-          {
-            cache: "no-store",
-          }
-        );
+        const exchangeData = await getBcvRate();
 
-        if (!response.ok) {
+        if (!exchangeData) {
           throw new Error("No se pudo obtener la tasa BCV");
         }
 
-        const data = await response.json();
-
-        const rate = Number(
-          data?.usd?.rate ??
-            data?.usd ??
-            data?.rate ??
-            data?.tasa ??
-            data?.USD?.rate
-        );
-
-        if (Number.isFinite(rate) && rate > 0 && isMounted) {
-          setBcvRate(rate);
-        }
-
-        const updatedAt =
-          data?.fechaActualizacion ??
-          data?.fecha ??
-          data?.updated_at ??
-          data?.updatedAt ??
-          null;
-
-        if (updatedAt && isMounted) {
-          setBcvUpdatedAt(String(updatedAt));
+        if (isMounted) {
+          setBcvRate(exchangeData.rate);
+          setBcvUpdatedAt(exchangeData.updatedAt ?? null);
         }
       } catch (err) {
         console.error("Error obteniendo tasa BCV:", err);
@@ -200,7 +166,8 @@ export default function CheckoutPage() {
      PRECIOS EN BOLÍVARES
   ============================================================ */
 
-  const totalBs = bcvRate !== null ? numericTotal * bcvRate : null;
+  const totalBs =
+    bcvRate !== null ? numericTotal * bcvRate : null;
 
   const formatBs = (value: number) =>
     value.toLocaleString("es-VE", {
@@ -212,7 +179,9 @@ export default function CheckoutPage() {
      ENVIAR PEDIDO
   ============================================================ */
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
     e.preventDefault();
 
     if (cart.length === 0) {
@@ -220,25 +189,20 @@ export default function CheckoutPage() {
       return;
     }
 
-    const cleanEmail = form.customer_email.trim().toLowerCase();
-    const cleanName = form.customer_name.trim();
-    const cleanPhone = form.customer_phone.trim();
-    const cleanAddress = form.customer_address.trim();
+    const cleanEmail =
+      form.customer_email.trim().toLowerCase();
 
-    const cleanRef = paymentReference.trim();
+    const cleanName =
+      form.customer_name.trim();
 
-    // ==========================================================
-    // LIMPIAR DATOS ADICIONALES DEL PAGO
-    // ==========================================================
+    const cleanPhone =
+      form.customer_phone.trim();
 
-    const cleanPaymentBank = paymentBank.trim();
-    const cleanPaymentPhone = paymentPhone.trim();
-    const cleanPaymentDate = paymentDate.trim();
-    const cleanPaymentIdNumber = paymentIdNumber.trim();
+    const cleanAddress =
+      form.customer_address.trim();
 
-    /* ========================================================
-       VALIDAR DATOS DEL CLIENTE
-    ======================================================== */
+    const cleanRef =
+      paymentReference.trim();
 
     if (
       !cleanName ||
@@ -252,10 +216,6 @@ export default function CheckoutPage() {
       return;
     }
 
-    /* ========================================================
-       VALIDAR REFERENCIA
-    ======================================================== */
-
     if (!cleanRef) {
       alert(
         "Por favor ingresa el número de referencia o Hash/ID de tu pago."
@@ -263,52 +223,31 @@ export default function CheckoutPage() {
       return;
     }
 
-    /* ========================================================
-       VALIDAR DATOS DEL PAGO
-    ======================================================== */
-
-    if (
-      !cleanPaymentBank ||
-      !cleanPaymentPhone ||
-      !cleanPaymentDate ||
-      !cleanPaymentIdNumber
-    ) {
-      alert(
-        "Por favor completa todos los datos del pago: banco, teléfono, fecha y cédula del titular."
-      );
-      return;
-    }
-
     setLoading(true);
 
     try {
-      /*
-       * El pedido continúa guardándose en USD.
-       * La conversión a Bs. es informativa para el cliente.
-       */
+      /* ========================================================
+         CREAR PEDIDO
+      ======================================================== */
 
       const order = await createOrder({
         user_id: userId,
-
         customer_name: cleanName,
         customer_phone: cleanPhone,
         customer_email: cleanEmail,
         customer_address: cleanAddress,
-
         payment_method: paymentMethod,
         payment_reference: cleanRef,
-
-        // ======================================================
-        // DATOS ADICIONALES DEL PAGO
-        // ======================================================
-
-        payment_bank: cleanPaymentBank,
-        payment_phone: cleanPaymentPhone,
-        payment_date: cleanPaymentDate,
-        payment_id_number: cleanPaymentIdNumber,
-
         products: cart,
+
+        // Total original en USD
         total: numericTotal,
+
+        // Tasa BCV utilizada al crear el pedido
+        bcv_rate: bcvRate,
+
+        // Total convertido a bolívares
+        total_bs: totalBs,
       });
 
       /* ========================================================
@@ -323,27 +262,16 @@ export default function CheckoutPage() {
           },
           body: JSON.stringify({
             orderId: order.id,
-
             customerEmail: cleanEmail,
             customerName: cleanName,
             customerPhone: cleanPhone,
             customerAddress: cleanAddress,
-
             paymentMethod,
             paymentReference: cleanRef,
-
-            // ==================================================
-            // DATOS ADICIONALES DEL PAGO
-            // ==================================================
-
-            paymentBank: cleanPaymentBank,
-            paymentPhone: cleanPaymentPhone,
-            paymentDate: cleanPaymentDate,
-            paymentIdNumber: cleanPaymentIdNumber,
-
             total: numericTotal,
             products: cart,
 
+            // Información BCV
             bcvRate,
             totalBs,
           }),
@@ -379,7 +307,7 @@ export default function CheckoutPage() {
 
   if (!mounted) {
     return (
-      <main className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-400">
+      <main className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-400">
         <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
       </main>
     );
@@ -391,10 +319,10 @@ export default function CheckoutPage() {
 
   if (cart.length === 0) {
     return (
-      <main className="min-h-screen bg-slate-950 py-16 text-slate-100 flex items-center">
-        <div className="mx-auto max-w-2xl px-4 w-full">
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center backdrop-blur-xl shadow-2xl">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 mb-6">
+      <main className="flex min-h-screen items-center bg-slate-950 py-16 text-slate-100">
+        <div className="mx-auto w-full max-w-2xl px-4">
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center shadow-2xl backdrop-blur-xl">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-400">
               <ShoppingBag className="h-10 w-10" />
             </div>
 
@@ -403,15 +331,14 @@ export default function CheckoutPage() {
             </h1>
 
             <p className="mt-3 text-slate-400">
-              Explora nuestro catálogo de tecnología y seguridad antes de
-              proceder al pago.
+              Explora nuestro catálogo de tecnología y seguridad antes de proceder al pago.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <button
                 type="button"
                 onClick={() => router.push("/")}
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-6 py-3 font-medium text-slate-200 transition hover:bg-slate-700 hover:text-white cursor-pointer"
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-6 py-3 font-medium text-slate-200 transition hover:bg-slate-700 hover:text-white"
               >
                 <Home size={18} />
                 Ir al inicio
@@ -420,7 +347,7 @@ export default function CheckoutPage() {
               <button
                 type="button"
                 onClick={() => router.push("/productos")}
-                className="inline-flex items-center justify-center rounded-xl bg-cyan-500 px-8 py-3 font-semibold text-slate-950 transition-all hover:bg-cyan-400 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] cursor-pointer"
+                className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-cyan-500 px-8 py-3 font-semibold text-slate-950 transition-all hover:bg-cyan-400 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]"
               >
                 Ver productos
               </button>
@@ -448,18 +375,24 @@ export default function CheckoutPage() {
             <button
               type="button"
               onClick={() => router.push("/carrito")}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-slate-700 hover:bg-slate-800 hover:text-white cursor-pointer"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-slate-700 hover:bg-slate-800 hover:text-white"
             >
-              <ArrowLeft size={18} className="text-cyan-400" />
+              <ArrowLeft
+                size={18}
+                className="text-cyan-400"
+              />
               <span>Volver al carrito</span>
             </button>
 
             <button
               type="button"
               onClick={() => router.push("/")}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-slate-700 hover:bg-slate-800 hover:text-white cursor-pointer"
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-slate-700 hover:bg-slate-800 hover:text-white"
             >
-              <Home size={18} className="text-cyan-400" />
+              <Home
+                size={18}
+                className="text-cyan-400"
+              />
               <span>Inicio</span>
             </button>
           </div>
@@ -468,9 +401,12 @@ export default function CheckoutPage() {
             href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-4 py-2.5 text-sm font-semibold text-emerald-400 transition-all hover:bg-emerald-500/20 hover:border-emerald-500/50 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+            className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-400 transition-all hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:shadow-[0_0_15px_rgba(16,185,129,0.2)]"
           >
-            <MessageCircle size={18} className="text-emerald-400" />
+            <MessageCircle
+              size={18}
+              className="text-emerald-400"
+            />
             <span>¿Dudas? Hablar por WhatsApp</span>
           </a>
         </div>
@@ -480,13 +416,12 @@ export default function CheckoutPage() {
         ====================================================== */}
 
         <div className="mb-10">
-          <h1 className="text-3xl font-extrabold text-white sm:text-4xl tracking-tight">
+          <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Finalizar compra
           </h1>
 
           <p className="mt-2 text-slate-400">
-            Completa tus datos y selecciona tu método de pago para procesar
-            la orden.
+            Completa tus datos y selecciona tu método de pago para procesar la orden.
           </p>
         </div>
 
@@ -494,6 +429,7 @@ export default function CheckoutPage() {
           onSubmit={handleSubmit}
           className="grid gap-8 lg:grid-cols-3"
         >
+
           {/* ====================================================
               COLUMNA IZQUIERDA
           ==================================================== */}
@@ -506,11 +442,10 @@ export default function CheckoutPage() {
 
             <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl backdrop-blur-md sm:p-8">
               <div className="mb-6 border-b border-slate-800/80 pb-4">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 text-sm border border-cyan-500/20">
+                <h2 className="flex items-center gap-2 text-xl font-bold text-white">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/10 text-sm text-cyan-400">
                     1
                   </span>
-
                   Datos del cliente
                 </h2>
 
@@ -614,21 +549,19 @@ export default function CheckoutPage() {
             <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl backdrop-blur-md sm:p-8">
 
               <div className="mb-6 border-b border-slate-800/80 pb-4">
-                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-cyan-500/10 text-cyan-400 text-sm border border-cyan-500/20">
+                <h2 className="flex items-center gap-2 text-xl font-bold text-white">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/10 text-sm text-cyan-400">
                     2
                   </span>
-
                   Método de pago
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-400">
-                  Selecciona la opción de tu preferencia e ingresa los datos
-                  de tu pago.
+                  Selecciona la opción de tu preferencia e ingresa el número de referencia.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+              <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
 
                 {/* PAGO MÓVIL */}
 
@@ -636,9 +569,9 @@ export default function CheckoutPage() {
                   type="button"
                   aria-pressed={paymentMethod === "pago_movil"}
                   onClick={() => setPaymentMethod("pago_movil")}
-                  className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
+                  className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
                     paymentMethod === "pago_movil"
-                      ? "bg-cyan-950/40 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+                      ? "border-cyan-500 bg-cyan-950/40 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
                       : "border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
                   }`}
                 >
@@ -659,10 +592,12 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   aria-pressed={paymentMethod === "transferencia"}
-                  onClick={() => setPaymentMethod("transferencia")}
-                  className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
+                  onClick={() =>
+                    setPaymentMethod("transferencia")
+                  }
+                  className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
                     paymentMethod === "transferencia"
-                      ? "bg-cyan-950/40 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+                      ? "border-cyan-500 bg-cyan-950/40 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
                       : "border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
                   }`}
                 >
@@ -684,9 +619,9 @@ export default function CheckoutPage() {
                   type="button"
                   aria-pressed={paymentMethod === "binance"}
                   onClick={() => setPaymentMethod("binance")}
-                  className={`p-4 rounded-xl border flex flex-col items-center justify-center gap-2 text-xs font-semibold transition-all cursor-pointer ${
+                  className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
                     paymentMethod === "binance"
-                      ? "bg-cyan-950/40 border-cyan-500 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+                      ? "border-cyan-500 bg-cyan-950/40 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
                       : "border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
                   }`}
                 >
@@ -707,40 +642,39 @@ export default function CheckoutPage() {
                   DETALLES DE PAGO
               ================================================== */}
 
-              <div className="rounded-xl bg-slate-950/60 p-5 border border-slate-800/80 text-sm space-y-4">
+              <div className="space-y-4 rounded-xl border border-slate-800/80 bg-slate-950/60 p-5 text-sm">
 
                 {paymentMethod === "pago_movil" && (
                   <div className="space-y-1.5 text-slate-300">
 
-                    <p className="text-cyan-400 font-semibold mb-2 flex items-center gap-2">
+                    <p className="mb-2 flex items-center gap-2 font-semibold text-cyan-400">
                       <CheckCircle2 className="h-4 w-4" />
                       Datos para Pago Móvil:
                     </p>
 
                     <p>
                       Banco:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         Mercantil (0105)
                       </span>
                     </p>
 
                     <p>
                       Teléfono:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         0414-5852935
                       </span>
                     </p>
 
                     <p>
                       RIF:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         V-29569063
                       </span>
                     </p>
 
                     {totalBs !== null && (
                       <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-950/50 p-3">
-
                         <p className="text-[10px] uppercase tracking-wider text-slate-400">
                           Monto exacto a transferir
                         </p>
@@ -750,10 +684,25 @@ export default function CheckoutPage() {
                         </p>
 
                         <p className="mt-1 text-[10px] text-slate-500">
-                          Calculado según la tasa BCV mostrada abajo.
+                          Calculado según la tasa BCV actual.
                         </p>
-
                       </div>
+                    )}
+
+                    {loadingRate && (
+                      <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
+                        <Loader2
+                          size={14}
+                          className="animate-spin"
+                        />
+                        Consultando tasa BCV...
+                      </div>
+                    )}
+
+                    {!loadingRate && bcvRate === null && (
+                      <p className="mt-4 text-xs text-amber-400">
+                        Tasa BCV no disponible temporalmente.
+                      </p>
                     )}
                   </div>
                 )}
@@ -761,76 +710,70 @@ export default function CheckoutPage() {
                 {paymentMethod === "transferencia" && (
                   <div className="space-y-1.5 text-slate-300">
 
-                    <p className="text-cyan-400 font-semibold mb-2 flex items-center gap-2">
+                    <p className="mb-2 flex items-center gap-2 font-semibold text-cyan-400">
                       <CheckCircle2 className="h-4 w-4" />
                       Datos Bancarios:
                     </p>
 
                     <p>
                       Banco:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         Mercantil
                       </span>
                     </p>
 
                     <p>
                       Cuenta Corriente:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         0105-XXXX-XX-XXXXXXXXXX
                       </span>
                     </p>
 
                     <p>
                       Titular:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         Tu Empresa / Nombre
                       </span>
                     </p>
 
                     <p>
                       RIF:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         V-29569063
                       </span>
                     </p>
-
                   </div>
                 )}
 
                 {paymentMethod === "binance" && (
                   <div className="space-y-1.5 text-slate-300">
 
-                    <p className="text-amber-400 font-semibold mb-2 flex items-center gap-2">
+                    <p className="mb-2 flex items-center gap-2 font-semibold text-amber-400">
                       <CheckCircle2 className="h-4 w-4" />
                       Datos para Binance Pay:
                     </p>
 
                     <p>
                       Binance ID (Pay ID):{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         XXXXXXXXX
                       </span>
                     </p>
 
                     <p>
                       Correo Binance:{" "}
-                      <span className="text-white font-medium">
+                      <span className="font-medium text-white">
                         tu-correo@ejemplo.com
                       </span>
                     </p>
-
                   </div>
                 )}
 
-                {/* ==================================================
-                    REFERENCIA
-                ================================================== */}
-
-                <div className="pt-4 border-t border-slate-800">
+                <div className="border-t border-slate-800 pt-4">
 
                   <label
                     htmlFor="payment_reference"
-                    className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2"
+                    className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
                   >
                     {paymentMethod === "binance"
                       ? "Order ID / Reference Binance (Obligatorio)"
@@ -851,139 +794,9 @@ export default function CheckoutPage() {
                       setPaymentReference(e.target.value)
                     }
                     disabled={loading}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm placeholder:text-slate-600 disabled:opacity-50"
+                    className="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
                   />
-
                 </div>
-
-                {/* ==================================================
-                    NUEVOS DATOS DEL PAGO
-                ================================================== */}
-
-                <div className="pt-4 border-t border-slate-800">
-
-                  <div className="mb-4">
-
-                    <p className="text-sm font-semibold text-white">
-                      Información del pago
-                    </p>
-
-                    <p className="mt-1 text-xs text-slate-500">
-                      Estos datos serán utilizados para verificar y
-                      confirmar el pago recibido.
-                    </p>
-
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-
-                    {/* BANCO EMISOR */}
-
-                    <div>
-
-                      <label
-                        htmlFor="payment_bank"
-                        className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
-                      >
-                        Banco emisor
-                      </label>
-
-                      <input
-                        id="payment_bank"
-                        type="text"
-                        required
-                        value={paymentBank}
-                        onChange={(e) =>
-                          setPaymentBank(e.target.value)
-                        }
-                        placeholder="Ej: Banesco"
-                        disabled={loading}
-                        className="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm placeholder:text-slate-600 disabled:opacity-50"
-                      />
-
-                    </div>
-
-                    {/* TELÉFONO DEL PAGO */}
-
-                    <div>
-
-                      <label
-                        htmlFor="payment_phone"
-                        className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
-                      >
-                        Teléfono asociado al pago
-                      </label>
-
-                      <input
-                        id="payment_phone"
-                        type="tel"
-                        required
-                        value={paymentPhone}
-                        onChange={(e) =>
-                          setPaymentPhone(e.target.value)
-                        }
-                        placeholder="Ej: 0414-1234567"
-                        disabled={loading}
-                        className="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm placeholder:text-slate-600 disabled:opacity-50"
-                      />
-
-                    </div>
-
-                    {/* FECHA */}
-
-                    <div>
-
-                      <label
-                        htmlFor="payment_date"
-                        className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
-                      >
-                        Fecha del pago
-                      </label>
-
-                      <input
-                        id="payment_date"
-                        type="date"
-                        required
-                        value={paymentDate}
-                        onChange={(e) =>
-                          setPaymentDate(e.target.value)
-                        }
-                        disabled={loading}
-                        className="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm disabled:opacity-50"
-                      />
-
-                    </div>
-
-                    {/* CÉDULA */}
-
-                    <div>
-
-                      <label
-                        htmlFor="payment_id_number"
-                        className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
-                      >
-                        Cédula del titular
-                      </label>
-
-                      <input
-                        id="payment_id_number"
-                        type="text"
-                        required
-                        value={paymentIdNumber}
-                        onChange={(e) =>
-                          setPaymentIdNumber(e.target.value)
-                        }
-                        placeholder="Ej: V-12345678"
-                        disabled={loading}
-                        className="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-white outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 text-sm placeholder:text-slate-600 disabled:opacity-50"
-                      />
-
-                    </div>
-
-                  </div>
-
-                </div>
-
               </div>
             </div>
           </div>
@@ -996,11 +809,11 @@ export default function CheckoutPage() {
 
             <div className="sticky top-6 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl backdrop-blur-md">
 
-              <h2 className="text-xl font-bold text-white border-b border-slate-800/80 pb-3">
+              <h2 className="border-b border-slate-800/80 pb-3 text-xl font-bold text-white">
                 Resumen de compra
               </h2>
 
-              <p className="mt-3 text-xs text-slate-400 font-medium uppercase tracking-wider">
+              <p className="mt-3 text-xs font-medium uppercase tracking-wider text-slate-400">
                 {cart.length}{" "}
                 {cart.length === 1 ? "producto" : "productos"} en total
               </p>
@@ -1009,13 +822,17 @@ export default function CheckoutPage() {
                   PRODUCTOS
               ================================================== */}
 
-              <div className="mt-5 space-y-4 max-h-[320px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-slate-800">
+              <div className="mt-5 max-h-[320px] space-y-4 overflow-y-auto pr-1">
 
                 {cart.map((product) => {
-                  const productPrice = Number(product.price) || 0;
-                  const quantity = Number(product.quantity) || 0;
+                  const productPrice =
+                    Number(product.price) || 0;
 
-                  const productTotal = productPrice * quantity;
+                  const quantity =
+                    Number(product.quantity) || 0;
+
+                  const productTotal =
+                    productPrice * quantity;
 
                   const productTotalBs =
                     bcvRate !== null
@@ -1025,10 +842,10 @@ export default function CheckoutPage() {
                   return (
                     <div
                       key={product.id}
-                      className="flex gap-4 items-center border-b border-slate-800/40 pb-3 last:border-0"
+                      className="flex items-center gap-4 border-b border-slate-800/40 pb-3 last:border-0"
                     >
 
-                      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-slate-950 border border-slate-800">
+                      <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl border border-slate-800 bg-slate-950">
 
                         {product.image ? (
                           <Image
@@ -1048,7 +865,7 @@ export default function CheckoutPage() {
 
                       <div className="min-w-0 flex-1">
 
-                        <p className="text-sm font-semibold text-slate-200 truncate">
+                        <p className="truncate text-sm font-semibold text-slate-200">
                           {product.name}
                         </p>
 
@@ -1061,16 +878,14 @@ export default function CheckoutPage() {
                         </p>
 
                         {productTotalBs !== null && (
-                          <p className="mt-0.5 text-[11px] font-mono font-semibold text-emerald-400">
+                          <p className="mt-0.5 font-mono text-[11px] font-semibold text-emerald-400">
                             ≈ Bs. {formatBs(productTotalBs)}
                           </p>
                         )}
-
                       </div>
                     </div>
                   );
                 })}
-
               </div>
 
               <div className="my-5 border-t border-slate-800" />
@@ -1084,15 +899,13 @@ export default function CheckoutPage() {
                 <div className="flex items-center justify-between gap-3">
 
                   <div>
-
-                    <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                       Tasa de cambio
                     </p>
 
                     <p className="mt-1 text-sm font-bold text-white">
                       Dólar BCV
                     </p>
-
                   </div>
 
                   {loadingRate ? (
@@ -1109,7 +922,6 @@ export default function CheckoutPage() {
                       No disponible
                     </span>
                   )}
-
                 </div>
 
                 {bcvUpdatedAt && (
@@ -1123,17 +935,15 @@ export default function CheckoutPage() {
                     1 USD = Bs. {formatBs(bcvRate)}
                   </p>
                 )}
-
               </div>
 
               {/* ==================================================
                   SUBTOTAL / ENVÍO
               ================================================== */}
 
-              <div className="space-y-3 text-sm text-slate-400 mt-5">
+              <div className="mt-5 space-y-3 text-sm text-slate-400">
 
                 <div className="flex items-center justify-between">
-
                   <span>Subtotal</span>
 
                   <div className="text-right">
@@ -1143,25 +953,20 @@ export default function CheckoutPage() {
                     </p>
 
                     {totalBs !== null && (
-                      <p className="mt-0.5 text-[11px] font-mono text-emerald-400">
+                      <p className="mt-0.5 font-mono text-[11px] text-emerald-400">
                         Bs. {formatBs(totalBs)}
                       </p>
                     )}
-
                   </div>
-
                 </div>
 
                 <div className="flex items-center justify-between">
-
                   <span>Envío</span>
 
                   <span className="font-medium text-slate-400">
                     Por confirmar
                   </span>
-
                 </div>
-
               </div>
 
               {/* ==================================================
@@ -1187,11 +992,8 @@ export default function CheckoutPage() {
                         Bs. {formatBs(totalBs)}
                       </p>
                     )}
-
                   </div>
-
                 </div>
-
               </div>
 
               {/* ==================================================
@@ -1201,7 +1003,7 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-6 w-full rounded-xl bg-cyan-500 px-5 py-4 text-base font-bold text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.25)] transition-all hover:bg-cyan-400 hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+                className="mt-6 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-cyan-500 px-5 py-4 text-base font-bold text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.25)] transition-all hover:bg-cyan-400 hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? (
                   <>

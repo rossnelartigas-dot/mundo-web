@@ -10,98 +10,59 @@ export interface OrderProduct {
 
 export interface OrderData {
   user_id?: string | null;
-
   customer_name: string;
   customer_phone: string;
   customer_email: string;
   customer_address: string;
-
   payment_method: string;
   payment_reference?: string;
-
-  // ============================================================
-  // DATOS DEL PAGO
-  // ============================================================
-
-  payment_bank?: string;
-  payment_phone?: string;
-  payment_id_number?: string;
-  payment_date?: string;
-  payment_time?: string;
-  payment_amount?: number;
-
   products: OrderProduct[];
-
   total: number;
+
+  // Tasa BCV utilizada al momento de crear el pedido
+  bcv_rate?: number | null;
+
+  // Total equivalente en bolívares
+  total_bs?: number | null;
 }
 
 /**
  * Crea un pedido y descuenta automáticamente
- * del inventario los productos comprados.
+ * el inventario de los productos comprados.
  */
 export async function createOrder(order: OrderData) {
   // ============================================================
-  // 1. GUARDAR PEDIDO
+  // 1. CREAR PEDIDO
   // ============================================================
 
   const { data, error } = await supabase
     .from("orders")
     .insert({
-      // ==========================================================
-      // DATOS DEL CLIENTE
-      // ==========================================================
-
-      user_id: order.user_id || null,
+      user_id: order.user_id ?? null,
 
       customer_name: order.customer_name,
       customer_phone: order.customer_phone,
       customer_email: order.customer_email,
       customer_address: order.customer_address,
 
-      // ==========================================================
-      // MÉTODO DE PAGO
-      // ==========================================================
-
       payment_method: order.payment_method,
-      payment_reference:
-        order.payment_reference || null,
-
-      // ==========================================================
-      // DATOS DEL PAGO
-      // ==========================================================
-
-      payment_bank:
-        order.payment_bank || null,
-
-      payment_phone:
-        order.payment_phone || null,
-
-      payment_id_number:
-        order.payment_id_number || null,
-
-      payment_date:
-        order.payment_date || null,
-
-      payment_time:
-        order.payment_time || null,
-
-      payment_amount:
-        order.payment_amount ?? null,
-
-      // ==========================================================
-      // PEDIDO
-      // ==========================================================
+      payment_reference: order.payment_reference || null,
 
       products: order.products,
-
       total: order.total,
 
+      // Datos de conversión BCV
+      bcv_rate: order.bcv_rate ?? null,
+      total_bs: order.total_bs ?? null,
+
+      // Estado inicial
       status: "pending",
     })
     .select()
     .single();
 
   if (error) {
+    console.error("Error creando pedido:", error);
     throw error;
   }
 
@@ -111,31 +72,53 @@ export async function createOrder(order: OrderData) {
 
   if (Array.isArray(order.products)) {
     for (const item of order.products) {
-      const {
-        data: productData,
-        error: fetchError,
-      } = await supabase
-        .from("products")
-        .select("stock")
-        .eq("id", item.id)
-        .single();
+      const quantity = Number(item.quantity || 1);
 
-      if (!fetchError && productData) {
-        const currentStock =
-          productData.stock ?? 0;
+      if (quantity <= 0) {
+        continue;
+      }
 
-        const newStock = Math.max(
-          0,
-          currentStock -
-            Number(item.quantity || 1)
-        );
-
+      const { data: productData, error: fetchError } =
         await supabase
           .from("products")
-          .update({
-            stock: newStock,
-          })
-          .eq("id", item.id);
+          .select("stock")
+          .eq("id", item.id)
+          .single();
+
+      if (fetchError) {
+        console.error(
+          `No se pudo consultar el stock del producto ${item.id}:`,
+          fetchError
+        );
+        continue;
+      }
+
+      if (!productData) {
+        console.error(
+          `No se encontró el producto ${item.id} al actualizar stock.`
+        );
+        continue;
+      }
+
+      const currentStock = Number(productData.stock ?? 0);
+
+      const newStock = Math.max(
+        0,
+        currentStock - quantity
+      );
+
+      const { error: stockError } = await supabase
+        .from("products")
+        .update({
+          stock: newStock,
+        })
+        .eq("id", item.id);
+
+      if (stockError) {
+        console.error(
+          `Error actualizando stock del producto ${item.id}:`,
+          stockError
+        );
       }
     }
   }
@@ -143,10 +126,9 @@ export async function createOrder(order: OrderData) {
   return data;
 }
 
-// ============================================================
-// OBTENER TODOS LOS PEDIDOS
-// ============================================================
-
+/**
+ * Obtiene todos los pedidos.
+ */
 export async function getOrders() {
   const { data, error } = await supabase
     .from("orders")
@@ -162,10 +144,9 @@ export async function getOrders() {
   return data;
 }
 
-// ============================================================
-// OBTENER PEDIDO POR ID
-// ============================================================
-
+/**
+ * Obtiene un pedido por su ID.
+ */
 export async function getOrder(id: number) {
   const { data, error } = await supabase
     .from("orders")
@@ -180,32 +161,53 @@ export async function getOrder(id: number) {
   return data;
 }
 
-// ============================================================
-// OBTENER PEDIDO POR ID + EMAIL
-// ============================================================
-
+/**
+ * Consulta un pedido utilizando:
+ * - Número del pedido
+ * - Correo electrónico del cliente
+ *
+ * Se utiliza para mostrar el pedido al cliente
+ * después de finalizar la compra.
+ */
 export async function getOrderByIdAndEmail(
   id: number,
   email: string
 ) {
+  const cleanEmail = email
+    .trim()
+    .toLowerCase();
+
   const { data, error } = await supabase
     .from("orders")
     .select("*")
     .eq("id", id)
-    .eq("customer_email", email)
+    .eq("customer_email", cleanEmail)
     .single();
 
   if (error) {
+    console.error(
+      "Error buscando pedido por ID y correo:",
+      error
+    );
+
     return null;
   }
 
   return data;
 }
 
-// ============================================================
-// ACTUALIZAR ESTADO DEL PEDIDO
-// ============================================================
-
+/**
+ * Actualiza el estado del pedido y gestiona
+ * automáticamente el inventario.
+ *
+ * CANCELADO:
+ *   - Si el pedido pasa de activo -> cancelado,
+ *     devuelve las unidades al inventario.
+ *
+ * REACTIVADO:
+ *   - Si pasa de cancelado -> cualquier estado activo,
+ *     vuelve a descontar las unidades.
+ */
 export async function updateOrderStatus(
   id: number,
   status: string
@@ -214,14 +216,12 @@ export async function updateOrderStatus(
   // 1. OBTENER PEDIDO ACTUAL
   // ============================================================
 
-  const {
-    data: order,
-    error: getError,
-  } = await supabase
-    .from("orders")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const { data: order, error: getError } =
+    await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", id)
+      .single();
 
   if (getError || !order) {
     throw (
@@ -249,12 +249,19 @@ export async function updateOrderStatus(
   }
 
   // ============================================================
-  // 3. DETECTAR CANCELACIÓN
+  // 3. FUNCIONES AUXILIARES DE ESTADO
   // ============================================================
 
-  const isCancelled = (st: string) =>
-    st.toLowerCase() === "cancelled" ||
-    st.toLowerCase() === "cancelado";
+  const isCancelled = (value: string) => {
+    const normalized = value
+      .toLowerCase()
+      .trim();
+
+    return (
+      normalized === "cancelled" ||
+      normalized === "cancelado"
+    );
+  };
 
   const isNewStatusCancelled =
     isCancelled(status);
@@ -264,7 +271,8 @@ export async function updateOrderStatus(
 
   // ============================================================
   // 4. RESTAURAR STOCK
-  //    NO CANCELADO → CANCELADO
+  //
+  // NO CANCELADO -> CANCELADO
   // ============================================================
 
   if (
@@ -273,34 +281,57 @@ export async function updateOrderStatus(
     Array.isArray(order.products)
   ) {
     for (const item of order.products) {
-      const { data: productData } =
+      const quantity = Number(
+        item.quantity || 1
+      );
+
+      if (quantity <= 0) {
+        continue;
+      }
+
+      const { data: productData, error } =
         await supabase
           .from("products")
           .select("stock")
           .eq("id", item.id)
           .single();
 
-      if (productData) {
-        const currentStock =
-          productData.stock ?? 0;
+      if (error || !productData) {
+        console.error(
+          `No se pudo obtener el producto ${item.id} para restaurar stock.`,
+          error
+        );
+        continue;
+      }
 
-        const restoredStock =
-          currentStock +
-          Number(item.quantity || 1);
+      const currentStock = Number(
+        productData.stock ?? 0
+      );
 
+      const restoredStock =
+        currentStock + quantity;
+
+      const { error: stockError } =
         await supabase
           .from("products")
           .update({
             stock: restoredStock,
           })
           .eq("id", item.id);
+
+      if (stockError) {
+        console.error(
+          `Error restaurando stock del producto ${item.id}:`,
+          stockError
+        );
       }
     }
   }
 
   // ============================================================
   // 5. DESCONTAR STOCK NUEVAMENTE
-  //    CANCELADO → ACTIVO
+  //
+  // CANCELADO -> ACTIVO
   // ============================================================
 
   if (
@@ -309,35 +340,57 @@ export async function updateOrderStatus(
     Array.isArray(order.products)
   ) {
     for (const item of order.products) {
-      const { data: productData } =
+      const quantity = Number(
+        item.quantity || 1
+      );
+
+      if (quantity <= 0) {
+        continue;
+      }
+
+      const { data: productData, error } =
         await supabase
           .from("products")
           .select("stock")
           .eq("id", item.id)
           .single();
 
-      if (productData) {
-        const currentStock =
-          productData.stock ?? 0;
-
-        const newStock = Math.max(
-          0,
-          currentStock -
-            Number(item.quantity || 1)
+      if (error || !productData) {
+        console.error(
+          `No se pudo obtener el producto ${item.id} para descontar stock.`,
+          error
         );
+        continue;
+      }
 
+      const currentStock = Number(
+        productData.stock ?? 0
+      );
+
+      const newStock = Math.max(
+        0,
+        currentStock - quantity
+      );
+
+      const { error: stockError } =
         await supabase
           .from("products")
           .update({
             stock: newStock,
           })
           .eq("id", item.id);
+
+      if (stockError) {
+        console.error(
+          `Error descontando stock del producto ${item.id}:`,
+          stockError
+        );
       }
     }
   }
 
   // ============================================================
-  // 6. NOTIFICACIÓN POR CORREO
+  // 6. NOTIFICACIÓN DE CAMBIO DE ESTADO
   // ============================================================
 
   try {
@@ -377,11 +430,12 @@ export async function updateOrderStatus(
   return true;
 }
 
-// ============================================================
-// ELIMINAR PEDIDO
-// ============================================================
-
-export async function deleteOrder(id: number) {
+/**
+ * Elimina un pedido por ID.
+ */
+export async function deleteOrder(
+  id: number
+) {
   const { error } = await supabase
     .from("orders")
     .delete()
