@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   useForm,
   SubmitHandler,
+  useWatch,
 } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
@@ -33,6 +34,17 @@ interface ProductFormData {
   warranty_months: number;
 }
 
+function generateSlug(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
 export default function ProductForm() {
   const router = useRouter();
 
@@ -42,10 +54,18 @@ export default function ProductForm() {
   const [loading, setLoading] =
     useState(false);
 
+  /*
+   * Indica si el usuario modificó manualmente
+   * el slug generado automáticamente.
+   */
+  const slugManuallyEdited =
+    useRef(false);
+
   const {
     register,
     handleSubmit,
-    watch,
+    control,
+    setValue,
   } = useForm<ProductFormData>({
     defaultValues: {
       name: "",
@@ -69,7 +89,109 @@ export default function ProductForm() {
     },
   });
 
-  const imageUrl = watch("image");
+  /*
+   * ==========================================================
+   * VALORES OBSERVADOS
+   * ==========================================================
+   *
+   * useWatch reemplaza watch() para evitar el warning
+   * del React Compiler.
+   */
+
+  const name = useWatch({
+    control,
+    name: "name",
+  });
+
+  const costPrice = useWatch({
+    control,
+    name: "cost_price",
+  });
+
+  const profitMargin = useWatch({
+    control,
+    name: "profit_margin",
+  });
+
+  const imageUrl = useWatch({
+    control,
+    name: "image",
+  });
+
+  /*
+   * ==========================================================
+   * SLUG AUTOMÁTICO
+   * ==========================================================
+   *
+   * Mientras el usuario no haya modificado manualmente
+   * el slug, éste se genera automáticamente a partir
+   * del nombre del producto.
+   */
+
+  useEffect(() => {
+    if (slugManuallyEdited.current) {
+      return;
+    }
+
+    const generatedSlug =
+      generateSlug(name || "");
+
+    setValue(
+      "slug",
+      generatedSlug,
+      {
+        shouldDirty: true,
+      }
+    );
+  }, [name, setValue]);
+
+  /*
+   * ==========================================================
+   * PRECIO AUTOMÁTICO
+   * ==========================================================
+   *
+   * Precio = Costo + (Costo × Margen / 100)
+   *
+   * Ejemplo:
+   *
+   * Costo: 100
+   * Margen: 30%
+   * Precio: 130
+   */
+
+  useEffect(() => {
+    const cost =
+      Number(costPrice) || 0;
+
+    const margin =
+      Number(profitMargin) || 0;
+
+    if (cost <= 0) {
+      setValue("price", 0);
+      return;
+    }
+
+    const calculatedPrice =
+      cost +
+      (cost * margin) / 100;
+
+    const roundedPrice =
+      Math.round(
+        calculatedPrice * 100
+      ) / 100;
+
+    setValue(
+      "price",
+      roundedPrice,
+      {
+        shouldDirty: true,
+      }
+    );
+  }, [
+    costPrice,
+    profitMargin,
+    setValue,
+  ]);
 
   /*
    * ==========================================================
@@ -96,7 +218,9 @@ export default function ProductForm() {
 
         if (imageFile) {
           finalImageUrl =
-            await uploadProductImage(imageFile);
+            await uploadProductImage(
+              imageFile
+            );
         }
 
         /*
@@ -145,10 +269,10 @@ export default function ProductForm() {
             data.sku?.trim() || "",
 
           slug:
-            data.slug?.trim() || "",
+            data.slug?.trim() ||
+            generateSlug(data.name),
 
           /*
-           * IMPORTANTE:
            * Product.image es string.
            */
           image:
@@ -175,7 +299,9 @@ export default function ProductForm() {
             Number(data.warranty_months) || 0,
         };
 
-        await createProduct(productData);
+        await createProduct(
+          productData
+        );
 
         alert(
           "Producto creado correctamente"
@@ -346,10 +472,20 @@ export default function ProductForm() {
           </label>
 
           <input
-            {...register("slug")}
+            {...register("slug", {
+              onChange: () => {
+                slugManuallyEdited.current =
+                  true;
+              },
+            })}
             placeholder="slug-del-producto"
             className="w-full rounded-lg border p-3"
           />
+
+          <p className="mt-1 text-xs text-slate-500">
+            Se genera automáticamente a partir
+            del nombre, pero puedes modificarlo.
+          </p>
         </div>
       </div>
 
@@ -370,8 +506,13 @@ export default function ProductForm() {
               valueAsNumber: true,
             })}
             placeholder="Precio de venta"
-            className="w-full rounded-lg border p-3"
+            className="w-full rounded-lg border p-3 bg-slate-50"
           />
+
+          <p className="mt-1 text-xs text-slate-500">
+            Se calcula automáticamente usando
+            el costo y el margen.
+          </p>
         </div>
 
         <div>
