@@ -3,9 +3,11 @@
 import { useState } from "react";
 import {
   Clock3,
+  CircleCheck,
+  CreditCard,
   PackageCheck,
   Truck,
-  CircleCheck,
+  CircleCheckBig,
   CircleX,
   Loader2,
 } from "lucide-react";
@@ -24,6 +26,16 @@ const statuses = [
     icon: Clock3,
   },
   {
+    value: "confirmado",
+    label: "Confirmado",
+    icon: CircleCheck,
+  },
+  {
+    value: "pagado",
+    label: "Pagado",
+    icon: CreditCard,
+  },
+  {
     value: "preparado",
     label: "Preparado",
     icon: PackageCheck,
@@ -36,7 +48,7 @@ const statuses = [
   {
     value: "entregado",
     label: "Entregado",
-    icon: CircleCheck,
+    icon: CircleCheckBig,
   },
   {
     value: "cancelado",
@@ -48,19 +60,96 @@ const statuses = [
 function normalizeStatus(status: string) {
   const value = status.toLowerCase().trim();
 
-  if (value === "cancelled") return "cancelado";
-  if (value === "cancelado") return "cancelado";
+  // Pendiente
+  if (value === "pending" || value === "pendiente") {
+    return "pending";
+  }
 
-  if (value === "pending") return "pending";
-  if (value === "pendiente") return "pending";
+  // Confirmado
+  if (value === "confirmed" || value === "confirmado") {
+    return "confirmado";
+  }
 
-  if (value === "preparado") return "preparado";
+  // Pagado
+  if (value === "paid" || value === "pagado") {
+    return "pagado";
+  }
 
-  if (value === "enviado") return "enviado";
+  // Preparado
+  if (value === "prepared" || value === "preparado") {
+    return "preparado";
+  }
 
-  if (value === "entregado") return "entregado";
+  // Enviado
+  if (value === "shipped" || value === "enviado") {
+    return "enviado";
+  }
+
+  // Entregado
+  if (value === "delivered" || value === "entregado") {
+    return "entregado";
+  }
+
+  // Cancelado
+  if (
+    value === "cancelled" ||
+    value === "canceled" ||
+    value === "cancelado"
+  ) {
+    return "cancelado";
+  }
 
   return "pending";
+}
+
+function getStatusColor(status: string) {
+  switch (status) {
+    case "cancelado":
+      return "text-red-400";
+
+    case "entregado":
+      return "text-emerald-400";
+
+    case "enviado":
+      return "text-blue-400";
+
+    case "preparado":
+      return "text-amber-400";
+
+    case "pagado":
+      return "text-green-400";
+
+    case "confirmado":
+      return "text-violet-400";
+
+    default:
+      return "text-cyan-400";
+  }
+}
+
+function getStatusBadge(status: string) {
+  switch (status) {
+    case "cancelado":
+      return "border-red-500/30 bg-red-500/10 text-red-400";
+
+    case "entregado":
+      return "border-emerald-500/30 bg-emerald-500/10 text-emerald-400";
+
+    case "enviado":
+      return "border-blue-500/30 bg-blue-500/10 text-blue-400";
+
+    case "preparado":
+      return "border-amber-500/30 bg-amber-500/10 text-amber-400";
+
+    case "pagado":
+      return "border-green-500/30 bg-green-500/10 text-green-400";
+
+    case "confirmado":
+      return "border-violet-500/30 bg-violet-500/10 text-violet-400";
+
+    default:
+      return "border-cyan-500/30 bg-cyan-500/10 text-cyan-400";
+  }
 }
 
 export default function OrderStatusSelect({
@@ -72,7 +161,6 @@ export default function OrderStatusSelect({
   );
 
   const [loading, setLoading] = useState(false);
-
   const [error, setError] = useState("");
 
   async function handleChange(
@@ -125,17 +213,7 @@ export default function OrderStatusSelect({
 
           <SelectedIcon
             size={18}
-            className={
-              currentStatus === "cancelado"
-                ? "text-red-400"
-                : currentStatus === "entregado"
-                ? "text-emerald-400"
-                : currentStatus === "enviado"
-                ? "text-blue-400"
-                : currentStatus === "preparado"
-                ? "text-amber-400"
-                : "text-cyan-400"
-            }
+            className={getStatusColor(currentStatus)}
           />
 
         </div>
@@ -180,17 +258,9 @@ export default function OrderStatusSelect({
           </span>
 
           <span
-            className={`rounded-lg border px-2.5 py-1 text-xs font-bold ${
-              currentStatus === "cancelado"
-                ? "border-red-500/30 bg-red-500/10 text-red-400"
-                : currentStatus === "entregado"
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                : currentStatus === "enviado"
-                ? "border-blue-500/30 bg-blue-500/10 text-blue-400"
-                : currentStatus === "preparado"
-                ? "border-amber-500/30 bg-amber-500/10 text-amber-400"
-                : "border-cyan-500/30 bg-cyan-500/10 text-cyan-400"
-            }`}
+            className={`rounded-lg border px-2.5 py-1 text-xs font-bold ${getStatusBadge(
+              currentStatus
+            )}`}
           >
             {selectedStatus.label}
           </span>
