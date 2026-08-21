@@ -41,16 +41,34 @@ export default function Navbar() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  // Estado del usuario autenticado
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  // ============================================================
+  // USUARIO AUTENTICADO
+  // ============================================================
+
+  const [userProfile, setUserProfile] =
+    useState<UserProfile | null>(null);
+
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [loadingUser, setLoadingUser] = useState(true);
-  const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
+  const userMenuRef =
+    useRef<HTMLDivElement>(null);
+
+  // ============================================================
+  // CONTADORES
+  // ============================================================
+
+  const cartCount = cart.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
+
   const favoritesCount = favorites.length;
 
-  // Escuchar sesión activa
+  // ============================================================
+  // ESCUCHAR SESIÓN ACTIVA
+  // ============================================================
+
   useEffect(() => {
     async function loadUserSession() {
       try {
@@ -69,7 +87,8 @@ export default function Navbar() {
             data || {
               id: session.user.id,
               email: session.user.email || "",
-              full_name: session.user.user_metadata?.full_name || "",
+              full_name:
+                session.user.user_metadata?.full_name || "",
               role: "customer",
             }
           );
@@ -77,7 +96,10 @@ export default function Navbar() {
           setUserProfile(null);
         }
       } catch (error) {
-        console.error("Error al cargar sesión de usuario:", error);
+        console.error(
+          "Error al cargar sesión de usuario:",
+          error
+        );
       } finally {
         setLoadingUser(false);
       }
@@ -85,8 +107,9 @@ export default function Navbar() {
 
     loadUserSession();
 
-    // Escuchar cambios de autenticación en tiempo real
-    const { data: authListener } = supabase.auth.onAuthStateChange(
+    const {
+      data: authListener,
+    } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (session?.user) {
           loadUserSession();
@@ -102,20 +125,38 @@ export default function Navbar() {
     };
   }, []);
 
-  // Cerrar desplegable si se hace clic afuera
+  // ============================================================
+  // CERRAR DESPLEGABLE AL HACER CLICK AFUERA
+  // ============================================================
+
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
         userMenuRef.current &&
-        !userMenuRef.current.contains(event.target as Node)
+        !userMenuRef.current.contains(
+          event.target as Node
+        )
       ) {
         setUserMenuOpen(false);
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener(
+      "mousedown",
+      handleClickOutside
+    );
+
+    return () => {
+      document.removeEventListener(
+        "mousedown",
+        handleClickOutside
+      );
+    };
   }, []);
+
+  // ============================================================
+  // FUNCIONES
+  // ============================================================
 
   function closeMenu() {
     setMenuOpen(false);
@@ -124,42 +165,69 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+
     setUserProfile(null);
+
     closeMenu();
+
     router.push("/");
     router.refresh();
   };
 
-  function handleSearch(e: React.FormEvent<HTMLFormElement>) {
+  function handleSearch(
+    e: React.FormEvent<HTMLFormElement>
+  ) {
     e.preventDefault();
 
     const query = search.trim();
 
     if (query) {
-      router.push(`/productos?q=${encodeURIComponent(query)}`);
+      router.push(
+        `/productos?q=${encodeURIComponent(query)}`
+      );
     } else {
       router.push("/productos");
     }
 
     setSearchOpen(false);
     setSearch("");
+
     closeMenu();
   }
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-900 bg-slate-950/90 text-slate-100 shadow-2xl backdrop-blur-md">
-      {/* Línea neón superior con degradado dinámico */}
+
+      {/* ======================================================
+          LÍNEA NEÓN SUPERIOR
+      ====================================================== */}
+
       <div
         className="h-1 w-full"
         style={{
-          background: `linear-gradient(90deg, transparent, ${settings.primaryColor || "#06b6d4"}, #22d3ee, ${settings.primaryColor || "#06b6d4"}, transparent)`,
+          background: `linear-gradient(
+            90deg,
+            transparent,
+            ${settings.primaryColor || "#06b6d4"},
+            #22d3ee,
+            ${settings.primaryColor || "#06b6d4"},
+            transparent
+          )`,
         }}
       />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* NAVBAR PRINCIPAL */}
+
+        {/* ====================================================
+            NAVBAR PRINCIPAL
+        ==================================================== */}
+
         <div className="flex h-[76px] items-center justify-between gap-4">
-          {/* LOGO */}
+
+          {/* ==================================================
+              LOGO
+          ================================================== */}
+
           <Link
             href="/"
             onClick={closeMenu}
@@ -183,14 +251,21 @@ export default function Navbar() {
                 group-hover:scale-105
               "
               style={{
-                borderColor: settings.primaryColor || "#0891b2",
-                boxShadow: `0 0 15px ${settings.primaryColor || "#06b6d4"}25`,
+                borderColor:
+                  settings.primaryColor || "#0891b2",
+
+                boxShadow: `0 0 15px ${
+                  settings.primaryColor || "#06b6d4"
+                }25`,
               }}
             >
               {settings.logoUrl ? (
                 <Image
                   src={settings.logoUrl}
-                  alt={settings.storeName || "Logo de la tienda"}
+                  alt={
+                    settings.storeName ||
+                    "Logo de la tienda"
+                  }
                   width={44}
                   height={44}
                   className="h-full w-full object-cover"
@@ -199,7 +274,11 @@ export default function Navbar() {
               ) : (
                 <span
                   className="font-mono text-sm font-black tracking-tight"
-                  style={{ color: settings.primaryColor || "#22d3ee" }}
+                  style={{
+                    color:
+                      settings.primaryColor ||
+                      "#22d3ee",
+                  }}
                 >
                   {(settings.storeName || "Mundo Web")
                     .slice(0, 2)
@@ -217,15 +296,23 @@ export default function Navbar() {
 
               <span
                 className="block font-mono text-[9px] font-bold uppercase tracking-[0.25em]"
-                style={{ color: settings.primaryColor || "#22d3ee" }}
+                style={{
+                  color:
+                    settings.primaryColor ||
+                    "#22d3ee",
+                }}
               >
                 Tecnología & innovación
               </span>
             </div>
           </Link>
 
-          {/* MENÚ DESKTOP */}
+          {/* ==================================================
+              MENÚ DESKTOP
+          ================================================== */}
+
           <nav className="hidden items-center gap-1 md:flex">
+
             <Link
               href="/"
               className="
@@ -300,6 +387,7 @@ export default function Navbar() {
               "
             >
               <span>Ofertas</span>
+
               <FaChevronDown className="text-[9px] opacity-60 transition group-hover:rotate-180" />
             </Link>
 
@@ -320,11 +408,19 @@ export default function Navbar() {
             >
               Contacto
             </Link>
+
           </nav>
 
-          {/* ACCIONES */}
+          {/* ==================================================
+              ACCIONES
+          ================================================== */}
+
           <div className="flex items-center gap-1 sm:gap-2">
-            {/* BUSCADOR */}
+
+            {/* =================================================
+                BUSCADOR
+            ================================================= */}
+
             {searchOpen ? (
               <form
                 onSubmit={handleSearch}
@@ -346,7 +442,9 @@ export default function Navbar() {
                 <input
                   type="search"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) =>
+                    setSearch(e.target.value)
+                  }
                   placeholder="Buscar componentes..."
                   autoFocus
                   className="
@@ -387,7 +485,9 @@ export default function Navbar() {
               <button
                 type="button"
                 aria-label="Buscar"
-                onClick={() => setSearchOpen(true)}
+                onClick={() =>
+                  setSearchOpen(true)
+                }
                 className="
                   hidden
                   h-10
@@ -410,7 +510,10 @@ export default function Navbar() {
               </button>
             )}
 
-            {/* FAVORITOS */}
+            {/* =================================================
+                FAVORITOS
+            ================================================= */}
+
             <Link
               href="/favoritos"
               aria-label="Favoritos"
@@ -460,7 +563,10 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* CARRITO */}
+            {/* =================================================
+                CARRITO
+            ================================================= */}
+
             <Link
               href="/carrito"
               aria-label="Carrito"
@@ -510,14 +616,22 @@ export default function Navbar() {
               )}
             </Link>
 
-            {/* USUARIO CON DESPLEGABLE */}
+            {/* =================================================
+                USUARIO
+            ================================================= */}
+
             {loadingUser ? (
               <div className="hidden h-10 w-10 animate-pulse rounded-xl border border-slate-800 bg-slate-900 sm:block" />
             ) : userProfile ? (
-              <div className="relative hidden sm:block" ref={userMenuRef}>
+              <div
+                className="relative hidden sm:block"
+                ref={userMenuRef}
+              >
                 <button
                   type="button"
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  onClick={() =>
+                    setUserMenuOpen(!userMenuOpen)
+                  }
                   className="
                     flex
                     h-10
@@ -535,30 +649,40 @@ export default function Navbar() {
                     hover:shadow-[0_0_15px_rgba(6,182,212,0.15)]
                   "
                 >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/30 font-mono text-xs font-bold text-cyan-400">
-                    {userProfile.full_name
-                      ? userProfile.full_name.charAt(0).toUpperCase()
-                      : <FaUser className="text-[10px]" />}
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg border border-cyan-500/30 bg-cyan-500/10 font-mono text-xs font-bold text-cyan-400">
+                    {userProfile.full_name ? (
+                      userProfile.full_name
+                        .charAt(0)
+                        .toUpperCase()
+                    ) : (
+                      <FaUser className="text-[10px]" />
+                    )}
                   </div>
+
                   <span className="max-w-[100px] truncate font-mono text-xs font-bold">
-                    {userProfile.full_name || "Mi Cuenta"}
+                    {userProfile.full_name ||
+                      "Mi Cuenta"}
                   </span>
+
                   <FaChevronDown className="text-[9px] opacity-60" />
                 </button>
 
-                {/* DESPLEGABLE DESKTOP */}
                 {userMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-800 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-xl z-50">
+                  <div className="absolute right-0 z-50 mt-2 w-56 rounded-2xl border border-slate-800 bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-xl">
+
                     <div className="border-b border-slate-800/80 px-3 py-2.5">
                       <p className="truncate font-mono text-xs font-bold text-white">
-                        {userProfile.full_name || "Usuario"}
+                        {userProfile.full_name ||
+                          "Usuario"}
                       </p>
+
                       <p className="truncate font-mono text-[10px] text-slate-400">
                         {userProfile.email}
                       </p>
                     </div>
 
                     <div className="py-1">
+
                       <Link
                         href="/pedido"
                         onClick={closeMenu}
@@ -590,15 +714,17 @@ export default function Navbar() {
                         <Link
                           href="/admin"
                           onClick={closeMenu}
-                          className="flex items-center gap-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/20 px-3 py-2 font-mono text-xs font-bold text-cyan-400 transition hover:bg-cyan-500/20"
+                          className="flex items-center gap-2.5 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 font-mono text-xs font-bold text-cyan-400 transition hover:bg-cyan-500/20"
                         >
                           <FaUser />
                           <span>Panel Admin</span>
                         </Link>
                       )}
+
                     </div>
 
                     <div className="border-t border-slate-800/80 pt-1">
+
                       <button
                         type="button"
                         onClick={handleLogout}
@@ -607,7 +733,9 @@ export default function Navbar() {
                         <FaSignOutAlt />
                         <span>Cerrar Sesión</span>
                       </button>
+
                     </div>
+
                   </div>
                 )}
               </div>
@@ -637,11 +765,20 @@ export default function Navbar() {
               </Link>
             )}
 
-            {/* MENÚ MÓVIL */}
+            {/* =================================================
+                MENÚ MÓVIL
+            ================================================= */}
+
             <button
               type="button"
-              aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"}
-              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label={
+                menuOpen
+                  ? "Cerrar menú"
+                  : "Abrir menú"
+              }
+              onClick={() =>
+                setMenuOpen(!menuOpen)
+              }
               className="
                 flex
                 h-10
@@ -659,12 +796,20 @@ export default function Navbar() {
                 md:hidden
               "
             >
-              {menuOpen ? <FaTimes size={16} /> : <FaBars size={16} />}
+              {menuOpen ? (
+                <FaTimes size={16} />
+              ) : (
+                <FaBars size={16} />
+              )}
             </button>
+
           </div>
         </div>
 
-        {/* BUSCADOR MÓVIL */}
+        {/* ====================================================
+            BUSCADOR MÓVIL
+        ==================================================== */}
+
         {searchOpen && (
           <div className="pb-4 sm:hidden">
             <form
@@ -683,7 +828,9 @@ export default function Navbar() {
               <input
                 type="search"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
                 placeholder="Buscar productos..."
                 autoFocus
                 className="
@@ -719,30 +866,49 @@ export default function Navbar() {
           </div>
         )}
 
-        {/* MENÚ MÓVIL */}
+        {/* ====================================================
+            MENÚ MÓVIL
+        ==================================================== */}
+
         {menuOpen && (
           <nav className="border-t border-slate-900 py-4 md:hidden">
+
             <div className="space-y-1">
-              {/* Sección de Usuario en Móvil */}
+
+              {/* USUARIO MÓVIL */}
+
               {userProfile ? (
                 <div className="mb-3 rounded-xl border border-slate-800 bg-slate-900/80 p-3">
+
                   <div className="mb-2 flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/30 font-mono text-xs font-bold text-cyan-400">
-                      {userProfile.full_name
-                        ? userProfile.full_name.charAt(0).toUpperCase()
-                        : <FaUser />}
+
+                    <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-cyan-500/30 bg-cyan-500/10 font-mono text-xs font-bold text-cyan-400">
+                      {userProfile.full_name ? (
+                        userProfile.full_name
+                          .charAt(0)
+                          .toUpperCase()
+                      ) : (
+                        <FaUser />
+                      )}
                     </div>
+
                     <div className="min-w-0 flex-1">
+
                       <p className="truncate font-mono text-xs font-bold text-white">
-                        {userProfile.full_name || "Usuario"}
+                        {userProfile.full_name ||
+                          "Usuario"}
                       </p>
+
                       <p className="truncate font-mono text-[10px] text-slate-400">
                         {userProfile.email}
                       </p>
+
                     </div>
+
                   </div>
 
-                  <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-800/80">
+                  <div className="grid grid-cols-2 gap-1.5 border-t border-slate-800/80 pt-2">
+
                     <Link
                       href="/pedido"
                       onClick={closeMenu}
@@ -751,6 +917,7 @@ export default function Navbar() {
                       <FaShoppingBag className="text-cyan-400" />
                       Mis Pedidos
                     </Link>
+
                     <Link
                       href="/perfil"
                       onClick={closeMenu}
@@ -759,13 +926,14 @@ export default function Navbar() {
                       <FaCog className="text-cyan-400" />
                       Configuración
                     </Link>
+
                   </div>
 
                   {userProfile.role === "admin" && (
                     <Link
                       href="/admin"
                       onClick={closeMenu}
-                      className="mt-1.5 flex items-center justify-center gap-2 rounded-lg bg-cyan-500/10 border border-cyan-500/20 py-2 font-mono text-[11px] font-bold text-cyan-400"
+                      className="mt-1.5 flex items-center justify-center gap-2 rounded-lg border border-cyan-500/20 bg-cyan-500/10 py-2 font-mono text-[11px] font-bold text-cyan-400"
                     >
                       <FaUser />
                       Panel Admin
@@ -780,17 +948,20 @@ export default function Navbar() {
                     <FaSignOutAlt />
                     Cerrar Sesión
                   </button>
+
                 </div>
               ) : (
                 <Link
                   href="/login"
                   onClick={closeMenu}
-                  className="mb-3 flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-3 font-mono text-xs font-bold text-slate-950 transition hover:bg-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)]"
+                  className="mb-3 flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-4 py-3 font-mono text-xs font-bold text-slate-950 shadow-[0_0_15px_rgba(6,182,212,0.3)] transition hover:bg-cyan-400"
                 >
                   <FaUser />
                   Iniciar Sesión
                 </Link>
               )}
+
+              {/* NAVEGACIÓN */}
 
               <Link
                 href="/"
@@ -875,7 +1046,10 @@ export default function Navbar() {
                 "
               >
                 <span>Ofertas</span>
-                <span className="text-xs text-cyan-400">⚡</span>
+
+                <span className="text-xs text-cyan-400">
+                  ⚡
+                </span>
               </Link>
 
               <Link
@@ -960,9 +1134,11 @@ export default function Navbar() {
               >
                 Contacto
               </Link>
+
             </div>
           </nav>
         )}
+
       </div>
     </header>
   );

@@ -1,5 +1,5 @@
 import { getProduct } from "@/services/productService";
-import ProductForm from "@/components/admin/ProductForm";
+import ProductEditForm from "@/components/admin/ProductEditForm";
 
 interface Props {
   params: Promise<{
@@ -7,7 +7,9 @@ interface Props {
   }>;
 }
 
-export default async function EditProductPage({ params }: Props) {
+export default async function EditProductPage({
+  params,
+}: Props) {
   const { id } = await params;
 
   const product = await getProduct(Number(id));
@@ -18,6 +20,7 @@ export default async function EditProductPage({ params }: Props) {
         <p className="font-mono text-sm font-semibold text-rose-400">
           [!] Producto no encontrado
         </p>
+
         <p className="mt-1 text-xs text-slate-400">
           El ID de producto especificado no existe o fue removido del catálogo.
         </p>
@@ -28,17 +31,20 @@ export default async function EditProductPage({ params }: Props) {
   return (
     <div className="max-w-4xl space-y-8 text-slate-100">
       <div>
-        <h1 className="text-3xl font-extrabold text-white tracking-tight flex items-center gap-3">
-          Editar Producto <span className="text-cyan-400 font-mono text-xl">#{product.id}</span>
+        <h1 className="flex items-center gap-3 text-3xl font-extrabold tracking-tight text-white">
+          Editar Producto{" "}
+          <span className="font-mono text-xl text-cyan-400">
+            #{product.id}
+          </span>
         </h1>
+
         <p className="mt-1 text-xs text-slate-400 font-mono">
           Modifica las especificaciones, precio e inventario del artículo.
         </p>
       </div>
 
-      {/* Contenedor con efecto Glassmorphism */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 backdrop-blur-md p-6 sm:p-8 shadow-2xl">
-        <ProductForm product={product} />
+      <div className="rounded-2xl border border-slate-800 bg-slate-900/80 p-6 shadow-2xl backdrop-blur-md sm:p-8">
+        <ProductEditForm product={product} />
       </div>
     </div>
   );

@@ -27,9 +27,19 @@ export interface Product {
 
   stock: number;
 
-  image_url?: string;
+  /**
+   * Imagen principal del producto.
+   *
+   * La aplicación trabaja con una sola URL.
+   * productService se encarga de normalizar el valor
+   * que venga desde Supabase.
+   */
+  image: string;
 
-  image?: string;
+  /**
+   * URL alternativa/compatibilidad con registros antiguos.
+   */
+  image_url?: string | null;
 
   active: boolean;
 

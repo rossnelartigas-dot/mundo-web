@@ -21,17 +21,17 @@ interface Props {
 
 const statuses = [
   {
-    value: "pending",
+    value: "Pendiente",
     label: "Pendiente",
     icon: Clock3,
   },
   {
-    value: "confirmed",
+    value: "Confirmado",
     label: "Confirmado",
     icon: CircleCheck,
   },
   {
-    value: "paid",
+    value: "Pagado",
     label: "Pagado",
     icon: CreditCard,
   },
@@ -57,39 +57,46 @@ const statuses = [
   },
 ];
 
+/**
+ * Convierte cualquier estado antiguo o nuevo
+ * al formato utilizado actualmente en Supabase.
+ */
 function normalizeStatus(status: string) {
   const value = status.toLowerCase().trim();
 
   switch (value) {
     case "pending":
     case "pendiente":
-      return "pending";
+      return "Pendiente";
 
     case "confirmed":
     case "confirmado":
-      return "confirmed";
+      return "Confirmado";
 
     case "paid":
     case "pagado":
-      return "paid";
+      return "Pagado";
 
+    case "preparing":
     case "preparando":
     case "preparado":
       return "Preparando";
 
+    case "shipped":
     case "enviado":
       return "Enviado";
 
+    case "delivered":
     case "entregado":
       return "Entregado";
 
-    case "cancelado":
     case "cancelled":
     case "canceled":
+    case "cancelado":
       return "Cancelado";
 
     default:
-      return "pending";
+      return "Pendiente";
   }
 }
 
@@ -107,10 +114,10 @@ function getStatusColor(status: string) {
     case "Preparando":
       return "text-amber-400";
 
-    case "paid":
+    case "Pagado":
       return "text-green-400";
 
-    case "confirmed":
+    case "Confirmado":
       return "text-violet-400";
 
     default:
@@ -132,10 +139,10 @@ function getStatusBadge(status: string) {
     case "Preparando":
       return "border-amber-500/30 bg-amber-500/10 text-amber-400";
 
-    case "paid":
+    case "Pagado":
       return "border-green-500/30 bg-green-500/10 text-green-400";
 
-    case "confirmed":
+    case "Confirmado":
       return "border-violet-500/30 bg-violet-500/10 text-violet-400";
 
     default:
@@ -152,6 +159,7 @@ export default function OrderStatusSelect({
   );
 
   const [loading, setLoading] = useState(false);
+
   const [error, setError] = useState("");
 
   async function handleChange(
@@ -198,7 +206,7 @@ export default function OrderStatusSelect({
     <div className="space-y-3">
 
       {/* ======================================================
-          SELECTOR
+          SELECTOR DE ESTADO
       ====================================================== */}
 
       <div className="relative">
@@ -226,6 +234,8 @@ export default function OrderStatusSelect({
             </option>
           ))}
         </select>
+
+        {/* Flecha */}
 
         <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
           ▼
@@ -255,8 +265,13 @@ export default function OrderStatusSelect({
 
         </div>
 
+        {/* ====================================================
+            GUARDANDO
+        ==================================================== */}
+
         {loading && (
           <div className="flex items-center gap-2 text-xs text-cyan-400">
+
             <Loader2
               size={14}
               className="animate-spin"
@@ -265,6 +280,7 @@ export default function OrderStatusSelect({
             <span>
               Guardando...
             </span>
+
           </div>
         )}
 

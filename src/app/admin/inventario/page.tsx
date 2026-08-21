@@ -174,7 +174,6 @@ export default function InventoryPage() {
             const status =
               String(order.status || "").toLowerCase().trim();
 
-            // No contabilizar pedidos cancelados
             const isCancelled =
               status === "cancelado" ||
               status === "cancelled";
@@ -274,7 +273,21 @@ export default function InventoryPage() {
   // ============================================================
 
   useEffect(() => {
-    fetchInventory(false);
+    let cancelled = false;
+
+    const loadInitialInventory = async () => {
+      if (cancelled) {
+        return;
+      }
+
+      await fetchInventory(false);
+    };
+
+    void loadInitialInventory();
+
+    return () => {
+      cancelled = true;
+    };
   }, [fetchInventory]);
 
   // ============================================================
@@ -330,7 +343,6 @@ export default function InventoryPage() {
         throw error;
       }
 
-      // Actualizamos también el estado local
       setProducts((currentProducts) =>
         currentProducts.map((item) =>
           item.id === id

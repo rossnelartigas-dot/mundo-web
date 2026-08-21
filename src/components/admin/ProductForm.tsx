@@ -1,947 +1,575 @@
 "use client";
 
 import { useState } from "react";
-import { useForm, Resolver } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  useForm,
+  SubmitHandler,
+} from "react-hook-form";
 import { useRouter } from "next/navigation";
 
-import {
-  ProductSchema,
-  ProductFormData,
-} from "@/lib/validators/product";
-
-import {
-  createProduct,
-  updateProduct,
-} from "@/services/productService";
-
-import {
-  uploadProductImage,
-} from "@/services/storageService";
-
-import { Product } from "@/types/product";
+import { createProduct } from "@/services/productService";
+import { uploadProductImage } from "@/services/storageService";
 
 import ImageUploader from "./ImageUploader";
 
-interface Props {
-  product?: Product;
+interface ProductFormData {
+  name: string;
+  description: string;
+  brand: string;
+  category: string;
+  subcategory: string;
+  condition: string;
+  price: number;
+  cost_price: number;
+  profit_margin: number;
+  discount: number;
+  stock: number;
+  sku: string;
+  slug: string;
+  image: string;
+  featured: boolean;
+  active: boolean;
+  weight: number;
+  warranty_months: number;
 }
 
-export default function ProductForm({ product }: Props) {
+export default function ProductForm() {
   const router = useRouter();
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] =
+    useState<File | null>(null);
 
-  // La interfaz Product define image como string.
-  // Usamos image_url como respaldo por compatibilidad
-  // con productos existentes.
-  const initialImage = product?.image || product?.image_url || "";
+  const [loading, setLoading] =
+    useState(false);
 
   const {
     register,
-    setValue,
     handleSubmit,
-    formState: { errors },
+    watch,
   } = useForm<ProductFormData>({
-    resolver: zodResolver(ProductSchema) as Resolver<
-      ProductFormData,
-      unknown
-    >,
-
     defaultValues: {
-      name: product?.name || "",
-      description: product?.description || "",
-      price: product?.price ?? 0,
-      cost_price: product?.cost_price ?? 0,
-      profit_margin: product?.profit_margin ?? 0,
-      category: product?.category || "",
-      subcategory: product?.subcategory || "",
-      brand: product?.brand || "",
-      condition: product?.condition || "nuevo",
-      image: initialImage,
-      stock: product?.stock ?? 0,
-      slug: product?.slug || "",
-      sku: product?.sku || "",
-      featured: product?.featured ?? false,
-      active: product?.active ?? true,
-      discount: product?.discount ?? 0,
-      weight: product?.weight ?? 0,
-      warranty_months: product?.warranty_months ?? 0,
+      name: "",
+      description: "",
+      brand: "",
+      category: "",
+      subcategory: "",
+      condition: "Nuevo",
+      price: 0,
+      cost_price: 0,
+      profit_margin: 0,
+      discount: 0,
+      stock: 0,
+      sku: "",
+      slug: "",
+      image: "",
+      featured: false,
+      active: true,
+      weight: 0,
+      warranty_months: 0,
     },
   });
 
-  function generateSlug(value: string): string {
-    return value
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, "")
-      .replace(/\s+/g, "-");
-  }
+  const imageUrl = watch("image");
 
-  const nameRegister = register("name");
+  /*
+   * ==========================================================
+   * CREAR PRODUCTO
+   * ==========================================================
+   */
 
-  function handleNameChange(
-    e: React.ChangeEvent<HTMLInputElement>
-  ): void {
-    const value = e.target.value;
+  const onSubmit: SubmitHandler<ProductFormData> =
+    async (data) => {
+      try {
+        setLoading(true);
 
-    nameRegister.onChange(e);
+        /*
+         * ======================================================
+         * IMAGEN
+         *
+         * Si se selecciona una imagen desde la PC,
+         * tiene prioridad sobre la URL.
+         * ======================================================
+         */
 
-    if (!product) {
-      setValue("slug", generateSlug(value));
-    }
-  }
+        let finalImageUrl =
+          data.image?.trim() || "";
 
-  async function onSubmit(data: ProductFormData): Promise<void> {
-    try {
-      setLoading(true);
+        if (imageFile) {
+          finalImageUrl =
+            await uploadProductImage(imageFile);
+        }
 
-      let imageUrl = data.image || "";
+        /*
+         * ======================================================
+         * PREPARAR PRODUCTO
+         *
+         * Product.image es STRING.
+         * ======================================================
+         */
 
-      if (imageFile) {
-        imageUrl = await uploadProductImage(imageFile);
-      }
+        const productData = {
+          name:
+            data.name.trim(),
 
-      const normalizedImageUrl = imageUrl.trim();
+          description:
+            data.description?.trim() || "",
 
-      const productData = {
-        name: data.name,
-        description: data.description ?? "",
-        price: data.price ?? 0,
-        cost_price: data.cost_price ?? 0,
-        profit_margin: data.profit_margin ?? 0,
-        discount: data.discount ?? 0,
-        stock: data.stock ?? 0,
-        category: data.category ?? "",
-        subcategory: data.subcategory ?? "",
-        brand: data.brand ?? "",
-        condition: data.condition || "nuevo",
-        weight: data.weight ?? 0,
-        warranty_months: data.warranty_months ?? 0,
-        featured: Boolean(data.featured),
-        active: Boolean(data.active),
-        sku: data.sku?.trim() || "",
-        slug:
-          data.slug?.trim() || generateSlug(data.name),
+          brand:
+            data.brand?.trim() || "",
 
-        image: normalizedImageUrl,
-        image_url: normalizedImageUrl,
-      };
+          category:
+            data.category?.trim() || "",
 
-      if (product) {
-        await updateProduct(product.id, productData);
-        alert("Producto actualizado correctamente");
-      } else {
+          subcategory:
+            data.subcategory?.trim() || "",
+
+          condition:
+            data.condition?.trim() || "Nuevo",
+
+          price:
+            Number(data.price) || 0,
+
+          cost_price:
+            Number(data.cost_price) || 0,
+
+          profit_margin:
+            Number(data.profit_margin) || 0,
+
+          discount:
+            Number(data.discount) || 0,
+
+          stock:
+            Number(data.stock) || 0,
+
+          sku:
+            data.sku?.trim() || "",
+
+          slug:
+            data.slug?.trim() || "",
+
+          /*
+           * IMPORTANTE:
+           * Product.image es string.
+           */
+          image:
+            finalImageUrl,
+
+          /*
+           * Compatibilidad con image_url.
+           */
+          image_url:
+            finalImageUrl
+              ? finalImageUrl
+              : null,
+
+          featured:
+            data.featured,
+
+          active:
+            data.active,
+
+          weight:
+            Number(data.weight) || 0,
+
+          warranty_months:
+            Number(data.warranty_months) || 0,
+        };
+
         await createProduct(productData);
-        alert("Producto creado correctamente");
+
+        alert(
+          "Producto creado correctamente"
+        );
+
+        router.push(
+          "/admin/products"
+        );
+
+        router.refresh();
+      } catch (error) {
+        console.error(
+          "Error creando producto:",
+          error
+        );
+
+        alert(
+          "Error creando producto"
+        );
+      } finally {
+        setLoading(false);
       }
+    };
 
-      router.push("/admin/products");
-      router.refresh();
-    } catch (error) {
-      console.error("Error guardando producto:", error);
-      alert("Error guardando producto");
-    } finally {
-      setLoading(false);
-    }
-  }
+  /*
+   * ==========================================================
+   * CAMBIO DE IMAGEN
+   * ==========================================================
+   */
 
-  const handleFileChange = (file: File | null) => {
+  const handleFileChange = (
+    file: File | null
+  ) => {
     setImageFile(file);
-
-    if (!file) {
-      setValue("image", "");
-    }
   };
+
+  /*
+   * ==========================================================
+   * RENDER
+   * ==========================================================
+   */
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="
-        w-full
-        max-w-5xl
-        space-y-8
-        rounded-2xl
-        border
-        border-slate-800
-        bg-slate-900/80
-        p-5
-        shadow-2xl
-        backdrop-blur-md
-        sm:p-6
-        lg:p-8
-      "
+      className="space-y-6"
     >
-      {/* CABECERA */}
-      <div className="border-b border-slate-800 pb-5">
-        <div className="flex items-center gap-3">
-          <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_rgba(34,211,238,0.7)]" />
+      {/* ======================================================
+          INFORMACIÓN PRINCIPAL
+      ====================================================== */}
 
-          <div>
-            <h2 className="text-xl font-extrabold tracking-tight text-white">
-              {product ? "Editar producto" : "Nuevo producto"}
-            </h2>
+      <div>
+        <label className="mb-2 block font-medium">
+          Nombre
+        </label>
 
-            <p className="mt-1 text-[11px] font-mono text-slate-500">
-              {product
-                ? "Actualiza la información del producto en el inventario."
-                : "Registra un nuevo producto en el inventario."}
-            </p>
-          </div>
-        </div>
+        <input
+          {...register("name")}
+          placeholder="Nombre del producto"
+          className="w-full rounded-lg border p-3"
+        />
       </div>
 
-      {/* INFORMACIÓN PRINCIPAL */}
-      <section className="space-y-5">
-        <div>
-          <p className="mb-4 text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
-            Información principal
-          </p>
+      <div>
+        <label className="mb-2 block font-medium">
+          Descripción
+        </label>
 
-          {/* NOMBRE */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              Nombre del Producto *
-            </label>
-
-            <input
-              {...nameRegister}
-              onChange={handleNameChange}
-              placeholder="Ej: Laptop Dell XPS 13"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-slate-800
-                bg-slate-950
-                px-4
-                py-3
-                text-sm
-                text-slate-100
-                placeholder-slate-600
-                outline-none
-                transition
-                focus:border-cyan-500
-                focus:ring-1
-                focus:ring-cyan-500
-              "
-            />
-
-            {errors.name && (
-              <p className="mt-1.5 text-xs font-mono text-rose-400">
-                {errors.name.message}
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* DESCRIPCIÓN */}
-        <div>
-          <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-            Descripción
-          </label>
-
-          <textarea
-            {...register("description")}
-            rows={5}
-            placeholder="Detalles sobre las especificaciones del producto..."
-            className="
-              w-full
-              resize-y
-              rounded-xl
-              border
-              border-slate-800
-              bg-slate-950
-              px-4
-              py-3
-              text-sm
-              leading-relaxed
-              text-slate-100
-              placeholder-slate-600
-              outline-none
-              transition
-              focus:border-cyan-500
-              focus:ring-1
-              focus:ring-cyan-500
-            "
-          />
-        </div>
-      </section>
-
-      {/* CLASIFICACIÓN */}
-      <section className="space-y-4">
-        <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
-          Clasificación
-        </p>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {/* MARCA */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              Marca
-            </label>
-
-            <input
-              {...register("brand")}
-              placeholder="Ej: Dell, ASUS"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-slate-800
-                bg-slate-950
-                px-3.5
-                py-3
-                text-sm
-                text-slate-100
-                placeholder-slate-600
-                outline-none
-                transition
-                focus:border-cyan-500
-                focus:ring-1
-                focus:ring-cyan-500
-              "
-            />
-          </div>
-
-          {/* CATEGORÍA */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              Categoría
-            </label>
-
-            <input
-              {...register("category")}
-              placeholder="Ej: Computación"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-slate-800
-                bg-slate-950
-                px-3.5
-                py-3
-                text-sm
-                text-slate-100
-                placeholder-slate-600
-                outline-none
-                transition
-                focus:border-cyan-500
-                focus:ring-1
-                focus:ring-cyan-500
-              "
-            />
-          </div>
-
-          {/* SUBCATEGORÍA */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              Subcategoría
-            </label>
-
-            <input
-              {...register("subcategory")}
-              placeholder="Ej: Laptops"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-slate-800
-                bg-slate-950
-                px-3.5
-                py-3
-                text-sm
-                text-slate-100
-                placeholder-slate-600
-                outline-none
-                transition
-                focus:border-cyan-500
-                focus:ring-1
-                focus:ring-cyan-500
-              "
-            />
-          </div>
-
-          {/* CONDICIÓN */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              Condición
-            </label>
-
-            <select
-              {...register("condition")}
-              className="
-                w-full
-                rounded-xl
-                border
-                border-slate-800
-                bg-slate-950
-                px-3.5
-                py-3
-                text-sm
-                text-slate-100
-                outline-none
-                transition
-                focus:border-cyan-500
-                focus:ring-1
-                focus:ring-cyan-500
-              "
-            >
-              <option value="nuevo">Nuevo</option>
-              <option value="usado">Usado</option>
-              <option value="reacondicionado">
-                Reacondicionado
-              </option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      {/* PRECIOS */}
-      <section
-        className="
-          space-y-4
-          rounded-2xl
-          border
-          border-slate-800
-          bg-slate-950/60
-          p-5
-        "
-      >
-        <div>
-          <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
-            Precios y rentabilidad
-          </p>
-
-          <p className="mt-1 text-[10px] font-mono text-slate-600">
-            Configura costos, margen y precio de venta.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          {/* COSTO */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              Costo ($)
-            </label>
-
-            <input
-              type="number"
-              step="0.01"
-              {...register("cost_price", {
-                valueAsNumber: true,
-              })}
-              placeholder="0.00"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-slate-800
-                bg-slate-900
-                px-4
-                py-3
-                text-sm
-                text-slate-100
-                placeholder-slate-600
-                outline-none
-                transition
-                focus:border-cyan-500
-                focus:ring-1
-                focus:ring-cyan-500
-              "
-            />
-          </div>
-
-          {/* MARGEN */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              Margen Ganancia (%)
-            </label>
-
-            <input
-              type="number"
-              step="0.01"
-              {...register("profit_margin", {
-                valueAsNumber: true,
-              })}
-              placeholder="30"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-slate-800
-                bg-slate-900
-                px-4
-                py-3
-                text-sm
-                text-slate-100
-                placeholder-slate-600
-                outline-none
-                transition
-                focus:border-cyan-500
-                focus:ring-1
-                focus:ring-cyan-500
-              "
-            />
-          </div>
-
-          {/* PRECIO */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              Precio de Venta ($) *
-            </label>
-
-            <input
-              type="number"
-              step="0.01"
-              {...register("price", {
-                valueAsNumber: true,
-              })}
-              placeholder="0.00"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-emerald-500/30
-                bg-slate-900
-                px-4
-                py-3
-                text-sm
-                font-semibold
-                text-emerald-400
-                placeholder-slate-600
-                outline-none
-                transition
-                focus:border-emerald-400
-                focus:ring-1
-                focus:ring-emerald-400
-              "
-            />
-
-            {errors.price && (
-              <p className="mt-1.5 text-xs font-mono text-rose-400">
-                {errors.price.message}
-              </p>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* INVENTARIO */}
-      <section className="space-y-4">
-        <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
-          Inventario y condiciones
-        </p>
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {/* STOCK */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              Stock *
-            </label>
-
-            <input
-              type="number"
-              {...register("stock", {
-                valueAsNumber: true,
-              })}
-              placeholder="0"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-slate-800
-                bg-slate-950
-                px-4
-                py-3
-                text-sm
-                text-slate-100
-                placeholder-slate-600
-                outline-none
-                transition
-                focus:border-cyan-500
-                focus:ring-1
-                focus:ring-cyan-500
-              "
-            />
-
-            {errors.stock && (
-              <p className="mt-1.5 text-xs font-mono text-rose-400">
-                {errors.stock.message}
-              </p>
-            )}
-          </div>
-
-          {/* DESCUENTO */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              Descuento (%)
-            </label>
-
-            <input
-              type="number"
-              step="0.01"
-              {...register("discount", {
-                valueAsNumber: true,
-              })}
-              placeholder="0"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-slate-800
-                bg-slate-950
-                px-4
-                py-3
-                text-sm
-                text-slate-100
-                placeholder-slate-600
-                outline-none
-                transition
-                focus:border-cyan-500
-                focus:ring-1
-                focus:ring-cyan-500
-              "
-            />
-          </div>
-
-          {/* PESO */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              Peso (Kg)
-            </label>
-
-            <input
-              type="number"
-              step="0.01"
-              {...register("weight", {
-                valueAsNumber: true,
-              })}
-              placeholder="0.00"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-slate-800
-                bg-slate-950
-                px-4
-                py-3
-                text-sm
-                text-slate-100
-                placeholder-slate-600
-                outline-none
-                transition
-                focus:border-cyan-500
-                focus:ring-1
-                focus:ring-cyan-500
-              "
-            />
-          </div>
-
-          {/* GARANTÍA */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              Garantía (Meses)
-            </label>
-
-            <input
-              type="number"
-              {...register("warranty_months", {
-                valueAsNumber: true,
-              })}
-              placeholder="0"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-slate-800
-                bg-slate-950
-                px-4
-                py-3
-                text-sm
-                text-slate-100
-                placeholder-slate-600
-                outline-none
-                transition
-                focus:border-cyan-500
-                focus:ring-1
-                focus:ring-cyan-500
-              "
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* SKU Y SLUG */}
-      <section className="space-y-4">
-        <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
-          Identificación
-        </p>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {/* SKU */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              SKU (Código único)
-            </label>
-
-            <input
-              {...register("sku")}
-              placeholder="Ej: LAP-DELL-001"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-slate-800
-                bg-slate-950
-                px-4
-                py-3
-                text-sm
-                text-slate-100
-                placeholder-slate-600
-                outline-none
-                transition
-                focus:border-cyan-500
-                focus:ring-1
-                focus:ring-cyan-500
-              "
-            />
-
-            {errors.sku && (
-              <p className="mt-1.5 text-xs font-mono text-rose-400">
-                {errors.sku.message}
-              </p>
-            )}
-          </div>
-
-          {/* SLUG */}
-          <div>
-            <label className="mb-2 block text-xs font-mono font-semibold text-slate-300">
-              Slug URL
-            </label>
-
-            <input
-              {...register("slug")}
-              placeholder="ej-laptop-dell-xps-13"
-              className="
-                w-full
-                rounded-xl
-                border
-                border-slate-800
-                bg-slate-950
-                px-4
-                py-3
-                text-sm
-                text-slate-100
-                placeholder-slate-600
-                outline-none
-                transition
-                focus:border-cyan-500
-                focus:ring-1
-                focus:ring-cyan-500
-              "
-            />
-
-            {errors.slug && (
-              <p className="mt-1.5 text-xs font-mono text-rose-400">
-                {errors.slug.message}
-              </p>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* IMAGEN */}
-      <section
-        className="
-          space-y-4
-          rounded-2xl
-          border
-          border-slate-800
-          bg-slate-950/60
-          p-5
-        "
-      >
-        <div>
-          <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
-            Imagen del producto
-          </p>
-
-          <p className="mt-1 text-[10px] font-mono text-slate-600">
-            Puedes subir una imagen desde tu PC o utilizar una URL.
-          </p>
-        </div>
-
-        <ImageUploader
-          imageUrl={initialImage}
-          onImageChange={handleFileChange}
+        <textarea
+          {...register("description")}
+          rows={4}
+          placeholder="Descripción del producto"
+          className="w-full rounded-lg border p-3"
         />
+      </div>
 
-        <div className="border-t border-slate-800 pt-4">
-          <label className="mb-2 block text-[10px] font-mono font-semibold uppercase tracking-wider text-slate-400">
-            URL de imagen
+      {/* ======================================================
+          MARCA / CATEGORÍA
+      ====================================================== */}
+
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block font-medium">
+            Marca
           </label>
 
           <input
-            {...register("image")}
-            placeholder="https://imagen.com/producto.jpg"
-            className="
-              w-full
-              rounded-xl
-              border
-              border-slate-800
-              bg-slate-950
-              px-4
-              py-3
-              text-sm
-              text-slate-100
-              placeholder-slate-600
-              outline-none
-              transition
-              focus:border-cyan-500
-              focus:ring-1
-              focus:ring-cyan-500
-            "
+            {...register("brand")}
+            placeholder="Marca"
+            className="w-full rounded-lg border p-3"
           />
         </div>
-      </section>
 
-      {/* PUBLICACIÓN */}
-      <section className="space-y-4 border-t border-slate-800 pt-5">
-        <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
-          Estado de publicación
-        </p>
-
-        <div className="flex flex-col gap-3 sm:flex-row sm:gap-6">
-          <label
-            className="
-              flex
-              cursor-pointer
-              items-center
-              gap-3
-              rounded-xl
-              border
-              border-slate-800
-              bg-slate-950
-              px-4
-              py-3
-              transition
-              hover:border-cyan-500/40
-            "
-          >
-            <input
-              type="checkbox"
-              {...register("featured")}
-              className="
-                h-4
-                w-4
-                rounded
-                border-slate-700
-                bg-slate-950
-                text-cyan-500
-                focus:ring-cyan-500
-              "
-            />
-
-            <span className="text-xs font-mono font-medium text-slate-300">
-              Producto destacado
-            </span>
+        <div>
+          <label className="mb-2 block font-medium">
+            Categoría
           </label>
 
-          <label
-            className="
-              flex
-              cursor-pointer
-              items-center
-              gap-3
-              rounded-xl
-              border
-              border-slate-800
-              bg-slate-950
-              px-4
-              py-3
-              transition
-              hover:border-emerald-500/40
-            "
-          >
-            <input
-              type="checkbox"
-              {...register("active")}
-              className="
-                h-4
-                w-4
-                rounded
-                border-slate-700
-                bg-slate-950
-                text-emerald-500
-                focus:ring-emerald-500
-              "
-            />
-
-            <span className="text-xs font-mono font-medium text-slate-300">
-              Producto activo en tienda
-            </span>
-          </label>
+          <input
+            {...register("category")}
+            placeholder="Categoría"
+            className="w-full rounded-lg border p-3"
+          />
         </div>
-      </section>
+      </div>
 
-      {/* BOTONES */}
-      <div className="flex flex-col-reverse gap-3 border-t border-slate-800 pt-6 sm:flex-row">
-        <button
-          type="button"
-          onClick={() => router.push("/admin/products")}
-          className="
-            w-full
-            rounded-xl
-            border
-            border-slate-800
-            bg-slate-950
-            px-6
-            py-3
-            font-mono
-            text-xs
-            font-bold
-            text-slate-400
-            transition
-            hover:border-slate-700
-            hover:bg-slate-800
-            hover:text-white
-            sm:w-auto
-          "
-        >
-          Cancelar
-        </button>
+      {/* ======================================================
+          SUBCATEGORÍA / CONDICIÓN
+      ====================================================== */}
 
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block font-medium">
+            Subcategoría
+          </label>
+
+          <input
+            {...register("subcategory")}
+            placeholder="Subcategoría"
+            className="w-full rounded-lg border p-3"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block font-medium">
+            Condición
+          </label>
+
+          <select
+            {...register("condition")}
+            className="w-full rounded-lg border p-3"
+          >
+            <option value="Nuevo">
+              Nuevo
+            </option>
+
+            <option value="Usado">
+              Usado
+            </option>
+
+            <option value="Reacondicionado">
+              Reacondicionado
+            </option>
+          </select>
+        </div>
+      </div>
+
+      {/* ======================================================
+          SKU / SLUG
+      ====================================================== */}
+
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block font-medium">
+            SKU
+          </label>
+
+          <input
+            {...register("sku")}
+            placeholder="SKU del producto"
+            className="w-full rounded-lg border p-3"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block font-medium">
+            Slug
+          </label>
+
+          <input
+            {...register("slug")}
+            placeholder="slug-del-producto"
+            className="w-full rounded-lg border p-3"
+          />
+        </div>
+      </div>
+
+      {/* ======================================================
+          PRECIO / COSTO
+      ====================================================== */}
+
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block font-medium">
+            Precio
+          </label>
+
+          <input
+            type="number"
+            step="0.01"
+            {...register("price", {
+              valueAsNumber: true,
+            })}
+            placeholder="Precio de venta"
+            className="w-full rounded-lg border p-3"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block font-medium">
+            Precio de costo
+          </label>
+
+          <input
+            type="number"
+            step="0.01"
+            {...register("cost_price", {
+              valueAsNumber: true,
+            })}
+            placeholder="Precio de costo"
+            className="w-full rounded-lg border p-3"
+          />
+        </div>
+      </div>
+
+      {/* ======================================================
+          MARGEN / DESCUENTO / STOCK
+      ====================================================== */}
+
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+        <div>
+          <label className="mb-2 block font-medium">
+            Margen de ganancia (%)
+          </label>
+
+          <input
+            type="number"
+            step="0.01"
+            {...register("profit_margin", {
+              valueAsNumber: true,
+            })}
+            placeholder="0"
+            className="w-full rounded-lg border p-3"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block font-medium">
+            Descuento (%)
+          </label>
+
+          <input
+            type="number"
+            step="0.01"
+            {...register("discount", {
+              valueAsNumber: true,
+            })}
+            placeholder="0"
+            className="w-full rounded-lg border p-3"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block font-medium">
+            Stock
+          </label>
+
+          <input
+            type="number"
+            {...register("stock", {
+              valueAsNumber: true,
+            })}
+            placeholder="Cantidad"
+            className="w-full rounded-lg border p-3"
+          />
+        </div>
+      </div>
+
+      {/* ======================================================
+          PESO / GARANTÍA
+      ====================================================== */}
+
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div>
+          <label className="mb-2 block font-medium">
+            Peso
+          </label>
+
+          <input
+            type="number"
+            step="0.01"
+            {...register("weight", {
+              valueAsNumber: true,
+            })}
+            placeholder="Peso"
+            className="w-full rounded-lg border p-3"
+          />
+        </div>
+
+        <div>
+          <label className="mb-2 block font-medium">
+            Garantía (meses)
+          </label>
+
+          <input
+            type="number"
+            {...register("warranty_months", {
+              valueAsNumber: true,
+            })}
+            placeholder="Meses"
+            className="w-full rounded-lg border p-3"
+          />
+        </div>
+      </div>
+
+      {/* ======================================================
+          IMAGEN DESDE PC
+      ====================================================== */}
+
+      <div>
+        <label className="mb-2 block font-medium">
+          Imagen del producto
+        </label>
+
+        <ImageUploader
+          imageUrl={imageUrl || ""}
+          onImageChange={handleFileChange}
+        />
+      </div>
+
+      {/* ======================================================
+          URL DE IMAGEN
+      ====================================================== */}
+
+      <div>
+        <label className="mb-2 block font-medium">
+          URL de imagen
+        </label>
+
+        <input
+          {...register("image")}
+          placeholder="https://..."
+          className="w-full rounded-lg border p-3"
+        />
+
+        <p className="mt-1 text-xs text-slate-500">
+          Puedes utilizar una URL o subir una imagen
+          desde tu PC.
+        </p>
+      </div>
+
+      {/* ======================================================
+          OPCIONES
+      ====================================================== */}
+
+      <div className="flex flex-col gap-3">
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            {...register("featured")}
+          />
+
+          <span>
+            Producto destacado
+          </span>
+        </label>
+
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            {...register("active")}
+          />
+
+          <span>
+            Producto activo
+          </span>
+        </label>
+      </div>
+
+      {/* ======================================================
+          BOTONES
+      ====================================================== */}
+
+      <div className="flex gap-4">
         <button
           type="submit"
           disabled={loading}
-          className="
-            w-full
-            rounded-xl
-            border
-            border-cyan-400/30
-            bg-cyan-500
-            px-7
-            py-3
-            font-mono
-            text-xs
-            font-bold
-            text-slate-950
-            shadow-[0_0_20px_rgba(6,182,212,0.2)]
-            transition
-            hover:bg-cyan-400
-            hover:shadow-[0_0_25px_rgba(6,182,212,0.35)]
-            disabled:cursor-not-allowed
-            disabled:opacity-50
-            sm:w-auto
-          "
+          className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading
             ? "Guardando..."
-            : product
-              ? "Guardar cambios"
-              : "Crear producto"}
+            : "Crear producto"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            router.push(
+              "/admin/products"
+            )
+          }
+          className="rounded-lg bg-gray-500 px-6 py-3 font-medium text-white transition hover:bg-gray-600"
+        >
+          Cancelar
         </button>
       </div>
     </form>

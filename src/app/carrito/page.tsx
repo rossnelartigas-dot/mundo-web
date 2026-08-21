@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useCart } from "@/context/CartContext";
 import {
   Trash2,
@@ -25,18 +25,34 @@ export default function CartPage() {
     total,
   } = useCart();
 
-  const [mounted, setMounted] = useState(false);
-
   /*
-   * Esperamos a que el componente esté montado en el navegador
-   * antes de renderizar el contenido dependiente del carrito.
+   * ============================================================
+   * HIDRATACIÓN
+   * ============================================================
    *
-   * Esto evita el error:
-   * "Hydration failed because the server rendered HTML didn't match the client."
+   * Evitamos usar:
+   *
+   * useEffect(() => {
+   *   setMounted(true);
+   * }, []);
+   *
+   * porque React 19 / Next.js actual y ESLint
+   * react-hooks/set-state-in-effect lo consideran un patrón
+   * innecesario.
+   *
+   * useSyncExternalStore nos permite tener:
+   *
+   * - false durante el render del servidor
+   * - true durante el render del cliente
+   *
+   * sin ejecutar setState dentro de un useEffect.
    */
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   /*
    * Durante el render inicial servidor/cliente mostramos
@@ -141,7 +157,8 @@ export default function CartPage() {
           </Link>
 
           <span className="hidden font-mono text-[11px] uppercase tracking-widest text-slate-500 sm:inline-block">
-            Mundo Web / Checkout Express
+            {totalItems}{" "}
+            {totalItems === 1 ? "ítem" : "ítems"} en el carrito
           </span>
 
         </div>
@@ -217,9 +234,7 @@ export default function CartPage() {
 
                   <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
 
-                    {/* ==================================================
-                        IMAGEN
-                    ================================================== */}
+                    {/* IMAGEN */}
 
                     <div className="relative h-28 w-full shrink-0 overflow-hidden rounded-xl border border-slate-800/80 bg-slate-950 sm:h-28 sm:w-28">
 
@@ -233,9 +248,7 @@ export default function CartPage() {
 
                     </div>
 
-                    {/* ==================================================
-                        INFORMACIÓN
-                    ================================================== */}
+                    {/* INFORMACIÓN */}
 
                     <div className="min-w-0 flex-1">
 
@@ -260,9 +273,7 @@ export default function CartPage() {
 
                         </div>
 
-                        {/* ==================================================
-                            ELIMINAR
-                        ================================================== */}
+                        {/* ELIMINAR */}
 
                         <button
                           type="button"
@@ -278,9 +289,7 @@ export default function CartPage() {
 
                       </div>
 
-                      {/* ==================================================
-                          CANTIDAD Y SUBTOTAL
-                      ================================================== */}
+                      {/* CANTIDAD Y SUBTOTAL */}
 
                       <div className="mt-4 flex flex-col gap-4 border-t border-slate-800/60 pt-3 sm:flex-row sm:items-center sm:justify-between">
 
@@ -343,9 +352,7 @@ export default function CartPage() {
               );
             })}
 
-            {/* ======================================================
-                SEGUIR COMPRANDO
-            ====================================================== */}
+            {/* SEGUIR COMPRANDO */}
 
             <div className="pt-3">
               <Link
@@ -423,9 +430,7 @@ export default function CartPage() {
 
             </div>
 
-            {/* ======================================================
-                GARANTÍA
-            ====================================================== */}
+            {/* GARANTÍA */}
 
             <div className="space-y-2 rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 font-mono text-xs text-slate-400 backdrop-blur-md">
 
