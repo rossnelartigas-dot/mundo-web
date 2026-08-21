@@ -33,43 +33,30 @@ export function FavoritesProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [favorites, setFavorites] = useState<Product[]>(() => {
-    if (typeof window === "undefined") {
-      return [];
-    }
-
-    try {
-      const savedFavorites =
-        localStorage.getItem("favorites");
-
-      if (!savedFavorites) {
-        return [];
-      }
-
-      const parsedFavorites =
-        JSON.parse(savedFavorites);
-
-      if (!Array.isArray(parsedFavorites)) {
-        return [];
-      }
-
-      return parsedFavorites as Product[];
-    } catch (error) {
-      console.error(
-        "Error cargando favoritos:",
-        error
-      );
-
-      return [];
-    }
-  });
+  const [favorites, setFavorites] = useState<Product[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem(
-      "favorites",
-      JSON.stringify(favorites)
-    );
-  }, [favorites]);
+    try {
+      const savedFavorites = localStorage.getItem("favorites");
+      if (savedFavorites) {
+        const parsedFavorites = JSON.parse(savedFavorites);
+        if (Array.isArray(parsedFavorites)) {
+          setFavorites(parsedFavorites as Product[]);
+        }
+      }
+    } catch (error) {
+      console.error("Error cargando favoritos:", error);
+    } finally {
+      setIsLoaded(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("favorites", JSON.stringify(favorites));
+    }
+  }, [favorites, isLoaded]);
 
   function addToFavorites(product: Product) {
     setFavorites((current) => {

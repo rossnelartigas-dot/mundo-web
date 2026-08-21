@@ -48,60 +48,30 @@ export function CartProvider({
 }) {
 
 
-  const [cart, setCart] = useState<CartItem[]>(() => {
-
-    if (typeof window === "undefined") {
-      return [];
-    }
-
-
-    try {
-
-      const savedCart =
-        localStorage.getItem("cart");
-
-
-      if (!savedCart) {
-        return [];
-      }
-
-
-      const parsedCart =
-        JSON.parse(savedCart);
-
-
-      if (!Array.isArray(parsedCart)) {
-        return [];
-      }
-
-
-      return parsedCart as CartItem[];
-
-
-    } catch (error) {
-
-      console.error(
-        "Error cargando carrito:",
-        error
-      );
-
-
-      return [];
-
-    }
-
-  });
-
-
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    try {
+      const savedCart = localStorage.getItem("cart");
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        if (Array.isArray(parsedCart)) {
+          setCart(parsedCart as CartItem[]);
+        }
+      }
+    } catch (error) {
+      console.error("Error cargando carrito:", error);
+    } finally {
+      setIsLoaded(true);
+    }
+  }, []);
 
-    localStorage.setItem(
-      "cart",
-      JSON.stringify(cart)
-    );
-
-  }, [cart]);
+  useEffect(() => {
+    if (isLoaded) {
+      localStorage.setItem("cart", JSON.stringify(cart));
+    }
+  }, [cart, isLoaded]);
 
 
 
