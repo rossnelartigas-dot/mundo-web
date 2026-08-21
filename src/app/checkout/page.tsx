@@ -14,6 +14,9 @@ import {
   Home,
   MessageCircle,
   Loader2,
+  CalendarDays,
+  Clock3,
+  CreditCard,
 } from "lucide-react";
 
 import { useCart } from "@/context/CartContext";
@@ -28,11 +31,20 @@ interface CustomerForm {
   customer_address: string;
 }
 
+type PaymentMethod =
+  | "pago_movil"
+  | "transferencia"
+  | "binance";
+
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart, total, clearCart } = useCart();
 
   const [mounted, setMounted] = useState(false);
+
+  /* ============================================================
+     DATOS DEL CLIENTE
+  ============================================================ */
 
   const [form, setForm] = useState<CustomerForm>({
     customer_name: "",
@@ -43,20 +55,52 @@ export default function CheckoutPage() {
 
   const [userId, setUserId] = useState<string | null>(null);
 
-  const [paymentMethod, setPaymentMethod] = useState<
-    "pago_movil" | "transferencia" | "binance"
-  >("pago_movil");
+  /* ============================================================
+     MÉTODO DE PAGO
+  ============================================================ */
 
-  const [paymentReference, setPaymentReference] = useState("");
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>("pago_movil");
+
+  /* ============================================================
+     DATOS DEL PAGO
+  ============================================================ */
+
+  const [paymentReference, setPaymentReference] =
+    useState("");
+
+  const [paymentBank, setPaymentBank] =
+    useState("");
+
+  const [paymentPhone, setPaymentPhone] =
+    useState("");
+
+  const [paymentIdNumber, setPaymentIdNumber] =
+    useState("");
+
+  const [paymentDate, setPaymentDate] =
+    useState("");
+
+  const [paymentTime, setPaymentTime] =
+    useState("");
+
+  const [paymentAmount, setPaymentAmount] =
+    useState("");
+
   const [loading, setLoading] = useState(false);
 
   /* ============================================================
      TASA BCV
   ============================================================ */
 
-  const [bcvRate, setBcvRate] = useState<number | null>(null);
-  const [loadingRate, setLoadingRate] = useState(true);
-  const [bcvUpdatedAt, setBcvUpdatedAt] = useState<string | null>(null);
+  const [bcvRate, setBcvRate] =
+    useState<number | null>(null);
+
+  const [loadingRate, setLoadingRate] =
+    useState(true);
+
+  const [bcvUpdatedAt, setBcvUpdatedAt] =
+    useState<string | null>(null);
 
   const numericTotal = Number(total) || 0;
 
@@ -103,7 +147,10 @@ export default function CheckoutPage() {
           }
         }
       } catch (err) {
-        console.error("Error obteniendo sesión de usuario:", err);
+        console.error(
+          "Error obteniendo sesión de usuario:",
+          err
+        );
       }
 
       /* ========================================================
@@ -116,15 +163,22 @@ export default function CheckoutPage() {
         const exchangeData = await getBcvRate();
 
         if (!exchangeData) {
-          throw new Error("No se pudo obtener la tasa BCV");
+          throw new Error(
+            "No se pudo obtener la tasa BCV"
+          );
         }
 
         if (isMounted) {
           setBcvRate(exchangeData.rate);
-          setBcvUpdatedAt(exchangeData.updatedAt ?? null);
+          setBcvUpdatedAt(
+            exchangeData.updatedAt ?? null
+          );
         }
       } catch (err) {
-        console.error("Error obteniendo tasa BCV:", err);
+        console.error(
+          "Error obteniendo tasa BCV:",
+          err
+        );
 
         if (isMounted) {
           setBcvRate(null);
@@ -145,12 +199,14 @@ export default function CheckoutPage() {
   }, []);
 
   /* ============================================================
-     FORMULARIO
+     FORMULARIO CLIENTE
   ============================================================ */
 
   const handleChange = useCallback(
     (
-      e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+      e: React.ChangeEvent<
+        HTMLInputElement | HTMLTextAreaElement
+      >
     ) => {
       const { name, value } = e.target;
 
@@ -163,17 +219,134 @@ export default function CheckoutPage() {
   );
 
   /* ============================================================
+     CAMBIO DE MÉTODO DE PAGO
+  ============================================================ */
+
+  function handlePaymentMethodChange(
+    method: PaymentMethod
+  ) {
+    setPaymentMethod(method);
+
+    /*
+     * Limpiamos los datos específicos del método anterior
+     * para evitar guardar información equivocada.
+     */
+
+    setPaymentBank("");
+    setPaymentPhone("");
+    setPaymentIdNumber("");
+    setPaymentDate("");
+    setPaymentTime("");
+    setPaymentAmount("");
+    setPaymentReference("");
+  }
+
+  /* ============================================================
      PRECIOS EN BOLÍVARES
   ============================================================ */
 
   const totalBs =
-    bcvRate !== null ? numericTotal * bcvRate : null;
+    bcvRate !== null
+      ? numericTotal * bcvRate
+      : null;
 
   const formatBs = (value: number) =>
     value.toLocaleString("es-VE", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
+
+  /* ============================================================
+     VALIDACIÓN DE DATOS DE PAGO
+  ============================================================ */
+
+  function validatePaymentData(): boolean {
+    if (!paymentDate) {
+      alert("Por favor indica la fecha del pago.");
+      return false;
+    }
+
+    if (!paymentTime) {
+      alert("Por favor indica la hora del pago.");
+      return false;
+    }
+
+    if (!paymentReference.trim()) {
+      alert(
+        "Por favor ingresa el número de referencia o Hash/ID del pago."
+      );
+      return false;
+    }
+
+    if (!paymentAmount.trim()) {
+      alert(
+        "Por favor indica el monto que realmente pagaste."
+      );
+      return false;
+    }
+
+    const numericPaymentAmount =
+      Number(paymentAmount);
+
+    if (
+      !Number.isFinite(numericPaymentAmount) ||
+      numericPaymentAmount <= 0
+    ) {
+      alert(
+        "El monto del pago debe ser un número válido mayor que cero."
+      );
+      return false;
+    }
+
+    /* ========================================================
+       PAGO MÓVIL
+    ======================================================== */
+
+    if (paymentMethod === "pago_movil") {
+      if (!paymentBank.trim()) {
+        alert(
+          "Por favor indica el banco emisor del Pago Móvil."
+        );
+        return false;
+      }
+
+      if (!paymentPhone.trim()) {
+        alert(
+          "Por favor indica el teléfono asociado al Pago Móvil."
+        );
+        return false;
+      }
+
+      if (!paymentIdNumber.trim()) {
+        alert(
+          "Por favor indica la cédula o RIF del emisor."
+        );
+        return false;
+      }
+    }
+
+    /* ========================================================
+       TRANSFERENCIA
+    ======================================================== */
+
+    if (paymentMethod === "transferencia") {
+      if (!paymentBank.trim()) {
+        alert(
+          "Por favor indica el banco desde donde realizaste la transferencia."
+        );
+        return false;
+      }
+
+      if (!paymentIdNumber.trim()) {
+        alert(
+          "Por favor indica la cédula o RIF del titular de la cuenta emisora."
+        );
+        return false;
+      }
+    }
+
+    return true;
+  }
 
   /* ============================================================
      ENVIAR PEDIDO
@@ -201,9 +374,6 @@ export default function CheckoutPage() {
     const cleanAddress =
       form.customer_address.trim();
 
-    const cleanRef =
-      paymentReference.trim();
-
     if (
       !cleanName ||
       !cleanPhone ||
@@ -216,12 +386,30 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (!cleanRef) {
-      alert(
-        "Por favor ingresa el número de referencia o Hash/ID de tu pago."
-      );
+    if (!validatePaymentData()) {
       return;
     }
+
+    const cleanRef =
+      paymentReference.trim();
+
+    const cleanBank =
+      paymentBank.trim();
+
+    const cleanPaymentPhone =
+      paymentPhone.trim();
+
+    const cleanIdNumber =
+      paymentIdNumber.trim();
+
+    const cleanDate =
+      paymentDate || null;
+
+    const cleanTime =
+      paymentTime || null;
+
+    const numericPaymentAmount =
+      Number(paymentAmount);
 
     setLoading(true);
 
@@ -232,12 +420,47 @@ export default function CheckoutPage() {
 
       const order = await createOrder({
         user_id: userId,
+
         customer_name: cleanName,
         customer_phone: cleanPhone,
         customer_email: cleanEmail,
         customer_address: cleanAddress,
+
         payment_method: paymentMethod,
         payment_reference: cleanRef,
+
+        /* ======================================================
+           DATOS DEL EMISOR / PAGO
+        ====================================================== */
+
+        payment_bank:
+          paymentMethod === "binance"
+            ? null
+            : cleanBank || null,
+
+        payment_phone:
+          paymentMethod === "pago_movil"
+            ? cleanPaymentPhone || null
+            : null,
+
+        payment_id_number:
+          paymentMethod === "binance"
+            ? null
+            : cleanIdNumber || null,
+
+        payment_date: cleanDate,
+
+        payment_time: cleanTime,
+
+        payment_amount:
+          Number.isFinite(numericPaymentAmount)
+            ? numericPaymentAmount
+            : null,
+
+        /* ======================================================
+           PRODUCTOS Y TOTALES
+        ====================================================== */
+
         products: cart,
 
         // Total original en USD
@@ -260,20 +483,53 @@ export default function CheckoutPage() {
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify({
             orderId: order.id,
+
             customerEmail: cleanEmail,
             customerName: cleanName,
             customerPhone: cleanPhone,
             customerAddress: cleanAddress,
+
             paymentMethod,
             paymentReference: cleanRef,
-            total: numericTotal,
-            products: cart,
 
-            // Información BCV
+            /* ==================================================
+               DATOS DEL PAGO
+            ================================================== */
+
+            paymentBank:
+              paymentMethod === "binance"
+                ? null
+                : cleanBank || null,
+
+            paymentPhone:
+              paymentMethod === "pago_movil"
+                ? cleanPaymentPhone || null
+                : null,
+
+            paymentIdNumber:
+              paymentMethod === "binance"
+                ? null
+                : cleanIdNumber || null,
+
+            paymentDate: cleanDate,
+            paymentTime: cleanTime,
+            paymentAmount:
+              Number.isFinite(numericPaymentAmount)
+                ? numericPaymentAmount
+                : null,
+
+            /* ==================================================
+               INFORMACIÓN BCV
+            ================================================== */
+
             bcvRate,
             totalBs,
+
+            total: numericTotal,
+            products: cart,
           }),
         });
       } catch (notifyErr) {
@@ -291,7 +547,10 @@ export default function CheckoutPage() {
         )}`
       );
     } catch (error) {
-      console.error("Error creando pedido:", error);
+      console.error(
+        "Error creando pedido:",
+        error
+      );
 
       alert(
         "No se pudo crear el pedido. Por favor intenta nuevamente."
@@ -322,6 +581,7 @@ export default function CheckoutPage() {
       <main className="flex min-h-screen items-center bg-slate-950 py-16 text-slate-100">
         <div className="mx-auto w-full max-w-2xl px-4">
           <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-8 text-center shadow-2xl backdrop-blur-xl">
+
             <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-cyan-500/20 bg-cyan-500/10 text-cyan-400">
               <ShoppingBag className="h-10 w-10" />
             </div>
@@ -335,6 +595,7 @@ export default function CheckoutPage() {
             </p>
 
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+
               <button
                 type="button"
                 onClick={() => router.push("/")}
@@ -346,11 +607,14 @@ export default function CheckoutPage() {
 
               <button
                 type="button"
-                onClick={() => router.push("/productos")}
+                onClick={() =>
+                  router.push("/productos")
+                }
                 className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-cyan-500 px-8 py-3 font-semibold text-slate-950 transition-all hover:bg-cyan-400 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)]"
               >
                 Ver productos
               </button>
+
             </div>
           </div>
         </div>
@@ -364,17 +628,22 @@ export default function CheckoutPage() {
 
   return (
     <main className="min-h-screen bg-slate-950 py-12 text-slate-100">
+
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
 
         {/* ======================================================
-            NAVEGACIÓN SUPERIOR
+            NAVEGACIÓN
         ====================================================== */}
 
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/80 pb-5">
+
           <div className="flex items-center gap-3">
+
             <button
               type="button"
-              onClick={() => router.push("/carrito")}
+              onClick={() =>
+                router.push("/carrito")
+              }
               className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-slate-700 hover:bg-slate-800 hover:text-white"
             >
               <ArrowLeft
@@ -386,7 +655,9 @@ export default function CheckoutPage() {
 
             <button
               type="button"
-              onClick={() => router.push("/")}
+              onClick={() =>
+                router.push("/")
+              }
               className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/80 px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-slate-700 hover:bg-slate-800 hover:text-white"
             >
               <Home
@@ -395,6 +666,7 @@ export default function CheckoutPage() {
               />
               <span>Inicio</span>
             </button>
+
           </div>
 
           <a
@@ -407,8 +679,11 @@ export default function CheckoutPage() {
               size={18}
               className="text-emerald-400"
             />
-            <span>¿Dudas? Hablar por WhatsApp</span>
+            <span>
+              ¿Dudas? Hablar por WhatsApp
+            </span>
           </a>
+
         </div>
 
         {/* ======================================================
@@ -416,13 +691,15 @@ export default function CheckoutPage() {
         ====================================================== */}
 
         <div className="mb-10">
+
           <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Finalizar compra
           </h1>
 
           <p className="mt-2 text-slate-400">
-            Completa tus datos y selecciona tu método de pago para procesar la orden.
+            Completa tus datos y registra la información de tu pago para procesar la orden.
           </p>
+
         </div>
 
         <form
@@ -441,22 +718,29 @@ export default function CheckoutPage() {
             ================================================== */}
 
             <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl backdrop-blur-md sm:p-8">
+
               <div className="mb-6 border-b border-slate-800/80 pb-4">
+
                 <h2 className="flex items-center gap-2 text-xl font-bold text-white">
+
                   <span className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/10 text-sm text-cyan-400">
                     1
                   </span>
+
                   Datos del cliente
+
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-400">
                   Ingresa tus datos para la entrega y confirmación del pedido.
                 </p>
+
               </div>
 
               <div className="grid gap-5 sm:grid-cols-2">
 
                 <div className="sm:col-span-2">
+
                   <label
                     htmlFor="customer_name"
                     className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
@@ -475,9 +759,11 @@ export default function CheckoutPage() {
                     required
                     className="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
                   />
+
                 </div>
 
                 <div>
+
                   <label
                     htmlFor="customer_phone"
                     className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
@@ -496,9 +782,11 @@ export default function CheckoutPage() {
                     required
                     className="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
                   />
+
                 </div>
 
                 <div>
+
                   <label
                     htmlFor="customer_email"
                     className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
@@ -517,9 +805,11 @@ export default function CheckoutPage() {
                     required
                     className="w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
                   />
+
                 </div>
 
                 <div className="sm:col-span-2">
+
                   <label
                     htmlFor="customer_address"
                     className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
@@ -538,7 +828,9 @@ export default function CheckoutPage() {
                     rows={3}
                     className="w-full resize-none rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
                   />
+
                 </div>
+
               </div>
             </div>
 
@@ -549,17 +841,26 @@ export default function CheckoutPage() {
             <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6 shadow-xl backdrop-blur-md sm:p-8">
 
               <div className="mb-6 border-b border-slate-800/80 pb-4">
+
                 <h2 className="flex items-center gap-2 text-xl font-bold text-white">
+
                   <span className="flex h-7 w-7 items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/10 text-sm text-cyan-400">
                     2
                   </span>
+
                   Método de pago
+
                 </h2>
 
                 <p className="mt-1 text-sm text-slate-400">
-                  Selecciona la opción de tu preferencia e ingresa el número de referencia.
+                  Selecciona tu método e ingresa los datos del pago realizado.
                 </p>
+
               </div>
+
+              {/* ==================================================
+                  BOTONES DE MÉTODO
+              ================================================== */}
 
               <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
 
@@ -567,156 +868,287 @@ export default function CheckoutPage() {
 
                 <button
                   type="button"
-                  aria-pressed={paymentMethod === "pago_movil"}
-                  onClick={() => setPaymentMethod("pago_movil")}
+                  aria-pressed={
+                    paymentMethod === "pago_movil"
+                  }
+                  onClick={() =>
+                    handlePaymentMethodChange(
+                      "pago_movil"
+                    )
+                  }
                   className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
                     paymentMethod === "pago_movil"
                       ? "border-cyan-500 bg-cyan-950/40 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
                       : "border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
                   }`}
                 >
+
                   <Smartphone
                     size={22}
                     className={
-                      paymentMethod === "pago_movil"
+                      paymentMethod ===
+                      "pago_movil"
                         ? "text-cyan-400"
                         : "text-slate-500"
                     }
                   />
 
                   <span>Pago Móvil</span>
+
                 </button>
 
                 {/* TRANSFERENCIA */}
 
                 <button
                   type="button"
-                  aria-pressed={paymentMethod === "transferencia"}
+                  aria-pressed={
+                    paymentMethod ===
+                    "transferencia"
+                  }
                   onClick={() =>
-                    setPaymentMethod("transferencia")
+                    handlePaymentMethodChange(
+                      "transferencia"
+                    )
                   }
                   className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
-                    paymentMethod === "transferencia"
+                    paymentMethod ===
+                    "transferencia"
                       ? "border-cyan-500 bg-cyan-950/40 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
                       : "border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
                   }`}
                 >
+
                   <Building
                     size={22}
                     className={
-                      paymentMethod === "transferencia"
+                      paymentMethod ===
+                      "transferencia"
                         ? "text-cyan-400"
                         : "text-slate-500"
                     }
                   />
 
                   <span>Transferencia</span>
+
                 </button>
 
                 {/* BINANCE */}
 
                 <button
                   type="button"
-                  aria-pressed={paymentMethod === "binance"}
-                  onClick={() => setPaymentMethod("binance")}
+                  aria-pressed={
+                    paymentMethod === "binance"
+                  }
+                  onClick={() =>
+                    handlePaymentMethodChange(
+                      "binance"
+                    )
+                  }
                   className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border p-4 text-xs font-semibold transition-all ${
                     paymentMethod === "binance"
-                      ? "border-cyan-500 bg-cyan-950/40 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]"
+                      ? "border-amber-500 bg-amber-950/20 text-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.15)]"
                       : "border-slate-800 text-slate-400 hover:bg-slate-800/50 hover:text-slate-200"
                   }`}
                 >
+
                   <Wallet
                     size={22}
                     className={
-                      paymentMethod === "binance"
+                      paymentMethod ===
+                      "binance"
                         ? "text-amber-400"
                         : "text-slate-500"
                     }
                   />
 
                   <span>Binance Pay</span>
+
                 </button>
+
               </div>
 
               {/* ==================================================
-                  DETALLES DE PAGO
+                  DATOS PARA PAGO MÓVIL
               ================================================== */}
 
-              <div className="space-y-4 rounded-xl border border-slate-800/80 bg-slate-950/60 p-5 text-sm">
+              {paymentMethod === "pago_movil" && (
+                <div className="space-y-5 rounded-xl border border-slate-800/80 bg-slate-950/60 p-5">
 
-                {paymentMethod === "pago_movil" && (
-                  <div className="space-y-1.5 text-slate-300">
+                  <div className="space-y-1.5 text-sm text-slate-300">
 
-                    <p className="mb-2 flex items-center gap-2 font-semibold text-cyan-400">
+                    <p className="mb-3 flex items-center gap-2 font-semibold text-cyan-400">
                       <CheckCircle2 className="h-4 w-4" />
-                      Datos para Pago Móvil:
+                      Datos para Pago Móvil
                     </p>
 
                     <p>
-                      Banco:{" "}
+                      Banco receptor:{" "}
                       <span className="font-medium text-white">
                         Mercantil (0105)
                       </span>
                     </p>
 
                     <p>
-                      Teléfono:{" "}
+                      Teléfono receptor:{" "}
                       <span className="font-medium text-white">
                         0414-5852935
                       </span>
                     </p>
 
                     <p>
-                      RIF:{" "}
+                      RIF receptor:{" "}
                       <span className="font-medium text-white">
                         V-29569063
                       </span>
                     </p>
 
-                    {totalBs !== null && (
-                      <div className="mt-4 rounded-xl border border-cyan-500/20 bg-cyan-950/50 p-3">
-                        <p className="text-[10px] uppercase tracking-wider text-slate-400">
-                          Monto exacto a transferir
-                        </p>
+                  </div>
 
-                        <p className="mt-1 font-mono text-xl font-extrabold text-cyan-300">
-                          Bs. {formatBs(totalBs)}
-                        </p>
+                  {totalBs !== null && (
+                    <div className="rounded-xl border border-cyan-500/20 bg-cyan-950/50 p-3">
 
-                        <p className="mt-1 text-[10px] text-slate-500">
-                          Calculado según la tasa BCV actual.
-                        </p>
-                      </div>
-                    )}
+                      <p className="text-[10px] uppercase tracking-wider text-slate-400">
+                        Monto esperado a transferir
+                      </p>
 
-                    {loadingRate && (
-                      <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                        <Loader2
-                          size={14}
-                          className="animate-spin"
-                        />
-                        Consultando tasa BCV...
-                      </div>
-                    )}
+                      <p className="mt-1 font-mono text-xl font-extrabold text-cyan-300">
+                        Bs. {formatBs(totalBs)}
+                      </p>
 
-                    {!loadingRate && bcvRate === null && (
-                      <p className="mt-4 text-xs text-amber-400">
+                      <p className="mt-1 text-[10px] text-slate-500">
+                        Calculado según la tasa BCV utilizada en esta orden.
+                      </p>
+
+                    </div>
+                  )}
+
+                  {loadingRate && (
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <Loader2
+                        size={14}
+                        className="animate-spin"
+                      />
+                      Consultando tasa BCV...
+                    </div>
+                  )}
+
+                  {!loadingRate &&
+                    bcvRate === null && (
+                      <p className="text-xs text-amber-400">
                         Tasa BCV no disponible temporalmente.
                       </p>
                     )}
+
+                  {/* DATOS DEL EMISOR */}
+
+                  <div className="border-t border-slate-800 pt-5">
+
+                    <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-300">
+                      Datos del emisor
+                    </p>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+
+                      <div>
+
+                        <label
+                          htmlFor="payment_bank"
+                          className="mb-2 block text-xs font-semibold text-slate-400"
+                        >
+                          Banco emisor
+                        </label>
+
+                        <input
+                          id="payment_bank"
+                          type="text"
+                          value={paymentBank}
+                          onChange={(e) =>
+                            setPaymentBank(
+                              e.target.value
+                            )
+                          }
+                          placeholder="Ej: Banesco"
+                          disabled={loading}
+                          required
+                          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        />
+
+                      </div>
+
+                      <div>
+
+                        <label
+                          htmlFor="payment_phone"
+                          className="mb-2 block text-xs font-semibold text-slate-400"
+                        >
+                          Teléfono del emisor
+                        </label>
+
+                        <input
+                          id="payment_phone"
+                          type="tel"
+                          value={paymentPhone}
+                          onChange={(e) =>
+                            setPaymentPhone(
+                              e.target.value
+                            )
+                          }
+                          placeholder="+58 412 000 0000"
+                          disabled={loading}
+                          required
+                          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        />
+
+                      </div>
+
+                      <div className="sm:col-span-2">
+
+                        <label
+                          htmlFor="payment_id_number"
+                          className="mb-2 block text-xs font-semibold text-slate-400"
+                        >
+                          Cédula / RIF del emisor
+                        </label>
+
+                        <input
+                          id="payment_id_number"
+                          type="text"
+                          value={paymentIdNumber}
+                          onChange={(e) =>
+                            setPaymentIdNumber(
+                              e.target.value
+                            )
+                          }
+                          placeholder="Ej: V-12345678"
+                          disabled={loading}
+                          required
+                          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        />
+
+                      </div>
+
+                    </div>
+
                   </div>
-                )}
+                </div>
+              )}
 
-                {paymentMethod === "transferencia" && (
-                  <div className="space-y-1.5 text-slate-300">
+              {/* ==================================================
+                  TRANSFERENCIA
+              ================================================== */}
 
-                    <p className="mb-2 flex items-center gap-2 font-semibold text-cyan-400">
+              {paymentMethod === "transferencia" && (
+                <div className="space-y-5 rounded-xl border border-slate-800/80 bg-slate-950/60 p-5">
+
+                  <div className="space-y-1.5 text-sm text-slate-300">
+
+                    <p className="mb-3 flex items-center gap-2 font-semibold text-cyan-400">
                       <CheckCircle2 className="h-4 w-4" />
-                      Datos Bancarios:
+                      Datos bancarios para la transferencia
                     </p>
 
                     <p>
-                      Banco:{" "}
+                      Banco receptor:{" "}
                       <span className="font-medium text-white">
                         Mercantil
                       </span>
@@ -742,15 +1174,89 @@ export default function CheckoutPage() {
                         V-29569063
                       </span>
                     </p>
+
                   </div>
-                )}
 
-                {paymentMethod === "binance" && (
-                  <div className="space-y-1.5 text-slate-300">
+                  {/* DATOS DEL EMISOR */}
 
-                    <p className="mb-2 flex items-center gap-2 font-semibold text-amber-400">
+                  <div className="border-t border-slate-800 pt-5">
+
+                    <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-300">
+                      Datos de la cuenta emisora
+                    </p>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+
+                      <div>
+
+                        <label
+                          htmlFor="payment_bank_transfer"
+                          className="mb-2 block text-xs font-semibold text-slate-400"
+                        >
+                          Banco emisor
+                        </label>
+
+                        <input
+                          id="payment_bank_transfer"
+                          type="text"
+                          value={paymentBank}
+                          onChange={(e) =>
+                            setPaymentBank(
+                              e.target.value
+                            )
+                          }
+                          placeholder="Ej: Banesco"
+                          disabled={loading}
+                          required
+                          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        />
+
+                      </div>
+
+                      <div>
+
+                        <label
+                          htmlFor="payment_id_number_transfer"
+                          className="mb-2 block text-xs font-semibold text-slate-400"
+                        >
+                          Cédula / RIF del titular
+                        </label>
+
+                        <input
+                          id="payment_id_number_transfer"
+                          type="text"
+                          value={paymentIdNumber}
+                          onChange={(e) =>
+                            setPaymentIdNumber(
+                              e.target.value
+                            )
+                          }
+                          placeholder="Ej: V-12345678"
+                          disabled={loading}
+                          required
+                          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        />
+
+                      </div>
+
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
+              {/* ==================================================
+                  BINANCE
+              ================================================== */}
+
+              {paymentMethod === "binance" && (
+                <div className="space-y-5 rounded-xl border border-slate-800/80 bg-slate-950/60 p-5">
+
+                  <div className="space-y-1.5 text-sm text-slate-300">
+
+                    <p className="mb-3 flex items-center gap-2 font-semibold text-amber-400">
                       <CheckCircle2 className="h-4 w-4" />
-                      Datos para Binance Pay:
+                      Datos para Binance Pay
                     </p>
 
                     <p>
@@ -766,43 +1272,207 @@ export default function CheckoutPage() {
                         tu-correo@ejemplo.com
                       </span>
                     </p>
+
+                  </div>
+
+                  <div className="border-t border-slate-800 pt-5">
+
+                    <p className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-300">
+                      Datos de la operación
+                    </p>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+
+                      <div className="sm:col-span-2">
+
+                        <label
+                          htmlFor="payment_reference_binance"
+                          className="mb-2 block text-xs font-semibold text-slate-400"
+                        >
+                          Order ID / Hash / Referencia Binance
+                        </label>
+
+                        <input
+                          id="payment_reference_binance"
+                          type="text"
+                          value={paymentReference}
+                          onChange={(e) =>
+                            setPaymentReference(
+                              e.target.value
+                            )
+                          }
+                          placeholder="Ej: 21983019283"
+                          disabled={loading}
+                          required
+                          className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-amber-500 focus:ring-1 focus:ring-amber-500"
+                        />
+
+                      </div>
+
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
+              {/* ==================================================
+                  DATOS COMUNES DE LA OPERACIÓN
+              ================================================== */}
+
+              <div className="mt-5 rounded-xl border border-slate-800/80 bg-slate-950/60 p-5">
+
+                <p className="mb-4 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-300">
+                  <CreditCard className="h-4 w-4 text-cyan-400" />
+                  Datos de la operación
+                </p>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+
+                  {/* FECHA */}
+
+                  <div>
+
+                    <label
+                      htmlFor="payment_date"
+                      className="mb-2 block text-xs font-semibold text-slate-400"
+                    >
+                      Fecha del pago
+                    </label>
+
+                    <div className="relative">
+
+                      <CalendarDays
+                        size={16}
+                        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+                      />
+
+                      <input
+                        id="payment_date"
+                        type="date"
+                        value={paymentDate}
+                        onChange={(e) =>
+                          setPaymentDate(
+                            e.target.value
+                          )
+                        }
+                        disabled={loading}
+                        required
+                        className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 pl-10 pr-3 text-sm text-white outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      />
+
+                    </div>
+
+                  </div>
+
+                  {/* HORA */}
+
+                  <div>
+
+                    <label
+                      htmlFor="payment_time"
+                      className="mb-2 block text-xs font-semibold text-slate-400"
+                    >
+                      Hora del pago
+                    </label>
+
+                    <div className="relative">
+
+                      <Clock3
+                        size={16}
+                        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"
+                      />
+
+                      <input
+                        id="payment_time"
+                        type="time"
+                        value={paymentTime}
+                        onChange={(e) =>
+                          setPaymentTime(
+                            e.target.value
+                          )
+                        }
+                        disabled={loading}
+                        required
+                        className="w-full rounded-xl border border-slate-700 bg-slate-900 py-3 pl-10 pr-3 text-sm text-white outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                      />
+
+                    </div>
+
+                  </div>
+
+                  {/* MONTO */}
+
+                  <div>
+
+                    <label
+                      htmlFor="payment_amount"
+                      className="mb-2 block text-xs font-semibold text-slate-400"
+                    >
+                      Monto pagado
+                    </label>
+
+                    <input
+                      id="payment_amount"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      value={paymentAmount}
+                      onChange={(e) =>
+                        setPaymentAmount(
+                          e.target.value
+                        )
+                      }
+                      placeholder={
+                        paymentMethod === "binance"
+                          ? "Ej: 100.00"
+                          : "Ej: 12500.50"
+                      }
+                      disabled={loading}
+                      required
+                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    />
+
+                  </div>
+
+                </div>
+
+                {/* REFERENCIA PARA PAGO MÓVIL / TRANSFERENCIA */}
+
+                {paymentMethod !== "binance" && (
+                  <div className="mt-4">
+
+                    <label
+                      htmlFor="payment_reference"
+                      className="mb-2 block text-xs font-semibold text-slate-400"
+                    >
+                      Número de referencia
+                    </label>
+
+                    <input
+                      id="payment_reference"
+                      type="text"
+                      value={paymentReference}
+                      onChange={(e) =>
+                        setPaymentReference(
+                          e.target.value
+                        )
+                      }
+                      placeholder="Ej: 00123456"
+                      disabled={loading}
+                      required
+                      className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                    />
+
                   </div>
                 )}
 
-                <div className="border-t border-slate-800 pt-4">
-
-                  <label
-                    htmlFor="payment_reference"
-                    className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-300"
-                  >
-                    {paymentMethod === "binance"
-                      ? "Order ID / Reference Binance (Obligatorio)"
-                      : "Número de Referencia (Obligatorio)"}
-                  </label>
-
-                  <input
-                    id="payment_reference"
-                    type="text"
-                    required
-                    placeholder={
-                      paymentMethod === "binance"
-                        ? "Ej: 21983019283"
-                        : "Ej: 00123456"
-                    }
-                    value={paymentReference}
-                    onChange={(e) =>
-                      setPaymentReference(e.target.value)
-                    }
-                    disabled={loading}
-                    className="w-full rounded-xl border border-slate-700 bg-slate-900/90 px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:opacity-50"
-                  />
-                </div>
               </div>
+
             </div>
           </div>
 
           {/* ====================================================
-              RESUMEN DE COMPRA
+              RESUMEN
           ==================================================== */}
 
           <div className="lg:col-span-1">
@@ -815,16 +1485,18 @@ export default function CheckoutPage() {
 
               <p className="mt-3 text-xs font-medium uppercase tracking-wider text-slate-400">
                 {cart.length}{" "}
-                {cart.length === 1 ? "producto" : "productos"} en total
+                {cart.length === 1
+                  ? "producto"
+                  : "productos"}{" "}
+                en total
               </p>
 
-              {/* ==================================================
-                  PRODUCTOS
-              ================================================== */}
+              {/* PRODUCTOS */}
 
               <div className="mt-5 max-h-[320px] space-y-4 overflow-y-auto pr-1">
 
                 {cart.map((product) => {
+
                   const productPrice =
                     Number(product.price) || 0;
 
@@ -879,26 +1551,31 @@ export default function CheckoutPage() {
 
                         {productTotalBs !== null && (
                           <p className="mt-0.5 font-mono text-[11px] font-semibold text-emerald-400">
-                            ≈ Bs. {formatBs(productTotalBs)}
+                            ≈ Bs.{" "}
+                            {formatBs(
+                              productTotalBs
+                            )}
                           </p>
                         )}
+
                       </div>
+
                     </div>
                   );
                 })}
+
               </div>
 
               <div className="my-5 border-t border-slate-800" />
 
-              {/* ==================================================
-                  TASA BCV
-              ================================================== */}
+              {/* TASA BCV */}
 
               <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
 
                 <div className="flex items-center justify-between gap-3">
 
                   <div>
+
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                       Tasa de cambio
                     </p>
@@ -906,6 +1583,7 @@ export default function CheckoutPage() {
                     <p className="mt-1 text-sm font-bold text-white">
                       Dólar BCV
                     </p>
+
                   </div>
 
                   {loadingRate ? (
@@ -915,35 +1593,40 @@ export default function CheckoutPage() {
                     />
                   ) : bcvRate !== null ? (
                     <p className="font-mono text-sm font-bold text-cyan-400">
-                      Bs. {formatBs(bcvRate)}
+                      Bs.{" "}
+                      {formatBs(bcvRate)}
                     </p>
                   ) : (
                     <span className="text-[10px] text-amber-400">
                       No disponible
                     </span>
                   )}
+
                 </div>
 
                 {bcvUpdatedAt && (
                   <p className="mt-2 text-[10px] text-slate-600">
-                    Actualización: {bcvUpdatedAt}
+                    Actualización:{" "}
+                    {bcvUpdatedAt}
                   </p>
                 )}
 
-                {!loadingRate && bcvRate !== null && (
-                  <p className="mt-2 text-[10px] text-slate-500">
-                    1 USD = Bs. {formatBs(bcvRate)}
-                  </p>
-                )}
+                {!loadingRate &&
+                  bcvRate !== null && (
+                    <p className="mt-2 text-[10px] text-slate-500">
+                      1 USD = Bs.{" "}
+                      {formatBs(bcvRate)}
+                    </p>
+                  )}
+
               </div>
 
-              {/* ==================================================
-                  SUBTOTAL / ENVÍO
-              ================================================== */}
+              {/* SUBTOTAL */}
 
               <div className="mt-5 space-y-3 text-sm text-slate-400">
 
                 <div className="flex items-center justify-between">
+
                   <span>Subtotal</span>
 
                   <div className="text-right">
@@ -954,24 +1637,28 @@ export default function CheckoutPage() {
 
                     {totalBs !== null && (
                       <p className="mt-0.5 font-mono text-[11px] text-emerald-400">
-                        Bs. {formatBs(totalBs)}
+                        Bs.{" "}
+                        {formatBs(totalBs)}
                       </p>
                     )}
+
                   </div>
+
                 </div>
 
                 <div className="flex items-center justify-between">
+
                   <span>Envío</span>
 
                   <span className="font-medium text-slate-400">
                     Por confirmar
                   </span>
+
                 </div>
+
               </div>
 
-              {/* ==================================================
-                  TOTAL
-              ================================================== */}
+              {/* TOTAL */}
 
               <div className="mt-5 border-t border-slate-800 pt-4">
 
@@ -989,35 +1676,39 @@ export default function CheckoutPage() {
 
                     {totalBs !== null && (
                       <p className="mt-1 font-mono text-base font-bold text-emerald-400">
-                        Bs. {formatBs(totalBs)}
+                        Bs.{" "}
+                        {formatBs(totalBs)}
                       </p>
                     )}
+
                   </div>
+
                 </div>
+
               </div>
 
-              {/* ==================================================
-                  CONFIRMAR PEDIDO
-              ================================================== */}
+              {/* CONFIRMAR */}
 
               <button
                 type="submit"
                 disabled={loading}
                 className="mt-6 flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-cyan-500 px-5 py-4 text-base font-bold text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.25)] transition-all hover:bg-cyan-400 hover:shadow-[0_0_25px_rgba(6,182,212,0.4)] disabled:cursor-not-allowed disabled:opacity-50"
               >
+
                 {loading ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Procesando pedido...</span>
+                    <span>
+                      Procesando pedido...
+                    </span>
                   </>
                 ) : (
                   "Confirmar pedido"
                 )}
+
               </button>
 
-              {/* ==================================================
-                  WHATSAPP
-              ================================================== */}
+              {/* WHATSAPP */}
 
               <a
                 href={`https://wa.me/${whatsappNumber}?text=${whatsappMessage}`}
@@ -1025,27 +1716,30 @@ export default function CheckoutPage() {
                 rel="noopener noreferrer"
                 className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-950/30 px-4 py-3 text-xs font-medium text-emerald-400 transition hover:bg-emerald-900/40"
               >
+
                 <MessageCircle size={16} />
 
                 <span>
                   ¿Prefieres acordar el pago por WhatsApp?
                 </span>
+
               </a>
 
-              {/* ==================================================
-                  SEGURIDAD
-              ================================================== */}
+              {/* SEGURIDAD */}
 
               <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-slate-500">
+
                 <ShieldCheck className="h-4 w-4 text-cyan-500/70" />
 
                 <span>
                   Transacción cifrada y datos protegidos
                 </span>
+
               </div>
 
             </div>
           </div>
+
         </form>
       </div>
     </main>
