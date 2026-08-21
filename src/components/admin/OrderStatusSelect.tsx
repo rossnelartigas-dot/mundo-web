@@ -26,32 +26,32 @@ const statuses = [
     icon: Clock3,
   },
   {
-    value: "confirmado",
+    value: "confirmed",
     label: "Confirmado",
     icon: CircleCheck,
   },
   {
-    value: "pagado",
+    value: "paid",
     label: "Pagado",
     icon: CreditCard,
   },
   {
-    value: "preparado",
-    label: "Preparado",
+    value: "Preparando",
+    label: "Preparando",
     icon: PackageCheck,
   },
   {
-    value: "enviado",
+    value: "Enviado",
     label: "Enviado",
     icon: Truck,
   },
   {
-    value: "entregado",
+    value: "Entregado",
     label: "Entregado",
     icon: CircleCheckBig,
   },
   {
-    value: "cancelado",
+    value: "Cancelado",
     label: "Cancelado",
     icon: CircleX,
   },
@@ -60,66 +60,57 @@ const statuses = [
 function normalizeStatus(status: string) {
   const value = status.toLowerCase().trim();
 
-  // Pendiente
-  if (value === "pending" || value === "pendiente") {
-    return "pending";
-  }
+  switch (value) {
+    case "pending":
+    case "pendiente":
+      return "pending";
 
-  // Confirmado
-  if (value === "confirmed" || value === "confirmado") {
-    return "confirmado";
-  }
+    case "confirmed":
+    case "confirmado":
+      return "confirmed";
 
-  // Pagado
-  if (value === "paid" || value === "pagado") {
-    return "pagado";
-  }
+    case "paid":
+    case "pagado":
+      return "paid";
 
-  // Preparado
-  if (value === "prepared" || value === "preparado") {
-    return "preparado";
-  }
+    case "preparando":
+    case "preparado":
+      return "Preparando";
 
-  // Enviado
-  if (value === "shipped" || value === "enviado") {
-    return "enviado";
-  }
+    case "enviado":
+      return "Enviado";
 
-  // Entregado
-  if (value === "delivered" || value === "entregado") {
-    return "entregado";
-  }
+    case "entregado":
+      return "Entregado";
 
-  // Cancelado
-  if (
-    value === "cancelled" ||
-    value === "canceled" ||
-    value === "cancelado"
-  ) {
-    return "cancelado";
-  }
+    case "cancelado":
+    case "cancelled":
+    case "canceled":
+      return "Cancelado";
 
-  return "pending";
+    default:
+      return "pending";
+  }
 }
 
 function getStatusColor(status: string) {
   switch (status) {
-    case "cancelado":
+    case "Cancelado":
       return "text-red-400";
 
-    case "entregado":
+    case "Entregado":
       return "text-emerald-400";
 
-    case "enviado":
+    case "Enviado":
       return "text-blue-400";
 
-    case "preparado":
+    case "Preparando":
       return "text-amber-400";
 
-    case "pagado":
+    case "paid":
       return "text-green-400";
 
-    case "confirmado":
+    case "confirmed":
       return "text-violet-400";
 
     default:
@@ -129,22 +120,22 @@ function getStatusColor(status: string) {
 
 function getStatusBadge(status: string) {
   switch (status) {
-    case "cancelado":
+    case "Cancelado":
       return "border-red-500/30 bg-red-500/10 text-red-400";
 
-    case "entregado":
+    case "Entregado":
       return "border-emerald-500/30 bg-emerald-500/10 text-emerald-400";
 
-    case "enviado":
+    case "Enviado":
       return "border-blue-500/30 bg-blue-500/10 text-blue-400";
 
-    case "preparado":
+    case "Preparando":
       return "border-amber-500/30 bg-amber-500/10 text-amber-400";
 
-    case "pagado":
+    case "paid":
       return "border-green-500/30 bg-green-500/10 text-green-400";
 
-    case "confirmado":
+    case "confirmed":
       return "border-violet-500/30 bg-violet-500/10 text-violet-400";
 
     default:
@@ -185,9 +176,12 @@ export default function OrderStatusSelect({
         err
       );
 
-      setError(
-        "No se pudo actualizar el estado del pedido."
-      );
+      const message =
+        err instanceof Error
+          ? err.message
+          : "No se pudo actualizar el estado del pedido.";
+
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -210,12 +204,10 @@ export default function OrderStatusSelect({
       <div className="relative">
 
         <div className="pointer-events-none absolute left-4 top-1/2 z-10 -translate-y-1/2">
-
           <SelectedIcon
             size={18}
             className={getStatusColor(currentStatus)}
           />
-
         </div>
 
         <select
@@ -224,7 +216,6 @@ export default function OrderStatusSelect({
           disabled={loading}
           className="w-full cursor-pointer appearance-none rounded-xl border border-slate-700 bg-slate-950/80 py-3 pl-11 pr-10 text-sm font-semibold text-white outline-none transition-all hover:border-slate-600 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
-
           {statuses.map((item) => (
             <option
               key={item.value}
@@ -234,10 +225,7 @@ export default function OrderStatusSelect({
               {item.label}
             </option>
           ))}
-
         </select>
-
-        {/* Flecha */}
 
         <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-500">
           ▼
@@ -267,13 +255,8 @@ export default function OrderStatusSelect({
 
         </div>
 
-        {/* ====================================================
-            CARGANDO
-        ==================================================== */}
-
         {loading && (
           <div className="flex items-center gap-2 text-xs text-cyan-400">
-
             <Loader2
               size={14}
               className="animate-spin"
@@ -282,7 +265,6 @@ export default function OrderStatusSelect({
             <span>
               Guardando...
             </span>
-
           </div>
         )}
 
