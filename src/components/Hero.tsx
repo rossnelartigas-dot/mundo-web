@@ -1,13 +1,23 @@
 import Link from "next/link";
-import { ArrowRight, ShoppingBag, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  ShoppingBag,
+  Sparkles,
+  Cpu,
+  Zap,
+  ShieldCheck,
+  Activity,
+  Terminal,
+} from "lucide-react";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-slate-950 text-slate-100 border-b border-slate-900">
-      {/* LUGES Y GLOW DE FONDO */}
+    <section className="relative overflow-hidden bg-slate-950 text-slate-100 border-b border-slate-900 bg-cyber-grid">
+      {/* LUCES Y GLOW DE FONDO */}
+      <div className="absolute inset-0 pointer-events-none bg-radial-glow" />
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -right-32 -top-32 h-[450px] w-[450px] rounded-full bg-cyan-500/15 blur-3xl" />
-        <div className="absolute -bottom-40 left-1/4 h-[450px] w-[450px] rounded-full bg-blue-600/15 blur-3xl" />
+        <div className="absolute -right-32 -top-32 h-[500px] w-[500px] rounded-full bg-cyan-500/15 blur-[120px] animate-pulse-slow" />
+        <div className="absolute -bottom-40 left-1/4 h-[500px] w-[500px] rounded-full bg-blue-600/15 blur-[120px]" />
       </div>
 
       <div className="relative mx-auto max-w-7xl px-6 py-20 sm:py-24 lg:px-8 lg:py-28">
@@ -16,27 +26,32 @@ export default function Hero() {
           {/* COLUMNA IZQUIERDA: TEXTO Y BOTONES */}
           <div className="max-w-3xl space-y-6">
             
-            {/* BADGE */}
-            <div className="inline-flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-3.5 py-1.5 text-xs font-mono font-bold text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)] backdrop-blur-md">
-              <Sparkles size={14} />
-              <span>Tecnología para tu mundo</span>
+            {/* BEACON STATUS BADGE */}
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-cyan-500/30 bg-cyan-950/40 px-4 py-1.5 text-xs font-mono font-semibold text-cyan-300 shadow-[0_0_20px_rgba(6,182,212,0.2)] backdrop-blur-md">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              <span>HARDWARE EN LÍNEA</span>
+              <span className="text-slate-600">|</span>
+              <span className="text-slate-400 font-normal">MUNDO STORE</span>
             </div>
 
             {/* TITULO PRINCIPAL */}
             <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl leading-[1.1]">
-              La tecnología que{" "}
-              <span className="block text-cyan-400 drop-shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-                impulsa tu mundo
+              Hardware avanzado que{" "}
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-teal-300 to-blue-500 drop-shadow-[0_0_25px_rgba(6,182,212,0.35)]">
+                potencia tu mundo
               </span>
             </h1>
 
             {/* DESCRIPCIÓN */}
             <div className="space-y-2">
               <p className="text-base font-mono text-slate-300 sm:text-lg">
-                Computadoras, laptops, monitores, accesorios, gaming, almacenamiento, redes y mucho más.
+                Computadoras, laptops, procesadores, tarjetas gráficas, gaming, almacenamiento de alta velocidad y periféricos pro.
               </p>
               <p className="text-xs font-mono text-slate-400">
-                Encuentra el hardware de alto rendimiento que necesitas para trabajar, estudiar, jugar y crear.
+                Selección certificada con entrega inmediata, garantía de fábrica y soporte técnico especializado.
               </p>
             </div>
 
@@ -48,7 +63,7 @@ export default function Hero() {
                   inline-flex
                   items-center
                   justify-center
-                  gap-2
+                  gap-2.5
                   rounded-xl
                   bg-cyan-500
                   px-7
@@ -57,16 +72,17 @@ export default function Hero() {
                   font-mono
                   font-bold
                   text-slate-950
-                  shadow-[0_0_20px_rgba(6,182,212,0.3)]
+                  shadow-[0_0_25px_rgba(6,182,212,0.35)]
                   transition-all
                   duration-300
                   hover:bg-cyan-400
-                  hover:shadow-[0_0_25px_rgba(6,182,212,0.5)]
+                  hover:shadow-[0_0_35px_rgba(6,182,212,0.55)]
+                  hover:-translate-y-0.5
                   active:scale-[0.98]
                 "
               >
                 <ShoppingBag size={18} />
-                <span>COMPRAR AHORA</span>
+                <span>EXPLORAR CATÁLOGO</span>
                 <ArrowRight size={16} />
               </Link>
 
@@ -93,93 +109,163 @@ export default function Hero() {
                   hover:border-cyan-500/50
                   hover:text-cyan-400
                   hover:bg-slate-900
-                  hover:shadow-[0_0_20px_rgba(6,182,212,0.15)]
+                  hover:shadow-[0_0_20px_rgba(6,182,212,0.2)]
+                  hover:-translate-y-0.5
                   active:scale-[0.98]
                 "
               >
-                VER OFERTAS
+                <Zap size={15} className="text-cyan-400" />
+                <span>OFERTAS FLASH</span>
               </Link>
             </div>
 
             {/* BENEFICIOS / FEATURES */}
             <div className="pt-6 grid grid-cols-1 gap-4 border-t border-slate-800/80 sm:grid-cols-3">
-              <div>
-                <p className="text-xs font-mono font-bold text-white">
-                  PRODUCTOS DE CALIDAD
-                </p>
-                <p className="mt-1 text-[11px] font-mono text-slate-400">
-                  Hardware garantizado
-                </p>
+              <div className="flex items-start gap-2.5">
+                <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                  <ShieldCheck size={14} />
+                </div>
+                <div>
+                  <p className="text-xs font-mono font-bold text-white">
+                    GARANTÍA TOTAL
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-mono text-slate-400">
+                    Artículos 100% nuevos
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <p className="text-xs font-mono font-bold text-white">
-                  COMPRA RÁPIDA
-                </p>
-                <p className="mt-1 text-[11px] font-mono text-slate-400">
-                  Proceso simple y directo
-                </p>
+              <div className="flex items-start gap-2.5">
+                <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                  <Zap size={14} />
+                </div>
+                <div>
+                  <p className="text-xs font-mono font-bold text-white">
+                    DESPACHO RÁPIDO
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-mono text-slate-400">
+                    Envíos directos
+                  </p>
+                </div>
               </div>
 
-              <div>
-                <p className="text-xs font-mono font-bold text-white">
-                  ATENCIÓN DIRECTA
-                </p>
-                <p className="mt-1 text-[11px] font-mono text-slate-400">
-                  Soporte personalizado
-                </p>
+              <div className="flex items-start gap-2.5">
+                <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+                  <Cpu size={14} />
+                </div>
+                <div>
+                  <p className="text-xs font-mono font-bold text-white">
+                    ASESORÍA TÉCNICA
+                  </p>
+                  <p className="mt-0.5 text-[11px] font-mono text-slate-400">
+                    Soporte especializado
+                  </p>
+                </div>
               </div>
             </div>
 
           </div>
 
-          {/* COLUMNA DERECHA: PANEL VISUAL CYBERPUNK */}
+          {/* COLUMNA DERECHA: PANEL VISUAL CYBER HUD */}
           <div className="hidden lg:flex lg:justify-end">
             <div className="relative w-full max-w-md">
-              <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-md space-y-6">
+              <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-7 shadow-2xl backdrop-blur-xl space-y-5 relative overflow-hidden">
                 
-                <div className="flex items-center justify-between border-b border-slate-800/80 pb-5">
-                  <div>
-                    <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
-                      Plataforma Mundo Web
-                    </p>
-                    <h2 className="mt-1 text-2xl font-extrabold text-white">
-                      Tecnología
-                    </h2>
+                {/* LÍNEA LÁSER SUPERIOR */}
+                <div className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-500 to-transparent" />
+
+                {/* HEADER DEL HUD */}
+                <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.2)]">
+                      <Terminal size={18} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-cyan-400">
+                        HUD // TELEMETRÍA
+                      </p>
+                      <h2 className="text-sm font-bold font-mono text-white">
+                        Mundo Web Engine
+                      </h2>
+                    </div>
                   </div>
 
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
-                    <ShoppingBag size={24} />
+                  <span className="flex items-center gap-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 px-2 py-1 font-mono text-[10px] font-bold text-emerald-400">
+                    <Activity size={10} className="animate-pulse" />
+                    LIVE
+                  </span>
+                </div>
+
+                {/* MÉTRICAS TECNOLÓGICAS */}
+                <div className="grid grid-cols-2 gap-3.5">
+                  <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 backdrop-blur-md">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono uppercase text-slate-400">
+                        Categorías
+                      </span>
+                      <Cpu size={12} className="text-cyan-400" />
+                    </div>
+                    <p className="mt-2 text-2xl font-extrabold font-mono text-white">
+                      6+ Áreas
+                    </p>
+                    <p className="text-[10px] font-mono text-slate-500 mt-0.5">
+                      Gaming, PC & Redes
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4 backdrop-blur-md">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-mono uppercase text-slate-400">
+                        Rendimiento
+                      </span>
+                      <Zap size={12} className="text-cyan-400" />
+                    </div>
+                    <p className="mt-2 text-2xl font-extrabold font-mono text-cyan-400">
+                      Tier 1
+                    </p>
+                    <p className="text-[10px] font-mono text-slate-500 mt-0.5">
+                      Componentes Pro
+                    </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-5 backdrop-blur-md">
-                    <p className="text-[10px] font-mono uppercase text-slate-400">
-                      Categorías
-                    </p>
-                    <p className="mt-2 text-3xl font-extrabold font-mono text-white">
-                      6+
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-800/80 bg-slate-950/60 p-5 backdrop-blur-md">
-                    <p className="text-[10px] font-mono uppercase text-slate-400">
-                      Ofertas
-                    </p>
-                    <p className="mt-2 text-3xl font-extrabold font-mono text-cyan-400">
-                      ⚡
-                    </p>
+                {/* CHIPS DE ESPECIFICACIONES */}
+                <div className="space-y-2">
+                  <p className="text-[10px] font-mono uppercase tracking-wider text-slate-400">
+                    Ecosistema soportado:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 font-mono text-[10px] font-bold text-cyan-300">
+                      [ RTX 40-SERIES ]
+                    </span>
+                    <span className="rounded-lg border border-slate-800 bg-slate-950 px-2.5 py-1 font-mono text-[10px] font-bold text-slate-300">
+                      [ DDR5 6000MHz+ ]
+                    </span>
+                    <span className="rounded-lg border border-slate-800 bg-slate-950 px-2.5 py-1 font-mono text-[10px] font-bold text-slate-300">
+                      [ NVMe Gen4/5 ]
+                    </span>
+                    <span className="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 font-mono text-[10px] font-bold text-cyan-300">
+                      [ WI-FI 6E / 7 ]
+                    </span>
                   </div>
                 </div>
 
-                <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-5 backdrop-blur-md space-y-1">
-                  <p className="text-[10px] font-mono uppercase text-slate-400">
-                    Encuentra lo que buscas
-                  </p>
-                  <p className="text-xs font-mono font-bold text-cyan-400">
-                    Computación · Gaming · Redes
-                  </p>
+                {/* BANNER INFERIOR DE ACCESO RÁPIDO */}
+                <div className="rounded-2xl border border-cyan-500/20 bg-gradient-to-r from-cyan-950/40 to-slate-950/60 p-4 backdrop-blur-md flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <p className="text-[10px] font-mono uppercase text-slate-400">
+                      ¿Buscas armar tu PC?
+                    </p>
+                    <p className="text-xs font-mono font-bold text-cyan-400">
+                      Contáctanos por WhatsApp
+                    </p>
+                  </div>
+                  <Link
+                    href="/contacto"
+                    className="flex h-8 w-8 items-center justify-center rounded-xl bg-cyan-500 text-slate-950 shadow-[0_0_12px_rgba(6,182,212,0.4)] transition hover:bg-cyan-400 hover:scale-105"
+                  >
+                    <ArrowRight size={14} />
+                  </Link>
                 </div>
 
               </div>

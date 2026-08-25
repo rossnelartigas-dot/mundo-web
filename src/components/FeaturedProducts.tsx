@@ -350,15 +350,24 @@ export default function FeaturedProducts() {
                       {/* DISPONIBILIDAD / STOCK */}
                       <div>
                         {outOfStock ? (
-                          <span className="inline-block rounded-md border border-rose-900/50 bg-rose-950/60 px-2 py-0.5 text-[10px] font-mono font-bold text-rose-400">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-[10px] font-mono font-bold text-rose-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
                             Agotado
                           </span>
                         ) : stock <= 5 ? (
-                          <span className="inline-block rounded-md border border-amber-900/50 bg-amber-950/60 px-2 py-0.5 text-[10px] font-mono font-bold text-amber-400">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-mono font-bold text-amber-400 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400 opacity-75" />
+                              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500" />
+                            </span>
                             Últimas {stock} unidades
                           </span>
                         ) : (
-                          <span className="inline-block rounded-md border border-emerald-900/50 bg-emerald-950/60 px-2 py-0.5 text-[10px] font-mono font-bold text-emerald-400">
+                          <span className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-mono font-bold text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.15)]">
+                            <span className="relative flex h-1.5 w-1.5">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            </span>
                             En stock
                           </span>
                         )}
