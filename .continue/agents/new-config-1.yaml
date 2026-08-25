@@ -1,0 +1,13 @@
+name: Mundo Web - LM Studio
+version: 1.0.0
+schema: v1
+
+models:
+  - name: Llama 3.2 1B - LM Studio
+    provider: lmstudio
+    model: llama-3.2-1b-instruct
+    apiBase: http://192.168.0.108:1234/v1
+    roles:
+      - chat
+      - edit
+      - apply
