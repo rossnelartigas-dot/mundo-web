@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   useForm,
   SubmitHandler,
@@ -58,8 +58,8 @@ export default function ProductForm() {
    * Indica si el usuario modificó manualmente
    * el slug generado automáticamente.
    */
-  const slugManuallyEdited =
-    useRef(false);
+  const [slugManuallyEdited, setSlugManuallyEdited] =
+    useState(false);
 
   const {
     register,
@@ -129,7 +129,7 @@ export default function ProductForm() {
    */
 
   useEffect(() => {
-    if (slugManuallyEdited.current) {
+    if (slugManuallyEdited) {
       return;
     }
 
@@ -143,7 +143,7 @@ export default function ProductForm() {
         shouldDirty: true,
       }
     );
-  }, [name, setValue]);
+  }, [name, slugManuallyEdited, setValue]);
 
   /*
    * ==========================================================
@@ -474,8 +474,7 @@ export default function ProductForm() {
           <input
             {...register("slug", {
               onChange: () => {
-                slugManuallyEdited.current =
-                  true;
+                setSlugManuallyEdited(true);
               },
             })}
             placeholder="slug-del-producto"
