@@ -13,6 +13,7 @@ export default function AdminLayout({
 }) {
   const router = useRouter();
   const [authorized, setAuthorized] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     async function checkAdminAuth() {
@@ -73,13 +74,13 @@ export default function AdminLayout({
       {/* Fondo estático con gradiente oscuro para todo el panel */}
       <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black -z-20 pointer-events-none" />
 
-      {/* Sidebar del Admin */}
-      <Sidebar />
+      {/* Sidebar del Admin (Adaptable a Móvil y Desktop) */}
+      <Sidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
 
       {/* Área principal del Dashboard */}
-      <div className="flex-1 min-h-screen bg-slate-950/60 backdrop-blur-md flex flex-col border-l border-slate-800/80">
-        <Header />
-        <main className="p-6 md:p-8 flex-1">
+      <div className="flex-1 min-w-0 min-h-screen bg-slate-950/60 backdrop-blur-md flex flex-col lg:border-l border-slate-800/80">
+        <Header onToggleSidebar={() => setMobileOpen((prev) => !prev)} />
+        <main className="p-4 sm:p-6 md:p-8 flex-1 min-w-0">
           {children}
         </main>
       </div>
